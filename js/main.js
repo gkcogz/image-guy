@@ -110,8 +110,7 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// main.js içindeki startBatchOptimization fonksiyonunun son hali
-
+// Ana optimizasyon fonksiyonu
 async function startBatchOptimization() {
     console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -147,10 +146,9 @@ async function startBatchOptimization() {
 
             const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
             
-            // Arayüzü, gerçek indirme linki ve sonuçlarla güncelliyoruz
             const successHTML = `
                 <span class="savings">✓ ${savings}% Saved</span>
-                <a href="${data.downloadUrl}" target="_blank" class="btn btn-download-item">Download</a>
+                <a href="${data.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
             `;
             statusElement.innerHTML = successHTML;
 
@@ -160,4 +158,18 @@ async function startBatchOptimization() {
         }
     }
     updateMainButtonAfterCompletion();
+}
+
+// EKSİK OLAN FONKSİYON
+function updateMainButtonAfterCompletion() {
+    const actionArea = document.querySelector('.action-area');
+    if (actionArea) {
+        actionArea.innerHTML = `<button class="btn" id="download-all-btn">Download All as .ZIP</button>`;
+        const downloadAllBtn = document.getElementById('download-all-btn');
+        downloadAllBtn.style.backgroundColor = '#28a745';
+        downloadAllBtn.style.color = 'white';
+        downloadAllBtn.style.width = '100%';
+        downloadAllBtn.style.padding = '1rem 2rem';
+        downloadAllBtn.style.fontSize = '1.2rem';
+    }
 }
