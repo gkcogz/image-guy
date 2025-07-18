@@ -122,7 +122,8 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// "Optimize All" butonuna basıldığında çalışacak ASENKRON fonksiyon
+// MEVCUT startBatchOptimization FONKSİYONUNU SİLİP BUNU EKLEYİN
+
 async function startBatchOptimization() {
     console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -133,50 +134,49 @@ async function startBatchOptimization() {
 
     const listItems = document.querySelectorAll('.file-list-item');
 
-    // Her bir dosyayı sırayla işlemek için 'for...of' döngüsü ve 'await' kullanıyoruz.
     for (const [index, file] of fileQueue.entries()) {
         const listItem = listItems[index];
         const statusElement = listItem.querySelector('.file-item-status');
 
         try {
-            // 1. Durumu "İşleniyor" olarak güncelle
             statusElement.innerHTML = `<div class="spinner-small"></div>`;
 
-            // 2. Dosyayı backend'e göndermek için FormData oluşturalım.
             const formData = new FormData();
-            formData.append('image', file); // 'image' anahtarı backend'de kullanılacak
+            formData.append('image', file);
 
-            // 3. Backend fonksiyonumuza GERÇEK bir API isteği atalım.
+            // Gerçek backend'e istek atıyoruz
             const response = await fetch('/.netlify/functions/optimize', {
                 method: 'POST',
                 body: formData,
             });
-            
-            // Eğer yanıt başarılı değilse (örn: 404, 500 hatası), bir hata fırlat.
+
             if (!response.ok) {
-                throw new Error(`Server responded with ${response.status}`);
+                throw new Error(`Server error: ${response.statusText}`);
             }
 
-            // Backend'den gelen JSON verisini al.
-            const data = await response.json();
-            console.log('Backend response:', data); // Gelen "Hello World" mesajını konsolda gör
+            // CEVAP OLARAK GELEN GÖRSELİ İŞLİYORUZ
+            // 1. Cevabı bir 'blob' (dosya gibi bir nesne) olarak alıyoruz.
+            const imageBlob = await response.blob();
+            
+            // 2. Bu blob için tarayıcıda geçici bir URL oluşturuyoruz.
+            const downloadUrl = URL.createObjectURL(imageBlob);
+            
+            const originalSize = file.size;
+            const newSize = imageBlob.size;
+            const savings = ((originalSize - newSize) / originalSize * 100).toFixed(0);
 
-            // 4. Durumu "Başarılı" olarak güncelle.
-            // Şimdilik sahte sonuçlar üretiyoruz. Gerçek backend'de bu bilgiler de gelecek.
+            // 3. Arayüzü, gerçek sonuçlar ve indirme linki ile güncelliyoruz.
             const successHTML = `
-                <span class="savings">✓ Success!</span>
-                <button class="btn btn-download-item">Download</button>
+                <span class="savings">✓ ${savings}% Saved</span>
+                <a href="${downloadUrl}" download="optimized-${file.name}" class="btn btn-download-item">Download</a>
             `;
             statusElement.innerHTML = successHTML;
 
         } catch (error) {
             console.error('Optimization failed for', file.name, ':', error);
-            // Hata durumunda arayüzü güncelle
             statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
         }
     }
-
-    // Tüm işlemler bittiğinde ana butonu güncelle.
     updateMainButtonAfterCompletion();
 }
 
