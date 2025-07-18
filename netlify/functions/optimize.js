@@ -1,34 +1,34 @@
-// Dosya Adı: netlify/functions/optimize.js (Nihai ve Düzeltilmiş Hali)
+// Dosya Adı: netlify/functions/optimize.js (parse-multipart-data ile çalışan son hali)
 
 const sharp = require('sharp');
-const parser = require('aws-lambda-multipart-parser');
+const multipart = require('parse-multipart-data');
 
 exports.handler = async (event, context) => {
     try {
-        // --- BAŞLANGIÇ: KESİN ÇÖZÜM ---
-        // Netlify, header isimlerini küçük harfe çevirebilir. Parser ise 'Content-Type' bekler.
-        // Gelen isteğin header'ları arasında 'content-type'ı bulup, parser'ın anlayacağı
-        // şekilde 'Content-Type' olarak kopyalayarak bu sorunu çözüyoruz.
-        const contentTypeHeader = Object.keys(event.headers).find(
-            (key) => key.toLowerCase() === 'content-type'
-        );
-        if (!contentTypeHeader) {
-            throw new Error("Content-Type header is missing");
-        }
-        event.headers['Content-Type'] = event.headers[contentTypeHeader];
-        // --- BİTİŞ: KESİN ÇÖZÜM ---
+        // 1. 'Content-Type' başlığından 'boundary' (sınır) bilgisini alıyoruz.
+        // Bu, isteğin parçalarının nerede başlayıp bittiğini söyler.
+        const boundary = multipart.getBoundary(event.headers['content-type']);
 
-        const formData = await parser.parse(event);
-        
-        if (!formData.files || formData.files.length === 0) {
-            throw new Error('No files found in form data. Parser may have failed.');
+        // 2. Netlify'dan gelen Base64 formatındaki gövdeyi (body) bir Buffer'a çeviriyoruz.
+        // Buffer, ham ikili (binary) veriyi temsil eder.
+        const bodyBuffer = Buffer.from(event.body, 'base64');
+
+        // 3. Buffer'ı, sınır bilgisiyle birlikte ayrıştırıyoruz.
+        const parts = multipart.parse(bodyBuffer, boundary);
+
+        if (!parts || !parts[0] || !parts[0].data) {
+            throw new Error("Could not parse file from form data. No parts found.");
         }
 
-        const file = formData.files[0];
+        // 'parts' dizisinin ilk elemanı bizim resim dosyamızdır.
+        const file = parts[0];
+        const { filename } = file;
+        const fileDataBuffer = file.data;
 
-        console.log(`Optimizing file: ${file.filename}`);
+        console.log(`Optimizing file: ${filename}`);
 
-        const optimizedImageBuffer = await sharp(file.content)
+        // 4. 'sharp' ile görseli işliyoruz. Artık 'file.data' kullanıyoruz.
+        const optimizedImageBuffer = await sharp(fileDataBuffer)
             .resize({ 
                 width: 1920,
                 height: 1920,
@@ -42,8 +42,9 @@ exports.handler = async (event, context) => {
             })
             .toBuffer();
 
-        console.log(`Optimization complete for: ${file.filename}`);
+        console.log(`Optimization complete for: ${filename}`);
 
+        // 5. Optimize edilmiş görseli geri döndürüyoruz.
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'image/jpeg' },
