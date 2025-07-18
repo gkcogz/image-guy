@@ -110,7 +110,8 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Hatanın düzeltildiği async fonksiyon
+// main.js içindeki startBatchOptimization fonksiyonunun son hali
+
 async function startBatchOptimization() {
     console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -142,19 +143,21 @@ async function startBatchOptimization() {
             }
 
             const data = await response.json();
-            console.log('Backend simple response:', data);
+            console.log('Backend response with S3 URL:', data);
 
-            // Arayüzü, backend'den gelen dosya adıyla güncelleyelim.
-            statusElement.innerHTML = `<span class="savings">✓ ${data.processedFile}</span>`;
+            const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
+            
+            // Arayüzü, gerçek indirme linki ve sonuçlarla güncelliyoruz
+            const successHTML = `
+                <span class="savings">✓ ${savings}% Saved</span>
+                <a href="${data.downloadUrl}" target="_blank" class="btn btn-download-item">Download</a>
+            `;
+            statusElement.innerHTML = successHTML;
 
         } catch (error) {
             console.error('Optimization failed for', file.name, ':', error);
             statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
         }
     }
-
-    const actionArea = document.querySelector('.action-area');
-    if(actionArea) {
-        actionArea.innerHTML = '<strong>Diagnosis Complete. Check the console and UI.</strong>';
-    }
+    updateMainButtonAfterCompletion();
 }
