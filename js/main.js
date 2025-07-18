@@ -122,11 +122,8 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-
-// MEVCUT startBatchOptimization FONKSİYONUNU SİLİP BUNU EKLEYİN
-
-// "Optimize All" butonuna basıldığında çalışacak fonksiyon
-function startBatchOptimization() {
+// "Optimize All" butonuna basıldığında çalışacak ASENKRON fonksiyon
+async function startBatchOptimization() {
     console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
     if (optimizeBtn) {
@@ -134,56 +131,60 @@ function startBatchOptimization() {
         optimizeBtn.disabled = true;
     }
 
-    // Listedeki tüm dosya elementlerini seçelim
     const listItems = document.querySelectorAll('.file-list-item');
 
-    // Her bir dosyayı sırayla (ardışık bir gecikmeyle) işleyelim
-    fileQueue.forEach((file, index) => {
+    // Her bir dosyayı sırayla işlemek için 'for...of' döngüsü ve 'await' kullanıyoruz.
+    for (const [index, file] of fileQueue.entries()) {
         const listItem = listItems[index];
         const statusElement = listItem.querySelector('.file-item-status');
 
-        // Gecikme, her dosya için biraz daha uzun olacak, bu da sıralı bir görünüm yaratır.
-        const delay = (index + 1) * 1500; // Her dosya arasında 1.5 saniye
+        try {
+            // 1. Durumu "İşleniyor" olarak güncelle
+            statusElement.innerHTML = `<div class="spinner-small"></div>`;
 
-        setTimeout(() => {
-            // 1. Durumu "İşleniyor" olarak güncelle (küçük spinner ile)
-            if (statusElement) {
-                statusElement.innerHTML = `<div class="spinner-small"></div>`;
+            // 2. Dosyayı backend'e göndermek için FormData oluşturalım.
+            const formData = new FormData();
+            formData.append('image', file); // 'image' anahtarı backend'de kullanılacak
+
+            // 3. Backend fonksiyonumuza GERÇEK bir API isteği atalım.
+            const response = await fetch('/.netlify/functions/optimize', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            // Eğer yanıt başarılı değilse (örn: 404, 500 hatası), bir hata fırlat.
+            if (!response.ok) {
+                throw new Error(`Server responded with ${response.status}`);
             }
 
-            // 2. Sahte optimizasyon gecikmesi
-            setTimeout(() => {
-                // 3. Durumu "Başarılı" olarak güncelle
-                const originalSize = file.size;
-                const newSize = originalSize * (Math.random() * (0.6 - 0.2) + 0.2); // %40-%80 arası rastgele sıkıştırma
-                const savings = ((originalSize - newSize) / originalSize * 100).toFixed(0);
+            // Backend'den gelen JSON verisini al.
+            const data = await response.json();
+            console.log('Backend response:', data); // Gelen "Hello World" mesajını konsolda gör
 
-                const successHTML = `
-                    <span class="savings">✓ ${savings}% Saved</span>
-                    <button class="btn btn-download-item">Download</button>
-                `;
+            // 4. Durumu "Başarılı" olarak güncelle.
+            // Şimdilik sahte sonuçlar üretiyoruz. Gerçek backend'de bu bilgiler de gelecek.
+            const successHTML = `
+                <span class="savings">✓ Success!</span>
+                <button class="btn btn-download-item">Download</button>
+            `;
+            statusElement.innerHTML = successHTML;
 
-                if (statusElement) {
-                    statusElement.innerHTML = successHTML;
-                }
+        } catch (error) {
+            console.error('Optimization failed for', file.name, ':', error);
+            // Hata durumunda arayüzü güncelle
+            statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
+        }
+    }
 
-                // Eğer bu son dosya ise, ana butonu da güncelle
-                if (index === fileQueue.length - 1) {
-                    updateMainButtonAfterCompletion();
-                }
-
-            }, 1000); // Her dosyanın "işlenmesi" 1 saniye sürsün
-
-        }, delay - 1500); // İlk dosya anında başlasın
-    });
+    // Tüm işlemler bittiğinde ana butonu güncelle.
+    updateMainButtonAfterCompletion();
 }
 
-// Tüm işlemler bittiğinde ana butonu güncelleyen fonksiyon
+// Tüm işlemler bittiğinde ana butonu güncelleyen fonksiyon (değişiklik yok, ama bütünlük için burada)
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
         actionArea.innerHTML = `<button class="btn" id="download-all-btn">Download All as .ZIP</button>`;
-        // İndirme butonu için yeşil rengi ve büyük stili ayarlayalım
         const downloadAllBtn = document.getElementById('download-all-btn');
         downloadAllBtn.style.backgroundColor = '#28a745';
         downloadAllBtn.style.color = 'white';
