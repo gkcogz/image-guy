@@ -90,53 +90,33 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-async function startBatchOptimization() {
-    console.log(`Optimizing ${fileQueue.length} files...`);
-    const optimizeBtn = document.getElementById('optimize-all-btn');
-    if (optimizeBtn) {
-        optimizeBtn.textContent = 'Optimizing...';
-        optimizeBtn.disabled = true;
+// startBatchOptimization fonksiyonu içindeki try bloğunu güncelleyin
+
+try {
+    statusElement.innerHTML = `<div class="spinner-small"></div>`;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch('/.netlify/functions/optimize', {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        // Sunucudan gelen hata mesajını daha detaylı loglayalım
+        const errorData = await response.json();
+        throw new Error(`Server error: ${errorData.error || response.statusText}`);
     }
 
-    const listItems = document.querySelectorAll('.file-list-item');
+    const data = await response.json();
+    console.log('Backend simple response:', data);
 
-    for (const [index, file] of fileQueue.entries()) {
-        const listItem = listItems[index];
-        const statusElement = listItem.querySelector('.file-item-status');
+    // Arayüzü, backend'den gelen dosya adıyla güncelleyelim.
+    // Bu, doğru dosya için doğru yanıtı aldığımızı kanıtlar.
+    statusElement.innerHTML = `<span class="savings">✓ ${data.processedFile}</span>`;
 
-        // --- DEĞİŞİKLİK BURADA ---
-        try {
-            statusElement.innerHTML = `<div class="spinner-small"></div>`;
-
-            const formData = new FormData();
-            formData.append('image', file);
-
-            const response = await fetch('/.netlify/functions/optimize', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.statusText}`);
-            }
-
-            // Cevabı artık BLOB olarak değil, JSON olarak bekliyoruz.
-            const data = await response.json();
-            
-            // Gelen cevabı konsola yazdırarak teşhisi doğruluyoruz.
-            console.log('Backend diagnosis response:', data);
-
-            // Arayüzü geçici bir başarı mesajıyla güncelliyoruz.
-            statusElement.innerHTML = `<span class="savings">✓ Verified!</span>`;
-
-        } catch (error) {
-            console.error('Optimization failed for', file.name, ':', error);
-            statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
-        }
-    }
-    // Ana butonu "hepsi tamamlandı" durumuna getirelim.
-    const actionArea = document.querySelector('.action-area');
-    if(actionArea) {
-        actionArea.innerHTML = '<strong>Diagnosis Complete. Check the console.</strong>';
-    }
+} catch (error) {
+    console.error('Optimization failed for', file.name, ':', error);
+    statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
 }
