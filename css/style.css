@@ -1,0 +1,328 @@
+/* Google Fonts Import - Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+/* Değişkenler ve Temel Stiller */
+:root {
+    --primary-color: #007bff; /* Güven veren Mavi */
+    --secondary-color: #f8f9fa; /* Çok açık Gri arka plan */
+    --dark-gray: #343a40; /* Koyu Gri metin */
+    --light-gray: #e9ecef; /* Açık Gri kenarlıklar */
+    --white-color: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-gray);
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    background: var(--white-color);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 20px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+/* Ana İçerik - Hero Bölümü */
+.hero {
+    background: var(--secondary-color);
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.hero .subtitle {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-bottom: 2.5rem;
+}
+
+.upload-area {
+    background: var(--white-color);
+    border: 3px dashed var(--light-gray);
+    border-radius: 10px;
+    padding: 3rem;
+    max-width: 700px;
+    margin: 0 auto;
+    transition: background-color 0.3s;
+}
+
+.upload-area:hover {
+    background-color: #fdfdfd;
+    border-color: var(--primary-color);
+}
+
+.upload-area h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    margin-top: 1rem;
+}
+
+/* Nasıl Çalışır? Bölümü */
+.how-it-works {
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.how-it-works h2 {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.step {
+    flex: 1;
+}
+
+/* Reklam ve Footer */
+.ad-placeholder-horizontal {
+    background: var(--light-gray);
+    text-align: center;
+    padding: 2rem 0;
+    margin: 2rem 0;
+    color: #6c757d;
+}
+
+.footer {
+    background: var(--dark-gray);
+    color: var(--white-color);
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer a {
+    color: var(--white-color);
+    text-decoration: none;
+    margin-left: 15px;
+}
+
+/* Dosya Seçildikten Sonraki Arayüz İçin Ek Stiller */
+
+.upload-area.file-selected {
+    border-style: solid;
+    padding: 1.5rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.file-icon {
+    font-size: 3rem;
+    margin-right: 15px;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: 500;
+}
+
+.file-size {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Optimize butonu için ek stil (btn ve btn-primary zaten mevcut) */
+#optimize-btn {
+    width: 50%; /* Butonun genişliğini ayarlayabiliriz */
+}
+
+/* Sürükle-Bırak için Görsel Geribildirim Stili */
+.upload-area.drag-over {
+    border-color: var(--primary-color);
+    border-style: solid;
+    background-color: #e8f0fe; /* Çok açık bir mavi tonu */
+}
+
+/* =================================
+   6. Optimizasyon Durum Stilleri
+   ================================= */
+
+/* Yükleme Animasyonu (Spinner) */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    margin: 2rem auto; /* Ortalamak için */
+
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Başarı Mesajı */
+.success-message {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-message h3 {
+    font-size: 1.5rem;
+    color: #28a745; /* Yeşil başarı rengi */
+    margin-bottom: 0.5rem;
+}
+
+.success-message p {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+/* İndirme Butonu */
+#download-btn {
+    width: 60%;
+    background-color: #28a745;
+    padding: 1rem 2rem; /* Daha büyük ve dikkat çekici */
+    font-size: 1.2rem;
+}
+
+/* =================================
+   7. Çoklu Dosya Listesi Stilleri
+   ================================= */
+
+.file-list {
+    list-style: none;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.file-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--secondary-color);
+    padding: 0.8rem 1.2rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.file-list-item .file-info {
+    margin-bottom: 0; /* Önceki stili ezelim */
+}
+
+.file-item-status {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.action-area {
+    text-align: center;
+    width: 100%;
+}
+
+/* =================================
+   8. Bireysel Dosya Durum Stilleri
+   ================================= */
+
+/* Her bir satırdaki küçük spinner */
+.file-item-status .spinner-small {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    display: inline-block; /* Metinle aynı hizada durması için */
+    animation: spin 1s ease infinite;
+}
+
+/* Başarı ve tasarruf metni */
+.file-item-status .savings {
+    color: #28a745; /* Yeşil başarı rengi */
+    font-weight: 700;
+}
+
+/* Her bir satırdaki küçük indirme butonu */
+.btn-download-item {
+    background-color: #6c757d; /* Nötr gri */
+    color: var(--white-color);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    margin-left: 10px;
+}
