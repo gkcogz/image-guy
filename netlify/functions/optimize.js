@@ -1,18 +1,26 @@
-// Dosya Adı: netlify/functions/optimize.js (Güncellenmiş Hali)
+// Dosya Adı: netlify/functions/optimize.js (Nihai ve Düzeltilmiş Hali)
 
 const sharp = require('sharp');
 const parser = require('aws-lambda-multipart-parser');
 
 exports.handler = async (event, context) => {
     try {
+        // --- BAŞLANGIÇ: KESİN ÇÖZÜM ---
+        // Netlify, header isimlerini küçük harfe çevirebilir. Parser ise 'Content-Type' bekler.
+        // Gelen isteğin header'ları arasında 'content-type'ı bulup, parser'ın anlayacağı
+        // şekilde 'Content-Type' olarak kopyalayarak bu sorunu çözüyoruz.
+        const contentTypeHeader = Object.keys(event.headers).find(
+            (key) => key.toLowerCase() === 'content-type'
+        );
+        if (!contentTypeHeader) {
+            throw new Error("Content-Type header is missing");
+        }
+        event.headers['Content-Type'] = event.headers[contentTypeHeader];
+        // --- BİTİŞ: KESİN ÇÖZÜM ---
+
         const formData = await parser.parse(event);
         
-        // HATA AYIKLAMA İÇİN EKLENEN SATIR: Parser'ın ne döndürdüğünü görelim.
-        console.log('Parsed formData object:', JSON.stringify(formData, null, 2));
-
-        // DAHA SAĞLAM KONTROL: 'files' özelliğinin var olup olmadığını ve boş olmadığını kontrol edelim.
         if (!formData.files || formData.files.length === 0) {
-            // Eğer dosya bulunamazsa, daha anlamlı bir hata fırlatalım.
             throw new Error('No files found in form data. Parser may have failed.');
         }
 
@@ -44,7 +52,6 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        // Hatanın kendisini de loglayalım ki daha fazla detay görelim.
         console.error('Detailed error:', error);
         return {
             statusCode: 500,
