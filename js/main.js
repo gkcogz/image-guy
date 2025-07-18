@@ -160,7 +160,6 @@ async function startBatchOptimization() {
     updateMainButtonAfterCompletion();
 }
 
-// EKSİK OLAN FONKSİYON
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
