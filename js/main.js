@@ -65,45 +65,41 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Please replace the existing processSingleFile function with this one
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     try {
-        // Adım 1: Güvenli yükleme linki iste
-        statusElement.textContent = 'Getting link...';
-        const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: file.name, fileType: file.type }),
-        });
-        if (!linkResponse.ok) throw new Error('Could not get upload link.');
-        const { uploadUrl, key } = await linkResponse.json();
-
-        // Adım 2: Dosyayı doğrudan S3'e yükle
-        statusElement.textContent = 'Uploading...';
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type },
-        });
-        if (!uploadResponse.ok) throw new Error('S3 upload failed.');
-        
-        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
-        const optimizeResponse = await fetch('/.netlify/functions/optimize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key }),
-        });
-        if (!optimizeResponse.ok) throw new Error('Optimization failed.');
-        const data = await optimizeResponse.json();
 
-        // Sonuçları göster
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
-        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>`;
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(`Server error: ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Backend response with S3 URL:', data);
+
+        const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
+        
+        // --- CHANGE IS ON THE LINE BELOW ---
+        // We added the 'download' attribute to the <a> tag.
+        const successHTML = `
+            <span class="savings">✓ ${savings}% Saved</span>
+            <a href="${data.downloadUrl}" download="optimized-${file.name}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
+        `;
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
-        console.error('Processing failed for', file.name, ':', error);
+        console.error('Optimization failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
     }
 }
