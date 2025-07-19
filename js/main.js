@@ -25,6 +25,10 @@ uploadArea.addEventListener('click', (e) => {
     if (e.target.id === 'optimize-all-btn') {
         startBatchOptimization();
     }
+    // YENİ EKLENEN BLOK
+    if (e.target && e.target.id === 'download-all-btn') {
+        handleZipDownload();
+    }
 });
 
 function handleFiles(files) {
@@ -116,10 +120,6 @@ async function startBatchOptimization() {
     if (optimizeBtn) {
         optimizeBtn.textContent = 'Processing...';
         optimizeBtn.disabled = true;
-    }
-        // YENİ EKLENEN BLOK
-    if (e.target && e.target.id === 'download-all-btn') {
-        handleZipDownload();
     }
 
     const listItems = document.querySelectorAll('.file-list-item');
