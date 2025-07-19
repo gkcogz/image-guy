@@ -60,10 +60,12 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// main.js içindeki processSingleFile fonksiyonunun son hali
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     try {
-        // Step 1: Get secure upload link
+        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -73,7 +75,7 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Step 2: Upload file directly to S3
+        // Adım 2: Dosyayı doğrudan S3'e yükle
         statusElement.textContent = 'Uploading...';
         const uploadResponse = await fetch(uploadUrl, {
             method: 'PUT',
@@ -82,7 +84,7 @@ async function processSingleFile(file, listItem) {
         });
         if (!uploadResponse.ok) throw new Error('S3 upload failed.');
         
-        // Step 3: Trigger optimization
+        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -95,9 +97,11 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Show results
+        // Sonuçları göster
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
-        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${file.name}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>`;
+        
+        // --- DEĞİŞİKLİK BURADA: target="_blank" kaldırıldı ---
+        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
