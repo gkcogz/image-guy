@@ -1,14 +1,10 @@
-// Dosya Adı: js/main.js (Pre-Signed URL Mimarisi ile Çalışan Nihai Hali)
-
 let fileQueue = []; 
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 
-// Event Listeners (olay dinleyicileri) aynı kalabilir.
-// ... (Önceki main.js'deki tüm event listener kodları buraya gelecek)
 uploadArea.addEventListener('click', (e) => {
-    if (e.target && e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
+    if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
         fileInput.click();
     }
@@ -26,11 +22,10 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 uploadArea.addEventListener('click', (e) => {
-    if (e.target && e.target.id === 'optimize-all-btn') {
+    if (e.target.id === 'optimize-all-btn') {
         startBatchOptimization();
     }
 });
-
 
 function handleFiles(files) {
     fileQueue = [];
@@ -65,42 +60,49 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Please replace the existing processSingleFile function with this one
-
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     try {
-        statusElement.innerHTML = `<div class="spinner-small"></div>`;
-
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const response = await fetch('/.netlify/functions/optimize', {
+        // Step 1: Get secure upload link
+        statusElement.textContent = 'Getting link...';
+        const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
-            body: formData,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, fileType: file.type }),
         });
+        if (!linkResponse.ok) throw new Error('Could not get upload link.');
+        const { uploadUrl, key } = await linkResponse.json();
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: response.statusText }));
-            throw new Error(`Server error: ${errorData.error || response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('Backend response with S3 URL:', data);
-
-        const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
+        // Step 2: Upload file directly to S3
+        statusElement.textContent = 'Uploading...';
+        const uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': file.type },
+        });
+        if (!uploadResponse.ok) throw new Error('S3 upload failed.');
         
-        // --- CHANGE IS ON THE LINE BELOW ---
-        // We added the 'download' attribute to the <a> tag.
-        const successHTML = `
-            <span class="savings">✓ ${savings}% Saved</span>
-            <a href="${data.downloadUrl}" download="optimized-${file.name}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
-        `;
+        // Step 3: Trigger optimization
+        statusElement.innerHTML = `<div class="spinner-small"></div>`;
+        const optimizeResponse = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key }),
+        });
+        if (!optimizeResponse.ok) {
+             const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
+             throw new Error(errorData.error);
+        }
+        const data = await optimizeResponse.json();
+
+        // Show results
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
+        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${file.name}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>`;
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
-        console.error('Optimization failed for', file.name, ':', error);
-        statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
+        console.error('Processing failed for', file.name, ':', error);
+        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
     }
 }
 
@@ -114,7 +116,6 @@ async function startBatchOptimization() {
 
     const listItems = document.querySelectorAll('.file-list-item');
     
-    // İstekleri artık sıralı yapıyoruz ki S3 ve fonksiyonlar üzerinde ani yük oluşturmayalım.
     for (const [index, file] of fileQueue.entries()) {
         const listItem = listItems[index];
         await processSingleFile(file, listItem);
