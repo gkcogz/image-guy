@@ -1,9 +1,13 @@
-# File: netlify.toml
-
 [build]
-  # Bu satır, Netlify'a fonksiyonlarımızın nerede olduğunu net bir şekilde söyler.
+  # This tells Netlify where our functions are located.
   functions = "netlify/functions/"
 
 [functions]
-  # Bu ayar, fonksiyonlarımızın bağımlılıklarının doğru bir şekilde paketlenmesini sağlar.
+  # This ensures Node.js dependencies from the root package.json are included.
   node_bundler = "esbuild"
+
+# --- ADD THIS NEW SECTION BELOW ---
+# Increase the timeout for our specific, long-running function
+[functions.optimize]
+  # Set the timeout to 26 seconds (the maximum allowed is 26)
+  timeout = 26
