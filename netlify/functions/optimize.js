@@ -1,3 +1,5 @@
+// File: netlify/functions/optimize.js (Final Version without ACL)
+
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
@@ -20,11 +22,9 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        // 1. Get the key of the original file from the frontend
         const { key } = JSON.parse(event.body);
         console.log(`Received key to optimize: ${key}`);
 
-        // 2. Download the original file from S3
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: key,
@@ -34,7 +34,6 @@ exports.handler = async (event, context) => {
         
         console.log(`Optimizing file: ${key}`);
 
-        // 3. Process the file with 'sharp'
         const optimizedImageBuffer = await sharp(fileDataBuffer)
             .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
             .jpeg({ quality: 80, progressive: true, mozjpeg: true })
@@ -42,20 +41,18 @@ exports.handler = async (event, context) => {
 
         const newFilename = key.replace('original-', 'optimized-');
 
-        // 4. Upload the new, optimized file back to S3
         const putCommand = new PutObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: newFilename,
             Body: optimizedImageBuffer,
-            ContentType: 'image/jpeg',
-            ACL: 'public-read' // <-- THIS IS THE FIX! It makes the file publicly readable.
+            ContentType: 'image/jpeg'
+            // ACL: 'public-read' <-- This line has been removed.
         });
         await s3Client.send(putCommand);
         console.log(`Successfully uploaded optimized file to S3: ${newFilename}`);
 
         const downloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${newFilename}`;
 
-        // 5. Return the successful result and the new download link
         return {
             statusCode: 200,
             body: JSON.stringify({
