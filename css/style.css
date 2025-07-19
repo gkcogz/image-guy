@@ -373,3 +373,48 @@ body {
     color: #fd7e14; /* Uyarı için turuncu renk */
     font-weight: 700;
 }
+
+/* Format Bilgi Bölümü Stilleri */
+.format-info {
+    padding: 4rem 0;
+    background-color: #fff;
+}
+
+.format-info h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.format-cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.format-card {
+    flex: 1;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.format-card h4 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.format-card p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #6c757d;
+}
+
+/* Mobil cihazlar için ek düzenleme */
+@media (max-width: 768px) {
+    .format-cards {
+        flex-direction: column;
+    }
+}
