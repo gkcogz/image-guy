@@ -138,38 +138,67 @@ async function processSingleFile(file, listItem) {
     }
 }
 
-// Ana optimizasyon fonksiyonu - Artık paralel çalışıyor
+// main.js içindeki startBatchOptimization fonksiyonunun son hali
+
 async function startBatchOptimization() {
-    console.log(`Optimizing ${fileQueue.length} files...`);
+    console.log(`Preparing to optimize ${fileQueue.length} files in a single request...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
     if (optimizeBtn) {
-        optimizeBtn.textContent = 'Optimizing...';
+        optimizeBtn.textContent = 'Uploading & Optimizing...';
         optimizeBtn.disabled = true;
     }
 
     const listItems = document.querySelectorAll('.file-list-item');
-    
-    // Her dosya için bir işlem promise'i oluşturuyoruz
-    const optimizationPromises = fileQueue.map((file, index) => {
-        const listItem = listItems[index];
-        return processSingleFile(file, listItem);
+    listItems.forEach(item => {
+        const statusElement = item.querySelector('.file-item-status');
+        statusElement.innerHTML = `<div class="spinner-small"></div>`;
     });
 
-    // Tüm işlemlerin tamamlanmasını bekliyoruz
-    await Promise.all(optimizationPromises);
+    try {
+        const formData = new FormData();
+        // Tüm dosyaları aynı anahtar ('images') ile FormData'ya ekliyoruz.
+        fileQueue.forEach(file => {
+            formData.append('images', file);
+        });
 
-    updateMainButtonAfterCompletion();
-}
+        // Tek bir API isteği gönderiyoruz
+        const response = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            body: formData,
+        });
 
-function updateMainButtonAfterCompletion() {
-    const actionArea = document.querySelector('.action-area');
-    if (actionArea) {
-        actionArea.innerHTML = `<button class="btn" id="download-all-btn">Download All as .ZIP</button>`;
-        const downloadAllBtn = document.getElementById('download-all-btn');
-        downloadAllBtn.style.backgroundColor = '#28a745';
-        downloadAllBtn.style.color = 'white';
-        downloadAllBtn.style.width = '100%';
-        downloadAllBtn.style.padding = '1rem 2rem';
-        downloadAllBtn.style.fontSize = '1.2rem';
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(`Server error: ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Backend response with all results:', data);
+
+        // Sonuçları arayüzde gösteriyoruz
+        data.results.forEach(result => {
+            const originalFile = fileQueue.find(f => f.name === result.originalFilename);
+            const fileIndex = fileQueue.indexOf(originalFile);
+            const listItem = listItems[fileIndex];
+            const statusElement = listItem.querySelector('.file-item-status');
+
+            if (originalFile && statusElement) {
+                const savings = ((originalFile.size - result.optimizedSize) / originalFile.size * 100).toFixed(0);
+                const successHTML = `
+                    <span class="savings">✓ ${savings}% Saved</span>
+                    <a href="${result.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
+                `;
+                statusElement.innerHTML = successHTML;
+            }
+        });
+        
+        updateMainButtonAfterCompletion();
+
+    } catch (error) {
+        console.error('Batch optimization failed:', error);
+        listItems.forEach(item => {
+            const statusElement = item.querySelector('.file-item-status');
+            statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
+        });
     }
 }
