@@ -326,3 +326,25 @@ body {
     border-radius: 3px;
     margin-left: 10px;
 }
+
+/* Sürdürülebilirlik Bölümü Stili */
+.sustainability-mission {
+    background-color: #f8f9fa; /* Arka planı diğerlerinden ayırmak için */
+    text-align: center;
+    padding: 3rem 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sustainability-mission h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #343a40;
+}
+
+.sustainability-mission p {
+    font-size: 1.1rem;
+    color: #6c757d;
+    max-width: 800px; /* Metnin çok geniş olmasını engellemek için */
+    margin: 0 auto;
+}
