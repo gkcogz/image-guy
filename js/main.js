@@ -39,6 +39,8 @@ function handleFiles(files) {
     updateUIForFileList();
 }
 
+// main.js içindeki updateUIForFileList fonksiyonunu bununla değiştirin
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -51,10 +53,25 @@ function updateUIForFileList() {
         fileListElement.appendChild(listItem);
     });
     
-    // Format seçme alanını HTML olarak oluşturalım
+    // Bilgi ikonu ve tooltip içeriğini içeren yeni HTML'i oluşturalım
     const formatOptionsHTML = `
-        <div class="format-options">
+        <div class="format-options-header">
             <span class="format-label">Output Format:</span>
+            <div class="tooltip-container">
+                <span class="info-icon">?</span>
+                <div class="tooltip-content">
+                    <h4>JPEG (.jpg)</h4>
+                    <p><strong>Best for:</strong> Photographs. Provides the smallest file size with a tiny, often unnoticeable, loss in quality.</p>
+                    <hr>
+                    <h4>PNG</h4>
+                    <p><strong>Best for:</strong> Graphics & logos with transparency. Preserves perfect quality but results in larger files.</p>
+                    <hr>
+                    <h4>WebP</h4>
+                    <p><strong>Best for:</strong> Web use. A modern format that creates smaller files than both JPG and PNG at the same quality.</p>
+                </div>
+            </div>
+        </div>
+        <div class="format-options">
             <div class="radio-group">
                 <input type="radio" id="jpeg" name="format" value="jpeg" checked>
                 <label for="jpeg">JPG</label>
@@ -72,7 +89,6 @@ function updateUIForFileList() {
 
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    // Format seçeneklerini ve Optimize butonunu ekliyoruz
     actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
     
     uploadArea.appendChild(fileListElement);
