@@ -1,4 +1,4 @@
-// Dosya Adı: netlify/functions/optimize.js (İndirmeyi Zorlayan Son Hali)
+// Dosya Adı: netlify/functions/optimize.js (Çoklu Format Destekli)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
@@ -21,8 +21,9 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        const { key } = JSON.parse(event.body);
-        const originalFilename = key.replace(/original-\d+-/, ''); // Orijinal dosya adını alalım
+        // 1. Frontend'den S3 anahtarını VE istenen formatı al
+        const { key, outputFormat } = JSON.parse(event.body);
+        const originalFilename = key.replace(/original-\d+-/, '');
         
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
@@ -31,22 +32,44 @@ exports.handler = async (event, context) => {
         const response = await s3Client.send(getCommand);
         const fileDataBuffer = await streamToBuffer(response.Body);
         
-        console.log(`Optimizing file: ${originalFilename}`);
+        console.log(`Optimizing file: ${originalFilename} to format: ${outputFormat}`);
 
-        const optimizedImageBuffer = await sharp(fileDataBuffer)
-            .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-            .jpeg({ quality: 80, progressive: true, mozjpeg: true })
-            .toBuffer();
+        // 2. 'sharp' ile görseli işle
+        let sharpInstance = sharp(fileDataBuffer)
+            .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
 
-        const newFilename = `optimized-${Date.now()}-${originalFilename.replace(/\s+/g, '-')}`;
+        // 3. İstenen formata göre optimizasyon yap
+        let contentType, newExtension;
+        switch (outputFormat) {
+            case 'png':
+                sharpInstance = sharpInstance.png({ quality: 90 });
+                contentType = 'image/png';
+                newExtension = 'png';
+                break;
+            case 'webp':
+                sharpInstance = sharpInstance.webp({ quality: 75 });
+                contentType = 'image/webp';
+                newExtension = 'webp';
+                break;
+            case 'jpeg':
+            default:
+                sharpInstance = sharpInstance.jpeg({ quality: 80, progressive: true, mozjpeg: true });
+                contentType = 'image/jpeg';
+                newExtension = 'jpg';
+                break;
+        }
+        
+        const optimizedImageBuffer = await sharpInstance.toBuffer();
+        
+        const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+        const newFilename = `optimized-${Date.now()}-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 
+        // 4. Optimize edilmiş yeni dosyayı doğru formatta S3'e geri yükle
         const putCommand = new PutObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: newFilename,
             Body: optimizedImageBuffer,
-            ContentType: 'image/jpeg',
-            // --- DEĞİŞİKLİK BURADA ---
-            // Bu başlık, tarayıcıya dosyayı göstermek yerine indirmesini söyler.
+            ContentType: contentType, // Dinamik ContentType
             ContentDisposition: `attachment; filename="${newFilename}"`
         });
         await s3Client.send(putCommand);
@@ -57,7 +80,7 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: "Optimization and upload successful!",
+                message: "Optimization successful!",
                 downloadUrl: downloadUrl,
                 originalFilename: originalFilename,
                 originalSize: fileDataBuffer.length,

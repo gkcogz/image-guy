@@ -3,10 +3,20 @@ let fileQueue = [];
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 
+// Olay dinleyicileri
 uploadArea.addEventListener('click', (e) => {
+    // "Choose File" butonunu dinle
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
         fileInput.click();
+    }
+    // "Optimize All" butonunu dinle
+    if (e.target.id === 'optimize-all-btn') {
+        startBatchOptimization();
+    }
+    // "Download All as .ZIP" butonunu dinle
+    if (e.target.id === 'download-all-btn') {
+        handleZipDownload();
     }
 });
 fileInput.addEventListener('change', (event) => {
@@ -21,15 +31,7 @@ uploadArea.addEventListener('drop', (e) => {
     const files = e.dataTransfer.files;
     if (files.length > 0) { handleFiles(files); }
 });
-uploadArea.addEventListener('click', (e) => {
-    if (e.target.id === 'optimize-all-btn') {
-        startBatchOptimization();
-    }
-    // YENİ EKLENEN BLOK
-    if (e.target && e.target.id === 'download-all-btn') {
-        handleZipDownload();
-    }
-});
+
 
 function handleFiles(files) {
     fileQueue = [];
@@ -48,9 +50,31 @@ function updateUIForFileList() {
         listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Waiting...</div>`;
         fileListElement.appendChild(listItem);
     });
+    
+    // Format seçme alanını HTML olarak oluşturalım
+    const formatOptionsHTML = `
+        <div class="format-options">
+            <span class="format-label">Output Format:</span>
+            <div class="radio-group">
+                <input type="radio" id="jpeg" name="format" value="jpeg" checked>
+                <label for="jpeg">JPG</label>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="png" name="format" value="png">
+                <label for="png">PNG</label>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="webp" name="format" value="webp">
+                <label for="webp">WebP</label>
+            </div>
+        </div>
+    `;
+
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    actionArea.innerHTML = `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
+    // Format seçeneklerini ve Optimize butonunu ekliyoruz
+    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
+    
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add('file-selected');
@@ -64,10 +88,11 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// main.js içindeki processSingleFile fonksiyonunun son hali
-
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
+    // Seçilen formatı al
+    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+
     try {
         // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
@@ -93,7 +118,8 @@ async function processSingleFile(file, listItem) {
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key }),
+            // Backend'e hangi formatı istediğimizi söylüyoruz
+            body: JSON.stringify({ key: key, outputFormat: selectedFormat }),
         });
         if (!optimizeResponse.ok) {
              const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
@@ -103,8 +129,6 @@ async function processSingleFile(file, listItem) {
 
         // Sonuçları göster
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
-        
-        // --- DEĞİŞİKLİK BURADA: target="_blank" kaldırıldı ---
         const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
         statusElement.innerHTML = successHTML;
 
@@ -121,14 +145,11 @@ async function startBatchOptimization() {
         optimizeBtn.textContent = 'Processing...';
         optimizeBtn.disabled = true;
     }
-
     const listItems = document.querySelectorAll('.file-list-item');
-    
     for (const [index, file] of fileQueue.entries()) {
         const listItem = listItems[index];
         await processSingleFile(file, listItem);
     }
-
     updateMainButtonAfterCompletion();
 }
 
@@ -145,65 +166,41 @@ function updateMainButtonAfterCompletion() {
     }
 }
 
-// Bu yeni fonksiyonu main.js dosyasının en altına ekleyin
-
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn) return;
-
     console.log('Starting ZIP download process...');
     downloadAllBtn.textContent = 'Zipping...';
     downloadAllBtn.disabled = true;
-
     try {
-        // 1. JSZip nesnesini başlat
         const zip = new JSZip();
-
-        // 2. Sayfadaki tüm bireysel indirme linklerini bul
         const downloadLinks = document.querySelectorAll('a.btn-download-item');
-
-        // 3. Her bir linkteki görseli S3'ten çekmek için bir promise dizisi oluştur
         const fetchPromises = Array.from(downloadLinks).map(link => 
             fetch(link.href)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch ${link.href}`);
-                    }
-                    return response.blob(); // Görsel verisini blob olarak al
+                    if (!response.ok) throw new Error(`Failed to fetch ${link.href}`);
+                    return response.blob();
                 })
                 .then(blob => ({
-                    name: link.getAttribute('download'), // 'download' özelliğinden dosya adını al
+                    name: link.getAttribute('download'),
                     blob: blob
                 }))
         );
-
-        // 4. Tüm görsellerin indirilmesini paralel olarak bekle
         const files = await Promise.all(fetchPromises);
-
-        // 5. İndirilen her bir dosyayı ZIP arşivine ekle
         files.forEach(file => {
             zip.file(file.name, file.blob);
         });
-
-        // 6. ZIP dosyasını oluştur
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-        // 7. Oluşturulan ZIP dosyasını indirmek için geçici bir link oluştur ve tıkla
         const tempUrl = URL.createObjectURL(zipBlob);
         const tempLink = document.createElement('a');
         tempLink.href = tempUrl;
         tempLink.setAttribute('download', 'image-guy-optimized.zip');
         document.body.appendChild(tempLink);
         tempLink.click();
-        
-        // 8. Geçici linki temizle
         document.body.removeChild(tempLink);
         URL.revokeObjectURL(tempUrl);
-
-        // Butonu eski haline getir
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
-
     } catch (error) {
         console.error('Failed to create ZIP file:', error);
         alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
