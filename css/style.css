@@ -367,3 +367,9 @@ body {
     align-items: center;
     gap: 0.5rem;
 }
+
+/* Dosya Boyutu Artışı Uyarısı Stili */
+.savings-increase {
+    color: #fd7e14; /* Uyarı için turuncu renk */
+    font-weight: 700;
+}

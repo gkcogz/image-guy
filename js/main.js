@@ -88,13 +88,13 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// main.js içindeki processSingleFile fonksiyonunu bununla değiştirin
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
-    // Seçilen formatı al
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
 
     try {
-        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -104,7 +104,6 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı doğrudan S3'e yükle
         statusElement.textContent = 'Uploading...';
         const uploadResponse = await fetch(uploadUrl, {
             method: 'PUT',
@@ -113,12 +112,10 @@ async function processSingleFile(file, listItem) {
         });
         if (!uploadResponse.ok) throw new Error('S3 upload failed.');
         
-        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // Backend'e hangi formatı istediğimizi söylüyoruz
             body: JSON.stringify({ key: key, outputFormat: selectedFormat }),
         });
         if (!optimizeResponse.ok) {
@@ -127,9 +124,26 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Sonuçları göster
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
-        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+
+        let successHTML;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+
+        if (savings >= 0) {
+            // Dosya boyutu küçüldü veya aynı kaldı
+            successHTML = `
+                <span class="savings">✓ ${savings.toFixed(0)}% Saved</span>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+            `;
+        } else {
+            // Dosya boyutu büyüdü!
+            const increase = Math.abs(savings);
+            successHTML = `
+                <span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+            `;
+        }
+        
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
