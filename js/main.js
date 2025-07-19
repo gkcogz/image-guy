@@ -1,11 +1,11 @@
-// File: js/main.js (Test Version)
+// File: js/main.js (Final Version)
 
 let fileQueue = []; 
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 
-// All event listeners can stay the same...
+// Event Listeners...
 uploadArea.addEventListener('click', (e) => {
     if (e.target && e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -31,6 +31,7 @@ uploadArea.addEventListener('click', (e) => {
 });
 
 function handleFiles(files) {
+    fileQueue = []; // Her yeni yüklemede kuyruğu sıfırla
     for (const file of files) { fileQueue.push(file); }
     updateUIForFileList();
 }
@@ -40,35 +41,78 @@ function updateUIForFileList() {
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
     fileQueue.forEach(file => {
+        const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
-        listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span></div></div><div class="file-item-status">Ready to test...</div>`;
+        listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Waiting...</div>`;
         fileListElement.appendChild(listItem);
     });
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    actionArea.innerHTML = `<button class="btn btn-primary" id="optimize-all-btn">Run Dependency Test</button>`;
+    actionArea.innerHTML = `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add('file-selected');
 }
 
-// The test function
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+async function processSingleFile(file, listItem) {
+    const statusElement = listItem.querySelector('.file-item-status');
+    try {
+        statusElement.innerHTML = `<div class="spinner-small"></div>`;
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            body: formData,
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(`Server error: ${errorData.error || response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('Backend response with S3 URL:', data);
+        const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
+        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>`;
+        statusElement.innerHTML = successHTML;
+    } catch (error) {
+        console.error('Optimization failed for', file.name, ':', error);
+        statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
+    }
+}
+
 async function startBatchOptimization() {
+    console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
     if (optimizeBtn) {
-        optimizeBtn.textContent = 'Testing...';
+        optimizeBtn.textContent = 'Optimizing...';
         optimizeBtn.disabled = true;
     }
+    const listItems = document.querySelectorAll('.file-list-item');
+    const optimizationPromises = fileQueue.map((file, index) => {
+        const listItem = listItems[index];
+        return processSingleFile(file, listItem);
+    });
+    await Promise.all(optimizationPromises);
+    updateMainButtonAfterCompletion();
+}
 
-    try {
-        const response = await fetch('/.netlify/functions/optimize', { method: 'POST' }); // Sending a simple POST request
-        if (!response.ok) { throw new Error(`Server error: ${response.statusText}`); }
-        const data = await response.json();
-        console.log('Backend test response:', data);
-        uploadArea.innerHTML = `<div class="success-message"><h3>✅ Test Successful!</h3><p>${data.message}</p></div>`;
-    } catch (error) {
-        console.error('Test failed:', error);
-        uploadArea.innerHTML = `<div class="success-message"><h3 style="color: red;">❌ Test Failed!</h3><p>Check the browser console and Netlify deploy logs.</p></div>`;
+function updateMainButtonAfterCompletion() {
+    const actionArea = document.querySelector('.action-area');
+    if (actionArea) {
+        actionArea.innerHTML = `<button class="btn" id="download-all-btn">Download All as .ZIP</button>`;
+        const downloadAllBtn = document.getElementById('download-all-btn');
+        downloadAllBtn.style.backgroundColor = '#28a745';
+        downloadAllBtn.style.color = 'white';
+        downloadAllBtn.style.width = '100%';
+        downloadAllBtn.style.padding = '1rem 2rem';
+        downloadAllBtn.style.fontSize = '1.2rem';
     }
 }
