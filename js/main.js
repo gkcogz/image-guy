@@ -1,7 +1,7 @@
 // ===============================================
 // Genel Değişkenler ve Durum Yönetimi
 // ===============================================
-let fileQueue = []; // Yüklenecek dosyaları tutacağımız bir dizi (kuyruk)
+let fileQueue = [];
 
 // ===============================================
 // Element Seçicileri
@@ -13,7 +13,6 @@ const uploadArea = document.querySelector('.upload-area');
 // Olay Dinleyicileri (Event Listeners)
 // ===============================================
 
-// uploadArea içindeki 'Choose File' butonuna tıklanınca gizli input'u tetikle
 uploadArea.addEventListener('click', (e) => {
     if (e.target && e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -21,7 +20,6 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
-// Kullanıcı Dosya Seçtiğinde Çalışacak Olay
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) {
@@ -29,7 +27,6 @@ fileInput.addEventListener('change', (event) => {
     }
 });
 
-// Sürükle-Bırak (Drag & Drop) Olayları
 uploadArea.addEventListener('dragover', (e) => {
     e.preventDefault();
     uploadArea.classList.add('drag-over');
@@ -49,19 +46,16 @@ uploadArea.addEventListener('drop', (e) => {
     }
 });
 
-// Dinamik olarak oluşturulan "Optimize All" butonunu dinlemek için olay delegasyonu
 uploadArea.addEventListener('click', (e) => {
     if (e.target && e.target.id === 'optimize-all-btn') {
         startBatchOptimization();
     }
 });
 
-
 // ===============================================
 // Fonksiyonlar
 // ===============================================
 
-// Seçilen Dosyaları İşleyen ve Arayüzü Güncelleyen Ana Fonksiyon
 function handleFiles(files) {
     for (const file of files) {
         fileQueue.push(file);
@@ -69,7 +63,6 @@ function handleFiles(files) {
     updateUIForFileList();
 }
 
-// Dosya listesi için arayüzü oluşturan fonksiyon
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -101,7 +94,6 @@ function updateUIForFileList() {
     uploadArea.classList.add('file-selected');
 }
 
-// Dosya boyutunu formatlayan yardımcı fonksiyon
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -110,7 +102,43 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Ana optimizasyon fonksiyonu
+// Tek bir dosyayı işleyen yardımcı fonksiyon
+async function processSingleFile(file, listItem) {
+    const statusElement = listItem.querySelector('.file-item-status');
+    try {
+        statusElement.innerHTML = `<div class="spinner-small"></div>`;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(`Server error: ${errorData.error || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Backend response with S3 URL:', data);
+
+        const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
+        
+        const successHTML = `
+            <span class="savings">✓ ${savings}% Saved</span>
+            <a href="${data.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
+        `;
+        statusElement.innerHTML = successHTML;
+
+    } catch (error) {
+        console.error('Optimization failed for', file.name, ':', error);
+        statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
+    }
+}
+
+// Ana optimizasyon fonksiyonu - Artık paralel çalışıyor
 async function startBatchOptimization() {
     console.log(`Optimizing ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -120,43 +148,16 @@ async function startBatchOptimization() {
     }
 
     const listItems = document.querySelectorAll('.file-list-item');
-
-    for (const [index, file] of fileQueue.entries()) {
+    
+    // Her dosya için bir işlem promise'i oluşturuyoruz
+    const optimizationPromises = fileQueue.map((file, index) => {
         const listItem = listItems[index];
-        const statusElement = listItem.querySelector('.file-item-status');
+        return processSingleFile(file, listItem);
+    });
 
-        try {
-            statusElement.innerHTML = `<div class="spinner-small"></div>`;
+    // Tüm işlemlerin tamamlanmasını bekliyoruz
+    await Promise.all(optimizationPromises);
 
-            const formData = new FormData();
-            formData.append('image', file);
-
-            const response = await fetch('/.netlify/functions/optimize', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: response.statusText }));
-                throw new Error(`Server error: ${errorData.error || response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('Backend response with S3 URL:', data);
-
-            const savings = ((file.size - data.optimizedSize) / file.size * 100).toFixed(0);
-            
-            const successHTML = `
-                <span class="savings">✓ ${savings}% Saved</span>
-                <a href="${data.downloadUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-download-item">Download</a>
-            `;
-            statusElement.innerHTML = successHTML;
-
-        } catch (error) {
-            console.error('Optimization failed for', file.name, ':', error);
-            statusElement.innerHTML = `<span style="color: red;">Failed!</span>`;
-        }
-    }
     updateMainButtonAfterCompletion();
 }
 
