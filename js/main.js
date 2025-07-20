@@ -4,6 +4,7 @@ const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 const initialUploadAreaHTML = uploadArea.innerHTML; // Arayüzün başlangıç halini kaydediyoruz
 
+// Ana olay dinleyicisi (Event Listener)
 uploadArea.addEventListener('click', (e) => {
     // "Choose File" butonunu dinle
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
@@ -18,15 +19,19 @@ uploadArea.addEventListener('click', (e) => {
     if (e.target.id === 'download-all-btn') {
         handleZipDownload();
     }
-    // YENİ EKLENEN KONTROL: "Start Over" butonunu dinle
+    // "Start Over" butonunu dinle
     if (e.target.id === 'clear-all-btn') {
         resetUI();
     }
 });
+
+// Dosya input'u değiştiğinde
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
+
+// Sürükle-Bırak (Drag & Drop) Olayları
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -37,18 +42,18 @@ uploadArea.addEventListener('drop', (e) => {
 });
 
 
+// ===============================================
+// Fonksiyonlar
+// ===============================================
+
+// Dosyaları alıp kuyruğa ekler ve arayüzü günceller
 function handleFiles(files) {
     fileQueue = [];
     for (const file of files) { fileQueue.push(file); }
     updateUIForFileList();
 }
 
-// main.js içindeki bu fonksiyonu mevcut olanla değiştirin
-
-// Lütfen main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin
-
-// main.js içindeki updateUIForFileList fonksiyonunu bununla değiştirin
-
+// Dosya listesi arayüzünü oluşturan fonksiyon
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -82,22 +87,10 @@ function updateUIForFileList() {
             </div>
         </div>
         <div class="format-options">
-            <div class="radio-group">
-                <input type="radio" id="jpeg" name="format" value="jpeg" checked>
-                <label for="jpeg">JPG</label>
-            </div>
-            <div class="radio-group">
-                <input type="radio" id="png" name="format" value="png">
-                <label for="png">PNG</label>
-            </div>
-            <div class="radio-group">
-                <input type="radio" id="webp" name="format" value="webp">
-                <label for="webp">WebP</label>
-            </div>
-            <div class="radio-group">
-                <input type="radio" id="avif" name="format" value="avif">
-                <label for="avif">AVIF</label>
-            </div>
+            <div class="radio-group"><input type="radio" id="jpeg" name="format" value="jpeg" checked><label for="jpeg">JPG</label></div>
+            <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
+            <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
+            <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
         </div>
     `;
 
@@ -110,6 +103,7 @@ function updateUIForFileList() {
     uploadArea.classList.add('file-selected');
 }
 
+// Dosya boyutunu formatlayan yardımcı fonksiyon
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -118,25 +112,18 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// main.js dosyasındaki mevcut processSingleFile fonksiyonunu silin
-// ve yerine aşağıdaki İKİ YENİ fonksiyonu ekleyin.
-
-// Dosyayı S3'e yükleyen ve ilerlemeyi raporlayan yeni yardımcı fonksiyon
+// Dosyayı S3'e yükleyen ve ilerlemeyi raporlayan yardımcı fonksiyon
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url);
+        xhr.open('PUT', url, true);
         xhr.setRequestHeader('Content-Type', file.type);
-
-        // Yükleme ilerlemesini dinleyen olay
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
                 const percentComplete = (event.loaded / event.total) * 100;
                 onProgress(percentComplete);
             }
         };
-
-        // Yükleme tamamlandığında
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 resolve(xhr.response);
@@ -144,21 +131,16 @@ function uploadWithProgress(url, file, onProgress) {
                 reject(new Error(`S3 upload failed: ${xhr.statusText}`));
             }
         };
-
-        // Ağ hatası olduğunda
         xhr.onerror = () => reject(new Error('S3 upload failed due to a network error.'));
-
         xhr.send(file);
     });
 }
 
-// Ana işlem fonksiyonumuzun XHR kullanan yeni hali
+// Tek bir dosyayı işleyen ana fonksiyon
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
-
     try {
-        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -168,24 +150,21 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı doğrudan S3'e yükle (ilerleme çubuğu ile)
-        // Arayüze progress bar'ı ekleyelim
-        statusElement.innerHTML = `
+        const progressBarContainer = `
             <div class="progress-bar-container">
                 <div class="progress-bar-fill" style="width: 0%;"></div>
                 <span class="progress-bar-text">Uploading 0%</span>
             </div>
         `;
+        statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        // uploadWithProgress fonksiyonunu çağırıyoruz
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
         
-        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -198,9 +177,14 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Sonuçları göster
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
-        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+        let successHTML;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+        if (savings >= 0) {
+            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+        } else {
+            const increase = Math.abs(savings);
+            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+        }
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
@@ -209,6 +193,7 @@ async function processSingleFile(file, listItem) {
     }
 }
 
+// Toplu optimizasyonu başlatan ana fonksiyon
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -217,17 +202,18 @@ async function startBatchOptimization() {
         optimizeBtn.disabled = true;
     }
     const listItems = document.querySelectorAll('.file-list-item');
-    for (const [index, file] of fileQueue.entries()) {
+    const optimizationPromises = fileQueue.map((file, index) => {
         const listItem = listItems[index];
-        await processSingleFile(file, listItem);
-    }
+        return processSingleFile(file, listItem);
+    });
+    await Promise.all(optimizationPromises);
     updateMainButtonAfterCompletion();
 }
 
+// İşlem bittikten sonra ana butonları güncelleyen fonksiyon
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
-        // Artık iki butonu birden oluşturuyoruz
         actionArea.innerHTML = `
             <div class="action-buttons-container">
                 <button class="btn" id="download-all-btn">Download All as .ZIP</button>
@@ -237,13 +223,12 @@ function updateMainButtonAfterCompletion() {
         const downloadAllBtn = document.getElementById('download-all-btn');
         downloadAllBtn.style.backgroundColor = '#28a745';
         downloadAllBtn.style.color = 'white';
-        // Butonların genişliklerini konteyner yönetecek
-        // downloadAllBtn.style.width = '100%'; 
         downloadAllBtn.style.padding = '1rem 2rem';
         downloadAllBtn.style.fontSize = '1.2rem';
     }
 }
 
+// ZIP indirme işlemini yöneten fonksiyon
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn) return;
@@ -259,15 +244,10 @@ async function handleZipDownload() {
                     if (!response.ok) throw new Error(`Failed to fetch ${link.href}`);
                     return response.blob();
                 })
-                .then(blob => ({
-                    name: link.getAttribute('download'),
-                    blob: blob
-                }))
+                .then(blob => ({ name: link.getAttribute('download'), blob: blob }))
         );
         const files = await Promise.all(fetchPromises);
-        files.forEach(file => {
-            zip.file(file.name, file.blob);
-        });
+        files.forEach(file => { zip.file(file.name, file.blob); });
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const tempUrl = URL.createObjectURL(zipBlob);
         const tempLink = document.createElement('a');
@@ -287,10 +267,10 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyasının en altına eklenecek yeni fonksiyon
+// Arayüzü başlangıç durumuna sıfırlayan fonksiyon
 function resetUI() {
     console.log('Resetting UI to initial state.');
-    fileQueue = []; // Dosya kuyruğunu sıfırla
-    uploadArea.innerHTML = initialUploadAreaHTML; // Arayüzü kaydettiğimiz başlangıç haline döndür
-    uploadArea.classList.remove('file-selected'); // Kenarlık stilini kaldır
+    fileQueue = [];
+    uploadArea.innerHTML = initialUploadAreaHTML;
+    uploadArea.classList.remove('file-selected');
 }
