@@ -95,22 +95,64 @@ body {
     color: #6c757d;
     margin-bottom: 2.5rem;
 }
+/* Sürdürülebilirlik Bölümü Stili (Video Arka Planlı Hali) */
+
 .sustainability-mission {
-    background-color: #f8f9fa;
+    position: relative; /* İçindeki elementleri konumlandırmak için temel alır */
     text-align: center;
-    padding: 3rem 0;
-    border-top: 1px solid #e9ecef;
-    border-bottom: 1px solid #e9ecef;
+    padding: 6rem 0; /* Metin için daha fazla dikey boşluk */
+    overflow: hidden; /* Dışarı taşmaları engeller */
+    color: var(--white-color); /* İçindeki tüm metinleri beyaz yapar */
 }
+
+/* Yarı saydam siyah katman (overlay) */
+.sustainability-mission::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* %60 opaklıkta siyah. Burayı ayarlayabilirsiniz. */
+    z-index: 2; /* Video'nun üstünde, metnin altında */
+}
+
+/* Video Konteyneri */
+.video-background {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: 1; /* En arkada */
+}
+
+/* Video Elementinin Kendisi */
+.video-background video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Videonun oranı bozmadan alanı kaplamasını sağlar */
+}
+
+/* Metin Konteyneri (Katmanların en üstünde olmalı) */
+.sustainability-mission .container {
+    position: relative;
+    z-index: 3;
+}
+
 .sustainability-mission h3 {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5); /* Okunabilirliği artırmak için gölge */
 }
+
 .sustainability-mission p {
-    font-size: 1.1rem;
-    color: #6c757d;
+    font-size: 1.2rem;
     max-width: 800px;
     margin: 0 auto;
+    opacity: 0.9; /* Hafif saydamlık */
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
 }
 .how-it-works {
     padding: 4rem 0;
