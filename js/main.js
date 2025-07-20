@@ -2,36 +2,32 @@ let fileQueue = [];
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
-const initialUploadAreaHTML = uploadArea.innerHTML; // Arayüzün başlangıç halini kaydediyoruz
+const initialUploadAreaHTML = uploadArea.innerHTML; // Save the initial state for the reset button
 
-// Ana olay dinleyicisi (Event Listener)
+// Main event listener for all dynamic buttons
 uploadArea.addEventListener('click', (e) => {
-    // "Choose File" butonunu dinle
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
         fileInput.click();
     }
-    // "Optimize All" butonunu dinle
     if (e.target.id === 'optimize-all-btn') {
         startBatchOptimization();
     }
-    // "Download All as .ZIP" butonunu dinle
     if (e.target.id === 'download-all-btn') {
         handleZipDownload();
     }
-    // "Start Over" butonunu dinle
     if (e.target.id === 'clear-all-btn') {
         resetUI();
     }
 });
 
-// Dosya input'u değiştiğinde
+// Event listener for file selection
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Sürükle-Bırak (Drag & Drop) Olayları
+// Event listeners for Drag & Drop
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -43,17 +39,17 @@ uploadArea.addEventListener('drop', (e) => {
 
 
 // ===============================================
-// Fonksiyonlar
+// FUNCTIONS
 // ===============================================
 
-// Dosyaları alıp kuyruğa ekler ve arayüzü günceller
+// Handles new files and updates the UI
 function handleFiles(files) {
     fileQueue = [];
     for (const file of files) { fileQueue.push(file); }
     updateUIForFileList();
 }
 
-// Dosya listesi arayüzünü oluşturan fonksiyon
+// Creates the file list and format options UI
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -72,17 +68,10 @@ function updateUIForFileList() {
             <div class="tooltip-container">
                 <span class="info-icon">?</span>
                 <div class="tooltip-content">
-                    <h4>JPEG (.jpg)</h4>
-                    <p><strong>Best for:</strong> Photographs. Provides the smallest file size with a tiny, often unnoticeable, loss in quality.</p>
-                    <hr>
-                    <h4>PNG</h4>
-                    <p><strong>Best for:</strong> Graphics & logos with transparency. Preserves perfect quality but results in larger files.</p>
-                    <hr>
-                    <h4>WebP</h4>
-                    <p><strong>Best for:</strong> Web use. A modern format that creates smaller files than both JPG and PNG at the same quality.</p>
-                    <hr>
-                    <h4>AVIF</h4>
-                    <p><strong>Best for:</strong> Modern web. The newest format with the highest compression, creating the smallest possible file sizes.</p>
+                    <h4>JPEG (.jpg)</h4><p><strong>Best for:</strong> Photographs. Provides the smallest file size...</p><hr>
+                    <h4>PNG</h4><p><strong>Best for:</strong> Graphics & logos with transparency...</p><hr>
+                    <h4>WebP</h4><p><strong>Best for:</strong> Web use. A modern format that creates smaller files...</p><hr>
+                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web. The newest format with the highest compression...</p>
                 </div>
             </div>
         </div>
@@ -103,7 +92,7 @@ function updateUIForFileList() {
     uploadArea.classList.add('file-selected');
 }
 
-// Dosya boyutunu formatlayan yardımcı fonksiyon
+// Helper function to format file size
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -112,7 +101,7 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Dosyayı S3'e yükleyen ve ilerlemeyi raporlayan yardımcı fonksiyon
+// Helper function to upload a file with progress tracking
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -125,18 +114,15 @@ function uploadWithProgress(url, file, onProgress) {
             }
         };
         xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(xhr.response);
-            } else {
-                reject(new Error(`S3 upload failed: ${xhr.statusText}`));
-            }
+            if (xhr.status >= 200 && xhr.status < 300) { resolve(xhr.response); }
+            else { reject(new Error(`S3 upload failed: ${xhr.statusText}`)); }
         };
         xhr.onerror = () => reject(new Error('S3 upload failed due to a network error.'));
         xhr.send(file);
     });
 }
 
-// Tek bir dosyayı işleyen ana fonksiyon
+// Processes a single file (gets link, uploads to S3, triggers optimization)
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
@@ -150,12 +136,7 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        const progressBarContainer = `
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: 0%;"></div>
-                <span class="progress-bar-text">Uploading 0%</span>
-            </div>
-        `;
+        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
@@ -193,7 +174,7 @@ async function processSingleFile(file, listItem) {
     }
 }
 
-// Toplu optimizasyonu başlatan ana fonksiyon
+// Starts the entire batch optimization process
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -210,7 +191,7 @@ async function startBatchOptimization() {
     updateMainButtonAfterCompletion();
 }
 
-// İşlem bittikten sonra ana butonları güncelleyen fonksiyon
+// Updates the main action buttons after the process is complete
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
@@ -221,14 +202,14 @@ function updateMainButtonAfterCompletion() {
             </div>
         `;
         const downloadAllBtn = document.getElementById('download-all-btn');
-        downloadAllBtn.style.backgroundColor = '#28a745';
+        downloadAllBtn.style.backgroundColor = '#28a-745';
         downloadAllBtn.style.color = 'white';
         downloadAllBtn.style.padding = '1rem 2rem';
         downloadAllBtn.style.fontSize = '1.2rem';
     }
 }
 
-// ZIP indirme işlemini yöneten fonksiyon
+// Handles the "Download All as .ZIP" functionality
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn) return;
@@ -267,7 +248,7 @@ async function handleZipDownload() {
     }
 }
 
-// Arayüzü başlangıç durumuna sıfırlayan fonksiyon
+// Resets the UI to its initial state
 function resetUI() {
     console.log('Resetting UI to initial state.');
     fileQueue = [];
