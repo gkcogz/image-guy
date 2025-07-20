@@ -699,3 +699,25 @@ img-comparison-slider img {
     width: 100%;
     height: 100%;
 }
+
+/* =================================
+   13. Result Row Alignment Fix
+   ================================= */
+
+/* This targets the container for the result text (e.g., ✓ 84% Saved) and the buttons */
+.file-item-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Aligns all items to the right */
+    gap: 15px; /* Adds space between the text, Compare button, and Download button */
+    flex-shrink: 0; /* Prevents this container from shrinking */
+    min-width: 280px; /* Ensures enough space for all elements */
+}
+
+/* This specifically targets the text part (✓ 84% Saved or ⚠️ +5% Increased) */
+.file-item-status .savings,
+.file-item-status .savings-increase {
+    display: inline-block;
+    width: 130px; /* Gives the text a fixed width to align everything nicely */
+    text-align: right; /* Aligns the text to the right within its fixed-width box */
+}
