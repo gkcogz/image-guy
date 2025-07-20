@@ -2,7 +2,7 @@ let fileQueue = [];
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
-const initialUploadAreaHTML = uploadArea.innerHTML; // Save the initial state for the reset button
+const initialUploadAreaHTML = uploadArea.innerHTML;
 
 // Main event listener for all dynamic buttons
 uploadArea.addEventListener('click', (e) => {
@@ -68,10 +68,10 @@ function updateUIForFileList() {
             <div class="tooltip-container">
                 <span class="info-icon">?</span>
                 <div class="tooltip-content">
-                    <h4>JPEG (.jpg)</h4><p><strong>Best for:</strong> Photographs. Provides the smallest file size...</p><hr>
+                    <h4>JPEG (.jpg)</h4><p><strong>Best for:</strong> Photographs...</p><hr>
                     <h4>PNG</h4><p><strong>Best for:</strong> Graphics & logos with transparency...</p><hr>
-                    <h4>WebP</h4><p><strong>Best for:</strong> Web use. A modern format that creates smaller files...</p><hr>
-                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web. The newest format with the highest compression...</p>
+                    <h4>WebP</h4><p><strong>Best for:</strong> Web use...</p><hr>
+                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web...</p>
                 </div>
             </div>
         </div>
@@ -122,13 +122,11 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
-// Lütfen main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
-
+// Processes a single file (gets link, uploads to S3, triggers optimization)
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     try {
-        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -138,7 +136,6 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı S3'e yükle (ilerleme çubuğu ile)
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
@@ -149,11 +146,10 @@ async function processSingleFile(file, listItem) {
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
         
-        // --- YENİ EKLENEN KOD ---
-        // Yükleme %100 olduğunda, kullanıcı bunu görebilsin diye çok kısa bir bekleme ekliyoruz.
-        await new Promise(resolve => setTimeout(resolve, 400)); // 0.4 saniye bekle
+        // THIS IS THE FIX: Add a small delay after upload is 100% complete
+        // This gives the browser time to render the full bar before switching to the spinner.
+        await new Promise(resolve => setTimeout(resolve, 400)); 
 
-        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -166,7 +162,6 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Sonuçları göster
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
@@ -200,25 +195,16 @@ async function startBatchOptimization() {
     updateMainButtonAfterCompletion();
 }
 
-// main.js dosyanızdaki mevcut updateMainButtonAfterCompletion fonksiyonunu bununla değiştirin
-
+// Updates the main action buttons after the process is complete
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
         actionArea.innerHTML = `
             <div class="action-buttons-container">
-                <button class="btn" id="download-all-btn">Download All as .ZIP</button>
+                <button class="btn btn-primary" id="download-all-btn">Download All as .ZIP</button>
                 <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
             </div>
         `;
-        const downloadAllBtn = document.getElementById('download-all-btn');
-        // --- DEĞİŞİKLİK BURADA ---
-        // Butona ana eylem rengimizi (yeşil yerine mavi) ve stilini veriyoruz
-        downloadAllBtn.classList.add('btn-primary');
-        downloadAllBtn.style.backgroundColor = '#28a745'; // İsterseniz yeşil kalabilir veya bu satırı silebilirsiniz
-        downloadAllBtn.style.color = 'white';
-        downloadAllBtn.style.padding = '1rem 2rem';
-        downloadAllBtn.style.fontSize = '1.2rem';
     }
 }
 
