@@ -1,9 +1,9 @@
-// Dosya Adı: netlify/functions/optimize.js (WebP ve AVIF için SSIM Entegreli)
+// Dosya Adı: netlify/functions/optimize.js (SSIM import düzeltmesi yapılmış)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
-const ssim = require('ssim.js');
+const { ssim } = require('ssim.js'); // <-- DÜZELTME BURADA
 
 const s3Client = new S3Client({ 
     region: process.env.IMAGEGUY_AWS_S3_REGION,
@@ -37,7 +37,6 @@ exports.handler = async (event, context) => {
         let optimizedImageBuffer;
         let contentType, newExtension;
         
-        // PNG kayıpsız olduğu için SSIM döngüsüne girmez.
         if (outputFormat === 'png') {
             console.log('Applying lossless PNG compression.');
             optimizedImageBuffer = await sharp(fileDataBuffer)
@@ -47,7 +46,6 @@ exports.handler = async (event, context) => {
             contentType = 'image/png';
             newExtension = 'png';
         } else {
-            // JPEG, WebP ve AVIF için AKILLI SIKIŞTIRMA (SSIM) MANTIĞI
             const ssimThreshold = 0.99;
             let bestBuffer = null;
             
@@ -62,7 +60,6 @@ exports.handler = async (event, context) => {
                 let sharpInstance = sharp(fileDataBuffer)
                     .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
 
-                // Formata göre sıkıştırma uygula
                 switch (outputFormat) {
                     case 'webp':
                         sharpInstance = sharpInstance.webp({ quality: quality });
@@ -70,7 +67,7 @@ exports.handler = async (event, context) => {
                         newExtension = 'webp';
                         break;
                     case 'avif':
-                        sharpInstance = sharpInstance.avif({ quality: quality - 25 }); // AVIF kalitesi daha farklıdır, daha düşük değerler gerekir.
+                        sharpInstance = sharpInstance.avif({ quality: quality - 25 });
                         contentType = 'image/avif';
                         newExtension = 'avif';
                         break;
@@ -86,6 +83,7 @@ exports.handler = async (event, context) => {
                 const compressedRaw = await sharp(currentBuffer).raw().toBuffer();
                 const compressedSsimData = { data: compressedRaw, width: metadata.width, height: metadata.height };
 
+                // ssim() fonksiyonunu burada çağırıyoruz
                 const { mssim } = ssim(originalSsimData, compressedSsimData);
                 console.log(`Quality: ${quality} -> SSIM Score: ${mssim}`);
 
