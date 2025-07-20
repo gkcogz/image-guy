@@ -118,13 +118,47 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// main.js içindeki processSingleFile fonksiyonunu bununla değiştirin
+// main.js dosyasındaki mevcut processSingleFile fonksiyonunu silin
+// ve yerine aşağıdaki İKİ YENİ fonksiyonu ekleyin.
 
+// Dosyayı S3'e yükleyen ve ilerlemeyi raporlayan yeni yardımcı fonksiyon
+function uploadWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        // Yükleme ilerlemesini dinleyen olay
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                onProgress(percentComplete);
+            }
+        };
+
+        // Yükleme tamamlandığında
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject(new Error(`S3 upload failed: ${xhr.statusText}`));
+            }
+        };
+
+        // Ağ hatası olduğunda
+        xhr.onerror = () => reject(new Error('S3 upload failed due to a network error.'));
+
+        xhr.send(file);
+    });
+}
+
+// Ana işlem fonksiyonumuzun XHR kullanan yeni hali
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
 
     try {
+        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -134,14 +168,24 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        statusElement.textContent = 'Uploading...';
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type },
-        });
-        if (!uploadResponse.ok) throw new Error('S3 upload failed.');
+        // Adım 2: Dosyayı doğrudan S3'e yükle (ilerleme çubuğu ile)
+        // Arayüze progress bar'ı ekleyelim
+        statusElement.innerHTML = `
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: 0%;"></div>
+                <span class="progress-bar-text">Uploading 0%</span>
+            </div>
+        `;
+        const progressBarFill = listItem.querySelector('.progress-bar-fill');
+        const progressBarText = listItem.querySelector('.progress-bar-text');
         
+        // uploadWithProgress fonksiyonunu çağırıyoruz
+        await uploadWithProgress(uploadUrl, file, (percent) => {
+            progressBarFill.style.width = `${percent.toFixed(0)}%`;
+            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+        });
+        
+        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -154,26 +198,9 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
-
-        let successHTML;
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
-
-        if (savings >= 0) {
-            // Dosya boyutu küçüldü veya aynı kaldı
-            successHTML = `
-                <span class="savings">✓ ${savings.toFixed(0)}% Saved</span>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
-            `;
-        } else {
-            // Dosya boyutu büyüdü!
-            const increase = Math.abs(savings);
-            successHTML = `
-                <span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
-            `;
-        }
-        
+        // Sonuçları göster
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100).toFixed(0);
+        const successHTML = `<span class="savings">✓ ${savings}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
         statusElement.innerHTML = successHTML;
 
     } catch (error) {

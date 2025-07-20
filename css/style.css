@@ -467,3 +467,32 @@ body {
     background-color: #f8f9fa; /* Üzerine gelince hafif arka plan */
     color: #343a40;
 }
+
+/* Yükleme Çubuğu (Progress Bar) Stilleri */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    position: relative;
+    height: 24px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Genişliği JavaScript ile ayarlanacak */
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out; /* Yumuşak geçiş efekti */
+}
+
+.progress-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #343a40;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+}
