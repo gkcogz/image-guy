@@ -135,6 +135,46 @@ body {
     object-fit: cover; /* Videonun oranı bozmadan alanı kaplamasını sağlar */
 }
 
+/* Sürdürülebilirlik Bölümü Stili (Video Arka Planlı Hali) */
+
+.sustainability-mission {
+    position: relative;
+    text-align: center;
+    padding: 4rem 0; /* Küçültüldü: 6rem'den 4rem'e düşürüldü */
+    overflow: hidden;
+    color: var(--white-color);
+}
+
+/* Yarı saydam siyah katman (overlay) */
+.sustainability-mission::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 2;
+}
+
+/* Video Konteyneri */
+.video-background {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+/* Video Elementinin Kendisi */
+.video-background video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* Metin Konteyneri (Katmanların en üstünde olmalı) */
 .sustainability-mission .container {
     position: relative;
@@ -142,16 +182,16 @@ body {
 }
 
 .sustainability-mission h3 {
-    font-size: 2.2rem;
+    font-size: 2rem; /* Küçültüldü: 2.2rem'den 2rem'e düşürüldü */
     margin-bottom: 1rem;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5); /* Okunabilirliği artırmak için gölge */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .sustainability-mission p {
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Küçültüldü: 1.2rem'den 1.1rem'e düşürüldü */
     max-width: 800px;
     margin: 0 auto;
-    opacity: 0.9; /* Hafif saydamlık */
+    opacity: 0.9;
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
 }
 .how-it-works {
