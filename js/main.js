@@ -125,13 +125,17 @@ function uploadWithProgress(url, file, onProgress) {
 // Lütfen mevcut processSingleFile ve uploadWithProgress fonksiyonlarını silip,
 // yerine sadece bu fonksiyonu yapıştırın.
 
+// main.js içindeki processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
 
+    // Orijinal dosyanın geçici URL'ini oluşturalım (karşılaştırma için)
+    const originalObjectUrl = URL.createObjectURL(file);
+
     try {
-        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
+        // ... (fetch to get-upload-url) ...
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -140,16 +144,18 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı doğrudan S3'e yükle (basit fetch ile)
-        statusElement.textContent = 'Uploading...'; // Yükleme çubuğu yerine basit metin
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type },
+        // ... (upload to S3 with progress) ...
+        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
+        statusElement.innerHTML = progressBarContainer;
+        const progressBarFill = listItem.querySelector('.progress-bar-fill');
+        const progressBarText = listItem.querySelector('.progress-bar-text');
+        await uploadWithProgress(uploadUrl, file, (percent) => {
+            progressBarFill.style.width = `${percent.toFixed(0)}%`;
+            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        if (!uploadResponse.ok) throw new Error('S3 upload failed.');
+        await new Promise(resolve => setTimeout(resolve, 400));
         
-        // Adım 3: Optimizasyon işlemini tetikle
+        // ... (fetch to optimize) ...
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -162,38 +168,28 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Sonuçları göster
+        // Sonuçları göster (Compare butonu ile birlikte)
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+
+        const resultActions = `
+            <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
+            <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+        `;
+
         if (savings >= 0) {
-            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
         } else {
             const increase = Math.abs(savings);
-            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span><a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>`;
+            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
 
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
+        URL.revokeObjectURL(originalObjectUrl); // Hata durumunda geçici URL'i temizle
     }
-}
-
-// Starts the entire batch optimization process
-async function startBatchOptimization() {
-    console.log(`Starting optimization for ${fileQueue.length} files...`);
-    const optimizeBtn = document.getElementById('optimize-all-btn');
-    if (optimizeBtn) {
-        optimizeBtn.textContent = 'Processing...';
-        optimizeBtn.disabled = true;
-    }
-    const listItems = document.querySelectorAll('.file-list-item');
-    const optimizationPromises = fileQueue.map((file, index) => {
-        const listItem = listItems[index];
-        return processSingleFile(file, listItem);
-    });
-    await Promise.all(optimizationPromises);
-    updateMainButtonAfterCompletion();
 }
 
 // Updates the main action buttons after the process is complete
@@ -254,4 +250,36 @@ function resetUI() {
     fileQueue = [];
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
+}
+
+// Bu kod bloğunu main.js dosyasının en altına ekleyin
+
+// "Compare" butonlarına tıklamayı dinlemek için olay delegasyonu
+document.body.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-compare')) {
+        const originalUrl = e.target.dataset.originalUrl;
+        const optimizedUrl = e.target.dataset.optimizedUrl;
+        showComparisonModal(originalUrl, optimizedUrl);
+    }
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+    }
+});
+
+function showComparisonModal(originalUrl, optimizedUrl) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <img-comparison-slider>
+                    <img slot="first" src="${originalUrl}" />
+                    <img slot="second" src="${optimizedUrl}" />
+                </img-comparison-slider>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }

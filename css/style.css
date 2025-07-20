@@ -468,31 +468,58 @@ body {
     color: #343a40;
 }
 
-/* Yükleme Çubuğu (Progress Bar) Stilleri */
-.progress-bar-container {
-    width: 100%;
-    background-color: #e9ecef;
-    border-radius: 5px;
-    position: relative;
-    height: 24px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    width: 0%; /* Genişliği JavaScript ile ayarlanacak */
-    background-color: var(--primary-color);
-    border-radius: 5px;
-    transition: width 0.3s ease-in-out; /* Yumuşak geçiş efekti */
-}
-
-.progress-bar-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #343a40;
+/* Karşılaştırma (Compare) Butonu Stili */
+.btn-compare {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    padding: 0.3rem 0.8rem;
     font-size: 0.8rem;
-    font-weight: 500;
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+    border-radius: 3px;
+    margin-left: 10px;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+}
+
+.btn-compare:hover {
+    background-color: #e9ecef;
+}
+
+/* Modal Pencere Stilleri */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 80vw;
+    max-height: 80vh;
+    position: relative;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background-color: white;
+    border: none;
+    font-size: 2rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
 }
