@@ -1,9 +1,8 @@
-// Dosya Adı: netlify/functions/optimize.js (SSIM import düzeltmesi yapılmış)
+// Dosya Adı: netlify/functions/optimize.js (Hızlı ve Yüksek Kaliteli Versiyon)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
-const { ssim } = require('ssim.js'); // <-- DÜZELTME BURADA
 
 const s3Client = new S3Client({ 
     region: process.env.IMAGEGUY_AWS_S3_REGION,
@@ -32,71 +31,40 @@ exports.handler = async (event, context) => {
         const response = await s3Client.send(getCommand);
         const fileDataBuffer = await streamToBuffer(response.Body);
         
-        console.log(`Smart optimizing file: ${originalFilename} to format: ${outputFormat}`);
-        
-        let optimizedImageBuffer;
+        console.log(`Optimizing file: ${originalFilename} to format: ${outputFormat}`);
+
+        let sharpInstance = sharp(fileDataBuffer)
+            .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
+
         let contentType, newExtension;
         
-        if (outputFormat === 'png') {
-            console.log('Applying lossless PNG compression.');
-            optimizedImageBuffer = await sharp(fileDataBuffer)
-                .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-                .png({ quality: 90 })
-                .toBuffer();
-            contentType = 'image/png';
-            newExtension = 'png';
-        } else {
-            const ssimThreshold = 0.99;
-            let bestBuffer = null;
-            
-            const originalSharp = sharp(fileDataBuffer);
-            const metadata = await originalSharp.metadata();
-            const originalRaw = await originalSharp.raw().toBuffer();
-            const originalSsimData = { data: originalRaw, width: metadata.width, height: metadata.height };
-            
-            for (let quality = 95; quality >= 50; quality -= 5) {
-                console.log(`Trying quality: ${quality} for format: ${outputFormat}...`);
-                
-                let sharpInstance = sharp(fileDataBuffer)
-                    .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
-
-                switch (outputFormat) {
-                    case 'webp':
-                        sharpInstance = sharpInstance.webp({ quality: quality });
-                        contentType = 'image/webp';
-                        newExtension = 'webp';
-                        break;
-                    case 'avif':
-                        sharpInstance = sharpInstance.avif({ quality: quality - 25 });
-                        contentType = 'image/avif';
-                        newExtension = 'avif';
-                        break;
-                    case 'jpeg':
-                    default:
-                        sharpInstance = sharpInstance.jpeg({ quality: quality, progressive: true, mozjpeg: true });
-                        contentType = 'image/jpeg';
-                        newExtension = 'jpg';
-                        break;
-                }
-
-                const currentBuffer = await sharpInstance.toBuffer();
-                const compressedRaw = await sharp(currentBuffer).raw().toBuffer();
-                const compressedSsimData = { data: compressedRaw, width: metadata.width, height: metadata.height };
-
-                // ssim() fonksiyonunu burada çağırıyoruz
-                const { mssim } = ssim(originalSsimData, compressedSsimData);
-                console.log(`Quality: ${quality} -> SSIM Score: ${mssim}`);
-
-                if (mssim >= ssimThreshold) {
-                    bestBuffer = currentBuffer;
-                } else {
-                    console.log(`SSIM score dropped below threshold. Using last best quality.`);
-                    break;
-                }
-            }
-            optimizedImageBuffer = bestBuffer || fileDataBuffer;
+        // SSIM döngüsü yerine, her format için tek seferde, yüksek kaliteli ayarlar kullanıyoruz.
+        switch (outputFormat) {
+            case 'png':
+                sharpInstance = sharpInstance.png({ quality: 90, compressionLevel: 9 }); // Yüksek sıkıştırma eforu
+                contentType = 'image/png';
+                newExtension = 'png';
+                break;
+            case 'webp':
+                sharpInstance = sharpInstance.webp({ quality: 80 }); // Yüksek kalite WebP
+                contentType = 'image/webp';
+                newExtension = 'webp';
+                break;
+            case 'avif':
+                sharpInstance = sharpInstance.avif({ quality: 60 }); // Yüksek kalite AVIF
+                contentType = 'image/avif';
+                newExtension = 'avif';
+                break;
+            case 'jpeg':
+            default:
+                sharpInstance = sharpInstance.jpeg({ quality: 85, progressive: true, mozjpeg: true }); // Yüksek kalite JPEG
+                contentType = 'image/jpeg';
+                newExtension = 'jpg';
+                break;
         }
-
+        
+        const optimizedImageBuffer = await sharpInstance.toBuffer();
+        
         const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
         const newFilename = `optimized-${Date.now()}-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 
@@ -115,7 +83,7 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: "Smart optimization successful!",
+                message: "Optimization successful!",
                 downloadUrl: downloadUrl,
                 originalFilename: originalFilename,
                 originalSize: fileDataBuffer.length,
