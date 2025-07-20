@@ -1,4 +1,4 @@
-// Dosya Adı: netlify/functions/optimize.js (Çoklu Format Destekli)
+// Dosya Adı: netlify/functions/optimize.js (AVIF Destekli)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
@@ -21,7 +21,6 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        // 1. Frontend'den S3 anahtarını VE istenen formatı al
         const { key, outputFormat } = JSON.parse(event.body);
         const originalFilename = key.replace(/original-\d+-/, '');
         
@@ -34,11 +33,9 @@ exports.handler = async (event, context) => {
         
         console.log(`Optimizing file: ${originalFilename} to format: ${outputFormat}`);
 
-        // 2. 'sharp' ile görseli işle
         let sharpInstance = sharp(fileDataBuffer)
             .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
 
-        // 3. İstenen formata göre optimizasyon yap
         let contentType, newExtension;
         switch (outputFormat) {
             case 'png':
@@ -50,6 +47,12 @@ exports.handler = async (event, context) => {
                 sharpInstance = sharpInstance.webp({ quality: 75 });
                 contentType = 'image/webp';
                 newExtension = 'webp';
+                break;
+            // --- YENİ EKLENEN AVIF DURUMU ---
+            case 'avif':
+                sharpInstance = sharpInstance.avif({ quality: 50 }); // AVIF kalitesi farklı çalışır, 50 iyi bir değerdir.
+                contentType = 'image/avif';
+                newExtension = 'avif';
                 break;
             case 'jpeg':
             default:
@@ -64,12 +67,11 @@ exports.handler = async (event, context) => {
         const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
         const newFilename = `optimized-${Date.now()}-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 
-        // 4. Optimize edilmiş yeni dosyayı doğru formatta S3'e geri yükle
         const putCommand = new PutObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: newFilename,
             Body: optimizedImageBuffer,
-            ContentType: contentType, // Dinamik ContentType
+            ContentType: contentType,
             ContentDisposition: `attachment; filename="${newFilename}"`
         });
         await s3Client.send(putCommand);

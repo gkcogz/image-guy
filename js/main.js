@@ -47,6 +47,8 @@ function handleFiles(files) {
 
 // Lütfen main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin
 
+// main.js içindeki updateUIForFileList fonksiyonunu bununla değiştirin
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -55,12 +57,10 @@ function updateUIForFileList() {
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
-        // 1. DÜZELTME: "Waiting..." yerine "Ready" yazısı burada.
         listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Ready</div>`;
         fileListElement.appendChild(listItem);
     });
     
-    // 2. DÜZELTME: Soru işaretli tooltip yapısı burada.
     const formatOptionsHTML = `
         <div class="format-options-header">
             <span class="format-label">Output Format:</span>
@@ -75,6 +75,9 @@ function updateUIForFileList() {
                     <hr>
                     <h4>WebP</h4>
                     <p><strong>Best for:</strong> Web use. A modern format that creates smaller files than both JPG and PNG at the same quality.</p>
+                    <hr>
+                    <h4>AVIF</h4>
+                    <p><strong>Best for:</strong> Modern web. The newest format with the highest compression, creating the smallest possible file sizes.</p>
                 </div>
             </div>
         </div>
@@ -90,6 +93,10 @@ function updateUIForFileList() {
             <div class="radio-group">
                 <input type="radio" id="webp" name="format" value="webp">
                 <label for="webp">WebP</label>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="avif" name="format" value="avif">
+                <label for="avif">AVIF</label>
             </div>
         </div>
     `;
