@@ -198,7 +198,6 @@ body {
     justify-content: flex-end;
     gap: 15px;
     flex-shrink: 0;
-    min-width: 250px;
     white-space: nowrap;
 }
 .savings {
@@ -239,7 +238,6 @@ body {
 .btn-primary {
     background-color: var(--primary-color);
     color: var(--white-color);
-    margin-top: 1rem;
 }
 .btn-secondary {
     background-color: transparent;
@@ -278,6 +276,9 @@ body {
     justify-content: center;
     gap: 1rem;
     width: 100%;
+}
+#optimize-all-btn {
+    margin-top: 1rem;
 }
 #download-all-btn {
     background-color: var(--success-color);
