@@ -1,13 +1,16 @@
-/* Google Fonts Import - Poppins */
+/* =================================
+   1. Temel Stiller ve Değişkenler
+   ================================= */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
 
-/* Değişkenler ve Temel Stiller */
 :root {
-    --primary-color: #007bff; /* Güven veren Mavi */
-    --secondary-color: #f8f9fa; /* Çok açık Gri arka plan */
-    --dark-gray: #343a40; /* Koyu Gri metin */
-    --light-gray: #e9ecef; /* Açık Gri kenarlıklar */
+    --primary-color: #007bff;
+    --secondary-color: #f8f9fa;
+    --dark-gray: #343a40;
+    --light-gray: #e9ecef;
     --white-color: #ffffff;
+    --success-color: #28a745;
+    --warning-color: #fd7e14;
 }
 
 * {
@@ -28,58 +31,107 @@ body {
     padding: 0 20px;
 }
 
-/* Header */
+/* =================================
+   2. Ana Bölümler (Header, Footer, vb.)
+   ================================= */
 .header {
     background: var(--white-color);
     padding: 1rem 0;
     border-bottom: 1px solid var(--light-gray);
 }
-
 .header .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-
 .logo {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary-color);
 }
-
 .main-nav ul {
     list-style: none;
     display: flex;
 }
-
 .main-nav ul li {
     margin-left: 20px;
 }
-
 .main-nav a {
     text-decoration: none;
     color: var(--dark-gray);
     font-weight: 500;
 }
+.footer {
+    background: var(--dark-gray);
+    color: var(--white-color);
+    text-align: center;
+    padding: 2rem 0;
+}
+.footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.footer a {
+    color: var(--white-color);
+    text-decoration: none;
+    margin-left: 15px;
+}
 
-/* Ana İçerik - Hero Bölümü */
+/* =================================
+   3. Ana Sayfa Bölümleri
+   ================================= */
 .hero {
     background: var(--secondary-color);
     text-align: center;
     padding: 4rem 0;
 }
-
 .hero h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
 }
-
 .hero .subtitle {
     font-size: 1.2rem;
     color: #6c757d;
     margin-bottom: 2.5rem;
 }
+.sustainability-mission {
+    background-color: #f8f9fa;
+    text-align: center;
+    padding: 3rem 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+}
+.sustainability-mission h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+.sustainability-mission p {
+    font-size: 1.1rem;
+    color: #6c757d;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.how-it-works {
+    padding: 4rem 0;
+    text-align: center;
+}
+.how-it-works h2 {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+.steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+.step {
+    flex: 1;
+}
 
+/* =================================
+   4. Yükleme Alanı ve Liste Stilleri
+   ================================= */
 .upload-area {
     background: var(--white-color);
     border: 3px dashed var(--light-gray);
@@ -87,19 +139,92 @@ body {
     padding: 3rem;
     max-width: 700px;
     margin: 0 auto;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, border-color 0.3s;
 }
-
-.upload-area:hover {
-    background-color: #fdfdfd;
+.upload-area:hover, .upload-area.drag-over {
     border-color: var(--primary-color);
 }
-
-.upload-area h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
+.upload-area.file-selected {
+    border-style: solid;
+    padding: 1.5rem;
+}
+.file-list {
+    list-style: none;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+.file-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--secondary-color);
+    padding: 0.8rem 1.2rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    min-width: 0;
+}
+.file-icon {
+    font-size: 2.5rem;
+    color: #6c757d;
+}
+.file-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.file-name {
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.file-size {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: #6c757d;
+}
+.file-item-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 15px;
+    flex-shrink: 0;
+    min-width: 250px;
+    white-space: nowrap;
+}
+.savings {
+    color: var(--success-color);
+    font-weight: 700;
+}
+.savings-increase {
+    color: var(--warning-color);
+    font-weight: 700;
+}
+.spinner-small {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    display: inline-block;
+    animation: spin 1s ease infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
+/* =================================
+   5. Butonlar ve Kontroller
+   ================================= */
 .btn {
     display: inline-block;
     padding: 0.8rem 2rem;
@@ -109,247 +234,67 @@ body {
     font-size: 1rem;
     font-weight: 500;
     text-decoration: none;
+    transition: background-color 0.2s;
 }
-
 .btn-primary {
     background-color: var(--primary-color);
     color: var(--white-color);
     margin-top: 1rem;
 }
-
-/* Nasıl Çalışır? Bölümü */
-.how-it-works {
-    padding: 4rem 0;
-    text-align: center;
-}
-
-.how-it-works h2 {
-    font-size: 2rem;
-    margin-bottom: 3rem;
-}
-
-.steps {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
-}
-
-.step {
-    flex: 1;
-}
-
-/* Reklam ve Footer */
-.ad-placeholder-horizontal {
-    background: var(--light-gray);
-    text-align: center;
-    padding: 2rem 0;
-    margin: 2rem 0;
+.btn-secondary {
+    background-color: transparent;
     color: #6c757d;
+    border: 1px solid #ced4da;
 }
-
-.footer {
-    background: var(--dark-gray);
-    color: var(--white-color);
-    text-align: center;
-    padding: 2rem 0;
+.btn-secondary:hover {
+    background-color: #f8f9fa;
+    color: #343a40;
 }
-
-.footer .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.footer a {
-    color: var(--white-color);
-    text-decoration: none;
-    margin-left: 15px;
-}
-
-/* Dosya Seçildikten Sonraki Arayüz İçin Ek Stiller */
-
-.upload-area.file-selected {
-    border-style: solid;
-    padding: 1.5rem;
-}
-
-.file-info {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: left;
-    margin-bottom: 2rem;
-}
-
-.file-icon {
-    font-size: 3rem;
-    margin-right: 15px;
-}
-
-.file-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.file-name {
-    font-weight: 500;
-}
-
-.file-size {
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-
-/* Optimize butonu için ek stil (btn ve btn-primary zaten mevcut) */
-#optimize-btn {
-    width: 50%; /* Butonun genişliğini ayarlayabiliriz */
-}
-
-/* Sürükle-Bırak için Görsel Geribildirim Stili */
-.upload-area.drag-over {
-    border-color: var(--primary-color);
-    border-style: solid;
-    background-color: #e8f0fe; /* Çok açık bir mavi tonu */
-}
-
-/* =================================
-   6. Optimizasyon Durum Stilleri
-   ================================= */
-
-/* Yükleme Animasyonu (Spinner) */
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border-left-color: var(--primary-color);
-    margin: 2rem auto; /* Ortalamak için */
-
-    animation: spin 1s ease infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Başarı Mesajı */
-.success-message {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.success-message h3 {
-    font-size: 1.5rem;
-    color: #28a745; /* Yeşil başarı rengi */
-    margin-bottom: 0.5rem;
-}
-
-.success-message p {
-    font-size: 1rem;
-    color: #6c757d;
-}
-
-/* İndirme Butonu */
-#download-btn {
-    width: 60%;
-    background-color: #28a745;
-    padding: 1rem 2rem; /* Daha büyük ve dikkat çekici */
-    font-size: 1.2rem;
-}
-
-/* =================================
-   7. Çoklu Dosya Listesi Stilleri
-   ================================= */
-
-.file-list {
-    list-style: none;
-    width: 100%;
-    margin-bottom: 2rem;
-}
-
-.file-list-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: var(--secondary-color);
-    padding: 0.8rem 1.2rem;
-    border-radius: 5px;
-    margin-bottom: 0.5rem;
-}
-
-.file-list-item .file-info {
-    margin-bottom: 0; /* Önceki stili ezelim */
-}
-
-.file-item-status {
-    font-weight: 500;
-    color: #6c757d;
-}
-
-.action-area {
-    text-align: center;
-    width: 100%;
-}
-
-/* =================================
-   8. Bireysel Dosya Durum Stilleri
-   ================================= */
-
-/* Her bir satırdaki küçük spinner */
-.file-item-status .spinner-small {
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border-left-color: var(--primary-color);
-    display: inline-block; /* Metinle aynı hizada durması için */
-    animation: spin 1s ease infinite;
-}
-
-/* Başarı ve tasarruf metni */
-.file-item-status .savings {
-    color: #28a745; /* Yeşil başarı rengi */
-    font-weight: 700;
-}
-
-/* Her bir satırdaki küçük indirme butonu */
 .btn-download-item {
-    background-color: #6c757d; /* Nötr gri */
+    background-color: #6c757d;
     color: var(--white-color);
     padding: 0.3rem 0.8rem;
     font-size: 0.8rem;
     border-radius: 3px;
-    margin-left: 10px;
 }
-
-/* Sürdürülebilirlik Bölümü Stili */
-.sustainability-mission {
-    background-color: #f8f9fa; /* Arka planı diğerlerinden ayırmak için */
+.btn-compare {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+}
+.btn-compare:hover {
+    background-color: #e9ecef;
+}
+.action-area {
     text-align: center;
-    padding: 3rem 0;
-    border-top: 1px solid #e9ecef;
-    border-bottom: 1px solid #e9ecef;
+    width: 100%;
+}
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+}
+#download-all-btn {
+    background-color: var(--success-color);
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
 }
 
-.sustainability-mission h3 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: #343a40;
+/* =================================
+   6. Format Seçenekleri ve Tooltip
+   ================================= */
+.format-options-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
-
-.sustainability-mission p {
-    font-size: 1.1rem;
-    color: #6c757d;
-    max-width: 800px; /* Metnin çok geniş olmasını engellemek için */
-    margin: 0 auto;
-}
-
-/* Format Seçenekleri Stilleri */
 .format-options {
     display: flex;
     justify-content: center;
@@ -357,40 +302,18 @@ body {
     gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
-
 .format-label {
     font-weight: 500;
 }
-
 .radio-group {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
-/* Dosya Boyutu Artışı Uyarısı Stili */
-.savings-increase {
-    color: #fd7e14; /* Uyarı için turuncu renk */
-    font-weight: 700;
-}
-
-/* Tooltip (Bilgi Kutucuğu) Stilleri */
-.format-options-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem; /* Radyo butonları ile arasına boşluk koyar */
-}
-
-.format-label {
-    font-weight: 500;
-}
-
 .tooltip-container {
     position: relative;
     display: inline-block;
 }
-
 .info-icon {
     display: flex;
     justify-content: center;
@@ -403,34 +326,29 @@ body {
     font-weight: 700;
     font-size: 0.8rem;
     cursor: pointer;
-    user-select: none; /* Yazının seçilmesini engeller */
+    user-select: none;
 }
-
 .tooltip-content {
     visibility: hidden;
     opacity: 0;
     width: 280px;
-    background-color: #343a40; /* Koyu arka plan */
-    color: #fff;
+    background-color: var(--dark-gray);
+    color: var(--white-color);
     text-align: left;
     border-radius: 6px;
     padding: 1rem;
     position: absolute;
     z-index: 1;
-    bottom: 125%; /* İkonun üstünde belirir */
+    bottom: 125%;
     left: 50%;
-    margin-left: -140px; /* Genişliğin yarısı kadar sola kaydır */
+    margin-left: -140px;
     transition: opacity 0.3s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
-/* Farenin üzerine gelince kutucuğu göster */
 .tooltip-container:hover .tooltip-content {
     visibility: visible;
     opacity: 1;
 }
-
-/* Tooltip içeriğinin stilleri */
 .tooltip-content h4 {
     font-size: 1rem;
     color: var(--primary-color);
@@ -448,43 +366,9 @@ body {
     margin: 0.8rem 0;
 }
 
-/* Çoklu Aksiyon Butonları için Konteyner */
-.action-buttons-container {
-    display: flex;
-    justify-content: center;
-    gap: 1rem; /* Butonlar arasına boşluk koyar */
-    width: 100%;
-}
-
-/* İkincil Buton Stili (Start Over için) */
-.btn-secondary {
-    background-color: transparent;
-    color: #6c757d; /* Nötr gri metin */
-    border: 1px solid #ced4da; /* Nötr gri kenarlık */
-}
-
-.btn-secondary:hover {
-    background-color: #f8f9fa; /* Üzerine gelince hafif arka plan */
-    color: #343a40;
-}
-
-/* Karşılaştırma (Compare) Butonu Stili */
-.btn-compare {
-    background-color: #f8f9fa;
-    color: var(--dark-gray);
-    padding: 0.3rem 0.8rem;
-    font-size: 0.8rem;
-    border-radius: 3px;
-    margin-left: 10px;
-    border: 1px solid #ced4da;
-    cursor: pointer;
-}
-
-.btn-compare:hover {
-    background-color: #e9ecef;
-}
-
-/* Modal Pencere Stilleri */
+/* =================================
+   7. Modal Pencere (Karşılaştırma)
+   ================================= */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -497,16 +381,16 @@ body {
     align-items: center;
     z-index: 1000;
 }
-
 .modal-content {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
-    max-width: 80vw;
-    max-height: 80vh;
+    max-width: 90vw;
+    max-height: 90vh;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
-
 .modal-close-btn {
     position: absolute;
     top: -15px;
@@ -522,142 +406,38 @@ body {
     justify-content: center;
     align-items: center;
     line-height: 1;
+    padding: 0;
 }
-
-/* =================================
-   10. Arayüz Düzeltmeleri (UI Fixes)
-   ================================= */
-
-/* --- Problem 1 Çözümü: Buton Kayması --- */
-
-/* Dosya listesi satırının içindeki elementlerin esnekliğini ayarlıyoruz */
-.file-list-item .file-info {
-    flex-grow: 1;
-    min-width: 0; /* Uzun dosya adlarının küçülebilmesi için önemli */
-}
-
-/* Uzun dosya adlarının ... ile kısaltılmasını sağlıyoruz */
-.file-list-item .file-details .file-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px; /* Dosya adının maksimum genişliği */
-}
-
-/* Durum bölümünün içeriğini tek satırda tutuyoruz */
-.file-item-status {
-    display: flex;
-    align-items: center;
-    white-space: nowrap; /* İçeriğin alt satıra kaymasını engeller */
-    flex-shrink: 0; /* Bu bölümün küçülmesini engeller */
-}
-
-
-/* --- Problem 2 Çözümü: Dikey Resim Sığdırma --- */
-
-/* Modal penceresinin içeriğinin esnek olmasını sağlıyoruz */
-.modal-content {
-    display: flex;
-}
-
-/* Karşılaştırma aracının konteynere uymasını sağlıyoruz */
 .modal-content img-comparison-slider {
     width: 100%;
     height: 100%;
-    max-height: 80vh; /* Maksimum yüksekliği ekranın %80'i yap */
+    max-height: 80vh;
 }
-
-/* Karşılaştırma aracının içindeki resimlerin oranlarını koruyarak sığmasını sağlıyoruz */
 img-comparison-slider img {
-    object-fit: contain; /* Resmi bozmadan konteynere sığdırır */
+    object-fit: contain;
     width: 100%;
     height: 100%;
 }
 
 /* =================================
-   11. Mobil Uyumluluk (Responsive Design)
+   8. Statik Sayfalar (About, Privacy)
    ================================= */
-@media (max-width: 768px) {
-
-    /* --- Genel Boyutlandırma ve Boşluk Ayarları --- */
-    .hero h1 {
-        font-size: 2.2rem; /* Ana başlığı mobil için biraz küçültelim */
-    }
-
-    .upload-area {
-        padding: 1.5rem; /* Yükleme alanının iç boşluğunu azaltalım */
-        border-width: 2px;
-    }
-
-    .format-info h2,
-    .how-it-works h2 {
-        font-size: 1.8rem; /* Ara başlıkları küçültelim */
-    }
-
-    /* --- Problem 1 Çözümü: Uzun Dosya Adının Taşması --- */
-    
-    /* Dosya adı ve boyutu için bir maksimum genişlik belirliyoruz */
-    .file-list-item .file-details {
-        max-width: 160px; /* Cihaza göre bu değeri artırıp azaltabilirsiniz */
-    }
-
-    /* Uzun dosya adlarının sonuna "..." ekleyerek taşmasını engelliyoruz */
-    .file-list-item .file-name {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    /* --- Problem 2 Çözümü: Format Seçeneklerinin Sıralanması --- */
-    
-    /* Başlık ve tooltip ikonunu ortalıyoruz */
-    .format-options-header {
-        justify-content: center;
-        margin-bottom: 1rem;
-    }
-
-    /* Format seçeneklerini yatay yerine dikey olarak sıralıyoruz */
-    .format-options {
-        flex-direction: column;   /* Dikey sıralama */
-        align-items: flex-start;  /* Sola hizalama */
-        gap: 1rem;                /* Aralarındaki dikey boşluğu artırma */
-        margin-left: auto;
-        margin-right: auto;
-        width: fit-content;       /* Konteyneri içeriğe göre ayarla */
-    }
-
-    /* Ana aksiyon butonlarının dikey sıralanması */
-    .action-buttons-container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    /* Adım kartlarının dikey sıralanması */
-    .steps {
-        flex-direction: column;
-    }
-}
-
-/* Statik İçerik Sayfaları İçin Stiller (About, Privacy, vb.) */
 .content-page {
     padding-top: 4rem;
     padding-bottom: 4rem;
-    max-width: 800px; /* Metnin okunabilirliğini artırmak için genişliği daraltıyoruz */
+    max-width: 800px;
 }
-
 .content-page h1 {
     font-size: 2.8rem;
     margin-bottom: 1rem;
     border-bottom: 2px solid var(--light-gray);
     padding-bottom: 1rem;
 }
-
 .content-page h2 {
     font-size: 1.8rem;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
 }
-
 .content-page p {
     font-size: 1.1rem;
     line-height: 1.8;
@@ -665,100 +445,49 @@ img-comparison-slider img {
 }
 
 /* =================================
-   12. Arayüz Düzeltmeleri - 2
+   9. Mobil Uyumluluk (Responsive Design)
    ================================= */
-
-/* --- Problem 1 Çözümü: Dosya İkonu Hizalama --- */
-
-/* .file-info içeriğini ortalamak yerine sola yaslıyoruz. */
-.file-info {
-    justify-content: flex-start; /* center yerine flex-start */
-}
-
-
-/* --- Problem 2 Çözümü: Dikey Resim Sığdırma --- */
-
-/* Modal penceresinin içeriğinin esnek olmasını sağlıyoruz */
-.modal-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Karşılaştırma aracının konteynere uymasını sağlıyoruz */
-.modal-content img-comparison-slider {
-    max-width: 100%;
-    max-height: 85vh; /* Maksimum yüksekliği ekranın %85'i yap */
-    overflow: hidden; /* Taşmaları engelle */
-}
-
-/* Karşılaştırma aracının içindeki resimlerin oranlarını koruyarak sığmasını sağlıyoruz */
-img-comparison-slider img {
-    object-fit: contain; /* Resmi bozmadan konteynere sığdırır */
-    width: 100%;
-    height: 100%;
-}
-
-/* =================================
-   13. Result Row Alignment Fix
-   ================================= */
-
-/* This targets the container for the result text (e.g., ✓ 84% Saved) and the buttons */
-.file-item-status {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Aligns all items to the right */
-    gap: 15px; /* Adds space between the text, Compare button, and Download button */
-    flex-shrink: 0; /* Prevents this container from shrinking */
-    min-width: 280px; /* Ensures enough space for all elements */
-}
-
-/* This specifically targets the text part (✓ 84% Saved or ⚠️ +5% Increased) */
-.file-item-status .savings,
-.file-item-status .savings-increase {
-    display: inline-block;
-    width: 130px; /* Gives the text a fixed width to align everything nicely */
-    text-align: right; /* Aligns the text to the right within its fixed-width box */
-}
-
-/* =================================
-   14. Sonuç Listesi Görünüm İyileştirmesi
-   ================================= */
-
-/* Dosya satırının tamamını dikey olarak ortalıyoruz */
-.file-list-item {
-    align-items: center;
-}
-
-/* Sol taraftaki ikon ve metin grubunu hizalıyoruz */
-.file-list-item .file-info {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* İkon ve metin arasına boşluk koyar */
-}
-
-/* Dosya adı ve boyutunun alt alta daha düzenli durmasını sağlıyoruz */
-.file-list-item .file-details {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-/* Dosya adının fontunu biraz daha belirgin yapıyoruz */
-.file-list-item .file-name {
-    font-weight: 500;
-    line-height: 1.2; /* Satır yüksekliğini azaltarak daha toplu bir görünüm */
-}
-
-/* Dosya boyutunun fontunu biraz küçültüyoruz */
-.file-list-item .file-size {
-    font-size: 0.85rem;
-    line-height: 1.2;
-}
-
-/* Sağ taraftaki durum ve buton grubunun genişliğini sabitliyoruz */
-.file-item-status {
-    min-width: 300px; /* Bu değeri artırıp azaltarak en iyi sonucu bulabilirsiniz */
-    justify-content: flex-end; /* İçeriği sağa yaslıyoruz */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+    .upload-area {
+        padding: 1.5rem;
+        border-width: 2px;
+    }
+    .how-it-works h2 {
+        font-size: 1.8rem;
+    }
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    .file-item-status {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .format-options-header {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .format-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-left: auto;
+        margin-right: auto;
+        width: fit-content;
+    }
+    .action-buttons-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .steps {
+        flex-direction: column;
+    }
+    .footer .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
 }
