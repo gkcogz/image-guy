@@ -521,3 +521,30 @@ img-comparison-slider img {
         margin-left: 0 !important; /* Eski boşlukları sıfırla */
     }
 }
+
+/* Blog Sayfası Stilleri */
+.blog-post-list {
+    margin-top: 3rem;
+}
+.blog-post-item {
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+}
+.blog-post-item h2 a {
+    text-decoration: none;
+    color: var(--dark-gray);
+}
+.blog-post-item h2 a:hover {
+    color: var(--primary-color);
+}
+.post-excerpt {
+    margin-top: 0.5rem;
+}
+.btn-read-more {
+    display: inline-block;
+    margin-top: 1rem;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--primary-color);
+}
