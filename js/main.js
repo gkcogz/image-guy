@@ -122,11 +122,15 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
-// Processes a single file (gets link, uploads to S3, triggers optimization)
+// Lütfen mevcut processSingleFile ve uploadWithProgress fonksiyonlarını silip,
+// yerine sadece bu fonksiyonu yapıştırın.
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+
     try {
+        // Adım 1: Güvenli yükleme linki iste
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -136,20 +140,16 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
-        statusElement.innerHTML = progressBarContainer;
-        const progressBarFill = listItem.querySelector('.progress-bar-fill');
-        const progressBarText = listItem.querySelector('.progress-bar-text');
-        
-        await uploadWithProgress(uploadUrl, file, (percent) => {
-            progressBarFill.style.width = `${percent.toFixed(0)}%`;
-            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+        // Adım 2: Dosyayı doğrudan S3'e yükle (basit fetch ile)
+        statusElement.textContent = 'Uploading...'; // Yükleme çubuğu yerine basit metin
+        const uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': file.type },
         });
+        if (!uploadResponse.ok) throw new Error('S3 upload failed.');
         
-        // THIS IS THE FIX: Add a small delay after upload is 100% complete
-        // This gives the browser time to render the full bar before switching to the spinner.
-        await new Promise(resolve => setTimeout(resolve, 400)); 
-
+        // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -162,6 +162,7 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
+        // Sonuçları göster
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
