@@ -663,3 +663,39 @@ img-comparison-slider img {
     line-height: 1.8;
     color: #495057;
 }
+
+/* =================================
+   12. Arayüz Düzeltmeleri - 2
+   ================================= */
+
+/* --- Problem 1 Çözümü: Dosya İkonu Hizalama --- */
+
+/* .file-info içeriğini ortalamak yerine sola yaslıyoruz. */
+.file-info {
+    justify-content: flex-start; /* center yerine flex-start */
+}
+
+
+/* --- Problem 2 Çözümü: Dikey Resim Sığdırma --- */
+
+/* Modal penceresinin içeriğinin esnek olmasını sağlıyoruz */
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Karşılaştırma aracının konteynere uymasını sağlıyoruz */
+.modal-content img-comparison-slider {
+    max-width: 100%;
+    max-height: 85vh; /* Maksimum yüksekliği ekranın %85'i yap */
+    overflow: hidden; /* Taşmaları engelle */
+}
+
+/* Karşılaştırma aracının içindeki resimlerin oranlarını koruyarak sığmasını sağlıyoruz */
+img-comparison-slider img {
+    object-fit: contain; /* Resmi bozmadan konteynere sığdırır */
+    width: 100%;
+    height: 100%;
+}
