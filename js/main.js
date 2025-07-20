@@ -138,20 +138,21 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı doğrudan S3'e yükle (ilerleme çubuğu ile)
+        // Adım 2: Dosyayı S3'e yükle (ilerleme çubuğu ile)
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        // --- DÜZELTME BURADA ---
-        // Yükleme işlemini, tarayıcının arayüzü çizmesine izin verdikten sonra başlatıyoruz.
-        await new Promise(resolve => setTimeout(resolve, 0)); 
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
         
+        // --- YENİ EKLENEN KOD ---
+        // Yükleme %100 olduğunda, kullanıcı bunu görebilsin diye çok kısa bir bekleme ekliyoruz.
+        await new Promise(resolve => setTimeout(resolve, 400)); // 0.4 saniye bekle
+
         // Adım 3: Optimizasyon işlemini tetikle
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
