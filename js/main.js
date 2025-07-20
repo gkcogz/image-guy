@@ -45,6 +45,8 @@ function handleFiles(files) {
 
 // main.js içindeki bu fonksiyonu mevcut olanla değiştirin
 
+// Lütfen main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -53,15 +55,30 @@ function updateUIForFileList() {
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
-        // --- DEĞİŞİKLİK BURADA: "Waiting..." yerine "Ready" yazıyoruz ---
+        // 1. DÜZELTME: "Waiting..." yerine "Ready" yazısı burada.
         listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Ready</div>`;
         fileListElement.appendChild(listItem);
     });
     
-    // Format seçme alanını HTML olarak oluşturalım
+    // 2. DÜZELTME: Soru işaretli tooltip yapısı burada.
     const formatOptionsHTML = `
-        <div class="format-options">
+        <div class="format-options-header">
             <span class="format-label">Output Format:</span>
+            <div class="tooltip-container">
+                <span class="info-icon">?</span>
+                <div class="tooltip-content">
+                    <h4>JPEG (.jpg)</h4>
+                    <p><strong>Best for:</strong> Photographs. Provides the smallest file size with a tiny, often unnoticeable, loss in quality.</p>
+                    <hr>
+                    <h4>PNG</h4>
+                    <p><strong>Best for:</strong> Graphics & logos with transparency. Preserves perfect quality but results in larger files.</p>
+                    <hr>
+                    <h4>WebP</h4>
+                    <p><strong>Best for:</strong> Web use. A modern format that creates smaller files than both JPG and PNG at the same quality.</p>
+                </div>
+            </div>
+        </div>
+        <div class="format-options">
             <div class="radio-group">
                 <input type="radio" id="jpeg" name="format" value="jpeg" checked>
                 <label for="jpeg">JPG</label>
