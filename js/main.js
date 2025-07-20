@@ -136,14 +136,13 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
-// Processes a single file from the queue (gets link, uploads, triggers optimization)
+// main.js içindeki processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
-        // Step 1: Get secure upload link
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -153,22 +152,18 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Step 2: Upload file to S3 with progress bar
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        await new Promise(resolve => setTimeout(resolve, 50)); // Allow browser to render progress bar
-        
+        await new Promise(resolve => setTimeout(resolve, 50));
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
+        await new Promise(resolve => setTimeout(resolve, 400));
         
-        await new Promise(resolve => setTimeout(resolve, 400)); // Allow user to see 100%
-        
-        // Step 3: Trigger optimization
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -181,13 +176,15 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Step 4: Show results
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         
+        // --- DEĞİŞİKLİK BURADA: Butonları yeni bir div içine aldık ---
         const resultActions = `
-            <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
-            <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+            <div class="result-buttons">
+                <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+            </div>
         `;
 
         if (savings >= 0) {

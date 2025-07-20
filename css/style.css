@@ -492,3 +492,32 @@ img-comparison-slider img {
         gap: 1rem;
     }
 }
+/* Sonuç satırındaki butonlar için yeni bir konteyner */
+.result-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Masaüstünde butonlar arası boşluk */
+}
+
+/* Mobil medya sorgusunun içini güncelliyoruz */
+@media (max-width: 768px) {
+    /* ... (mevcut mobil kurallarınız burada kalacak) ... */
+
+    /* YENİ EKLENEN KURALLAR */
+    .file-item-status {
+        flex-direction: column; /* Durum ve butonları dikeyde hizala */
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .result-buttons {
+        flex-direction: column; /* Butonları dikeyde sırala */
+        align-items: stretch;   /* Butonların genişliğini eşitle */
+        width: 100%;            /* Konteynerin tamamını kapla */
+    }
+
+    .result-buttons > * { /* İçindeki tüm buton/linkleri ortala */
+        text-align: center;
+        margin-left: 0 !important; /* Eski boşlukları sıfırla */
+    }
+}
