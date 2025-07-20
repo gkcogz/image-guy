@@ -721,3 +721,44 @@ img-comparison-slider img {
     width: 130px; /* Gives the text a fixed width to align everything nicely */
     text-align: right; /* Aligns the text to the right within its fixed-width box */
 }
+
+/* =================================
+   14. Sonuç Listesi Görünüm İyileştirmesi
+   ================================= */
+
+/* Dosya satırının tamamını dikey olarak ortalıyoruz */
+.file-list-item {
+    align-items: center;
+}
+
+/* Sol taraftaki ikon ve metin grubunu hizalıyoruz */
+.file-list-item .file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* İkon ve metin arasına boşluk koyar */
+}
+
+/* Dosya adı ve boyutunun alt alta daha düzenli durmasını sağlıyoruz */
+.file-list-item .file-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Dosya adının fontunu biraz daha belirgin yapıyoruz */
+.file-list-item .file-name {
+    font-weight: 500;
+    line-height: 1.2; /* Satır yüksekliğini azaltarak daha toplu bir görünüm */
+}
+
+/* Dosya boyutunun fontunu biraz küçültüyoruz */
+.file-list-item .file-size {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+/* Sağ taraftaki durum ve buton grubunun genişliğini sabitliyoruz */
+.file-item-status {
+    min-width: 300px; /* Bu değeri artırıp azaltarak en iyi sonucu bulabilirsiniz */
+    justify-content: flex-end; /* İçeriği sağa yaslıyoruz */
+}
