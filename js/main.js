@@ -2,9 +2,9 @@ let fileQueue = [];
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
-const initialUploadAreaHTML = uploadArea.innerHTML;
+const initialUploadAreaHTML = uploadArea.innerHTML; // Save the initial state for the reset button
 
-// Main event listener for all dynamic buttons
+// Main event listener for dynamic buttons inside the upload area
 uploadArea.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -21,13 +21,13 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
-// Event listener for file selection
+// Event listener for file selection via the input
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Event listeners for Drag & Drop
+// Event listeners for Drag & Drop functionality
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -37,19 +37,33 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
+// Event listener for the dynamically created "Compare" modal
+document.body.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-compare')) {
+        const originalUrl = e.target.dataset.originalUrl;
+        const optimizedUrl = e.target.dataset.optimizedUrl;
+        showComparisonModal(originalUrl, optimizedUrl);
+    }
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+    }
+});
 
 // ===============================================
 // FUNCTIONS
 // ===============================================
 
-// Handles new files and updates the UI
+// Handles newly added files and updates the UI
 function handleFiles(files) {
     fileQueue = [];
     for (const file of files) { fileQueue.push(file); }
     updateUIForFileList();
 }
 
-// Creates the file list and format options UI
+// Creates the UI for the file list and format options
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -92,7 +106,7 @@ function updateUIForFileList() {
     uploadArea.classList.add('file-selected');
 }
 
-// Helper function to format file size
+// Helper function to format file size into KB/MB
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -101,7 +115,7 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Helper function to upload a file with progress tracking
+// Helper function to upload a file with progress tracking using XMLHttpRequest
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -122,20 +136,15 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
-// Lütfen mevcut processSingleFile ve uploadWithProgress fonksiyonlarını silip,
-// yerine sadece bu fonksiyonu yapıştırın.
-
-// main.js içindeki processSingleFile fonksiyonunu bununla değiştirin
+// Processes a single file from the queue (gets link, uploads, triggers optimization)
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
-
-    // Orijinal dosyanın geçici URL'ini oluşturalım (karşılaştırma için)
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
+        // Step 1: Get secure upload link
         statusElement.textContent = 'Getting link...';
-        // ... (fetch to get-upload-url) ...
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -144,18 +153,22 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // ... (upload to S3 with progress) ...
+        // Step 2: Upload file to S3 with progress bar
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
+        
+        await new Promise(resolve => setTimeout(resolve, 50)); // Allow browser to render progress bar
+        
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        await new Promise(resolve => setTimeout(resolve, 400));
         
-        // ... (fetch to optimize) ...
+        await new Promise(resolve => setTimeout(resolve, 400)); // Allow user to see 100%
+        
+        // Step 3: Trigger optimization
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -168,10 +181,10 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Sonuçları göster (Compare butonu ile birlikte)
+        // Step 4: Show results
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
-
+        
         const resultActions = `
             <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
             <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
@@ -188,8 +201,25 @@ async function processSingleFile(file, listItem) {
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
-        URL.revokeObjectURL(originalObjectUrl); // Hata durumunda geçici URL'i temizle
+        URL.revokeObjectURL(originalObjectUrl);
     }
+}
+
+// Starts the batch optimization process
+async function startBatchOptimization() {
+    console.log(`Starting optimization for ${fileQueue.length} files...`);
+    const optimizeBtn = document.getElementById('optimize-all-btn');
+    if (optimizeBtn) {
+        optimizeBtn.textContent = 'Processing...';
+        optimizeBtn.disabled = true;
+    }
+    const listItems = document.querySelectorAll('.file-list-item');
+    const optimizationPromises = fileQueue.map((file, index) => {
+        const listItem = listItems[index];
+        return processSingleFile(file, listItem);
+    });
+    await Promise.all(optimizationPromises);
+    updateMainButtonAfterCompletion();
 }
 
 // Updates the main action buttons after the process is complete
@@ -252,23 +282,7 @@ function resetUI() {
     uploadArea.classList.remove('file-selected');
 }
 
-// Bu kod bloğunu main.js dosyasının en altına ekleyin
-
-// "Compare" butonlarına tıklamayı dinlemek için olay delegasyonu
-document.body.addEventListener('click', (e) => {
-    if (e.target.classList.contains('btn-compare')) {
-        const originalUrl = e.target.dataset.originalUrl;
-        const optimizedUrl = e.target.dataset.optimizedUrl;
-        showComparisonModal(originalUrl, optimizedUrl);
-    }
-    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            modal.remove();
-        }
-    }
-});
-
+// Shows the Before/After comparison modal
 function showComparisonModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
