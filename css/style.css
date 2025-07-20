@@ -573,3 +573,67 @@ img-comparison-slider img {
     width: 100%;
     height: 100%;
 }
+
+/* =================================
+   11. Mobil Uyumluluk (Responsive Design)
+   ================================= */
+@media (max-width: 768px) {
+
+    /* --- Genel Boyutlandırma ve Boşluk Ayarları --- */
+    .hero h1 {
+        font-size: 2.2rem; /* Ana başlığı mobil için biraz küçültelim */
+    }
+
+    .upload-area {
+        padding: 1.5rem; /* Yükleme alanının iç boşluğunu azaltalım */
+        border-width: 2px;
+    }
+
+    .format-info h2,
+    .how-it-works h2 {
+        font-size: 1.8rem; /* Ara başlıkları küçültelim */
+    }
+
+    /* --- Problem 1 Çözümü: Uzun Dosya Adının Taşması --- */
+    
+    /* Dosya adı ve boyutu için bir maksimum genişlik belirliyoruz */
+    .file-list-item .file-details {
+        max-width: 160px; /* Cihaza göre bu değeri artırıp azaltabilirsiniz */
+    }
+
+    /* Uzun dosya adlarının sonuna "..." ekleyerek taşmasını engelliyoruz */
+    .file-list-item .file-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* --- Problem 2 Çözümü: Format Seçeneklerinin Sıralanması --- */
+    
+    /* Başlık ve tooltip ikonunu ortalıyoruz */
+    .format-options-header {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    /* Format seçeneklerini yatay yerine dikey olarak sıralıyoruz */
+    .format-options {
+        flex-direction: column;   /* Dikey sıralama */
+        align-items: flex-start;  /* Sola hizalama */
+        gap: 1rem;                /* Aralarındaki dikey boşluğu artırma */
+        margin-left: auto;
+        margin-right: auto;
+        width: fit-content;       /* Konteyneri içeriğe göre ayarla */
+    }
+
+    /* Ana aksiyon butonlarının dikey sıralanması */
+    .action-buttons-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Adım kartlarının dikey sıralanması */
+    .steps {
+        flex-direction: column;
+    }
+}
