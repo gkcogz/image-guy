@@ -2,8 +2,8 @@ let fileQueue = [];
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
+const initialUploadAreaHTML = uploadArea.innerHTML; // Arayüzün başlangıç halini kaydediyoruz
 
-// Olay dinleyicileri
 uploadArea.addEventListener('click', (e) => {
     // "Choose File" butonunu dinle
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
@@ -17,6 +17,10 @@ uploadArea.addEventListener('click', (e) => {
     // "Download All as .ZIP" butonunu dinle
     if (e.target.id === 'download-all-btn') {
         handleZipDownload();
+    }
+    // YENİ EKLENEN KONTROL: "Start Over" butonunu dinle
+    if (e.target.id === 'clear-all-btn') {
+        resetUI();
     }
 });
 fileInput.addEventListener('change', (event) => {
@@ -186,11 +190,18 @@ async function startBatchOptimization() {
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
-        actionArea.innerHTML = `<button class="btn" id="download-all-btn">Download All as .ZIP</button>`;
+        // Artık iki butonu birden oluşturuyoruz
+        actionArea.innerHTML = `
+            <div class="action-buttons-container">
+                <button class="btn" id="download-all-btn">Download All as .ZIP</button>
+                <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
+            </div>
+        `;
         const downloadAllBtn = document.getElementById('download-all-btn');
         downloadAllBtn.style.backgroundColor = '#28a745';
         downloadAllBtn.style.color = 'white';
-        downloadAllBtn.style.width = '100%';
+        // Butonların genişliklerini konteyner yönetecek
+        // downloadAllBtn.style.width = '100%'; 
         downloadAllBtn.style.padding = '1rem 2rem';
         downloadAllBtn.style.fontSize = '1.2rem';
     }
@@ -237,4 +248,12 @@ async function handleZipDownload() {
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
     }
+}
+
+// main.js dosyasının en altına eklenecek yeni fonksiyon
+function resetUI() {
+    console.log('Resetting UI to initial state.');
+    fileQueue = []; // Dosya kuyruğunu sıfırla
+    uploadArea.innerHTML = initialUploadAreaHTML; // Arayüzü kaydettiğimiz başlangıç haline döndür
+    uploadArea.classList.remove('file-selected'); // Kenarlık stilini kaldır
 }

@@ -447,3 +447,23 @@ body {
     border-top: 1px solid #495057;
     margin: 0.8rem 0;
 }
+
+/* Çoklu Aksiyon Butonları için Konteyner */
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem; /* Butonlar arasına boşluk koyar */
+    width: 100%;
+}
+
+/* İkincil Buton Stili (Start Over için) */
+.btn-secondary {
+    background-color: transparent;
+    color: #6c757d; /* Nötr gri metin */
+    border: 1px solid #ced4da; /* Nötr gri kenarlık */
+}
+
+.btn-secondary:hover {
+    background-color: #f8f9fa; /* Üzerine gelince hafif arka plan */
+    color: #343a40;
+}
