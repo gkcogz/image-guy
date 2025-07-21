@@ -458,23 +458,26 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8); /* Arka planı biraz daha koyu yaptık */
+    background-color: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 20px; /* Kenarlara boşluk ekleyelim */
 }
 
 .modal-content {
     background-color: white;
-    padding: 10px; /* Kenar boşluğunu azalttık */
+    padding: 10px;
     border-radius: 8px;
-    max-width: 90vw;  /* Genişliğin %90'ını geçemez */
-    max-height: 90vh; /* Yüksekliğin %90'ını geçemez */
+    max-width: 95vw;  /* Maksimum genişliği biraz artıralım */
+    max-height: 95vh; /* Maksimum yüksekliği biraz artıralım */
     position: relative;
-    display: flex; /* İçeriği ortalamak için */
+    display: flex;
     justify-content: center;
     align-items: center;
+    /* Yüksekliğin otomatik ayarlanmasını sağlıyoruz */
+    height: auto; 
 }
 
 .modal-close-btn {
@@ -505,8 +508,8 @@ body {
 /* İçindeki resimler için en önemli kural */
 img-comparison-slider img {
     object-fit: contain; /* Bu, resmin oranını koruyarak konteynere sığmasını sağlar */
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 90vw;     /* Resmin genişliği ekran genişliğinin %90'ını geçemez */
+    max-height: 85vh;    /* Resmin yüksekliği ekran yüksekliğinin %85'ini geçemez */
     display: block;
 }
 
