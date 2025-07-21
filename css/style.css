@@ -641,3 +641,15 @@ img-comparison-slider img {
     font-weight: 500;
     color: var(--primary-color);
 }
+
+/* Smart Tip Style */
+.smart-tip {
+    font-size: 0.9rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 0.8rem 1rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
