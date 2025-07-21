@@ -63,12 +63,19 @@ function handleFiles(files) {
     updateUIForFileList();
 }
 
-// Creates the UI for the file list and format options
+// Replace the updateUIForFileList function in your main.js with this one
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
+    
+    let containsPng = false; // Check if any of the uploaded files are PNGs
+
     fileQueue.forEach(file => {
+        if (file.name.toLowerCase().endsWith('.png')) {
+            containsPng = true;
+        }
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
@@ -97,13 +104,25 @@ function updateUIForFileList() {
         </div>
     `;
 
+    // --- NEW "SMART TIP" LOGIC STARTS HERE ---
+    let smartTipHTML = '';
+    if (containsPng) {
+        smartTipHTML = `
+            <div class="smart-tip">
+                💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.
+            </div>
+        `;
+    }
+    // --- NEW "SMART TIP" LOGIC ENDS HERE ---
+
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
+    // Add the smart tip before the optimize button
+    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>` + smartTipHTML;
     
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
-    uploadArea.classList.add('file-selected');
+    uploadArea.classList.add("file-selected");
 }
 
 // Helper function to format file size into KB/MB
