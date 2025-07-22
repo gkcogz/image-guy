@@ -23,6 +23,7 @@ body {
     font-family: 'Poppins', sans-serif;
     line-height: 1.6;
     color: var(--dark-gray);
+    background-color: var(--white-color);
 }
 
 .container {
@@ -32,7 +33,7 @@ body {
 }
 
 /* =================================
-   2. Ana Bölümler (Header, Footer, vb.)
+   2. Ana Bölümler (Header, Footer)
    ================================= */
 .header {
     background: var(--white-color);
@@ -44,8 +45,23 @@ body {
     justify-content: space-between;
     align-items: center;
 }
-.logo {
-    font-size: 1.5rem;
+/* Header'ın üstüne mavi bir çizgi eklemek için */
+
+.header {
+    border-top: 5px solid var(--primary-color);
+}
+.logo a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+.logo-image {
+    height: 50px;
+    width: auto;
+}
+.logo-text {
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--primary-color);
 }
@@ -95,57 +111,17 @@ body {
     color: #6c757d;
     margin-bottom: 2.5rem;
 }
-/* Sürdürülebilirlik Bölümü Stili (Video Arka Planlı Hali) */
-
-.sustainability-mission {
-    position: relative; /* İçindeki elementleri konumlandırmak için temel alır */
-    text-align: center;
-    padding: 6rem 0; /* Metin için daha fazla dikey boşluk */
-    overflow: hidden; /* Dışarı taşmaları engeller */
-    color: var(--white-color); /* İçindeki tüm metinleri beyaz yapar */
-}
-
-/* Yarı saydam siyah katman (overlay) */
-.sustainability-mission::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); /* %60 opaklıkta siyah. Burayı ayarlayabilirsiniz. */
-    z-index: 2; /* Video'nun üstünde, metnin altında */
-}
-
-/* Video Konteyneri */
-.video-background {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
-    transform: translate(-50%, -50%);
-    z-index: 1; /* En arkada */
-}
-
-/* Video Elementinin Kendisi */
-.video-background video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Videonun oranı bozmadan alanı kaplamasını sağlar */
-}
-
-/* Sürdürülebilirlik Bölümü Stili (Video Arka Planlı Hali) */
+/* Sürdürülebilirlik Bölümü Stili (Düz Geçişli Hali) */
 
 .sustainability-mission {
     position: relative;
     text-align: center;
-    padding: 4rem 0; /* Küçültüldü: 6rem'den 4rem'e düşürüldü */
+    padding: 4rem 0; /* Simetrik dikey boşluk */
     overflow: hidden;
     color: var(--white-color);
+    background-color: var(--dark-gray);
 }
 
-/* Yarı saydam siyah katman (overlay) */
 .sustainability-mission::before {
     content: '';
     position: absolute;
@@ -157,44 +133,89 @@ body {
     z-index: 2;
 }
 
-/* Video Konteyneri */
 .video-background {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    transform: translate(-50%, -50%);
     z-index: 1;
 }
 
-/* Video Elementinin Kendisi */
 .video-background video {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-/* Metin Konteyneri (Katmanların en üstünde olmalı) */
 .sustainability-mission .container {
     position: relative;
     z-index: 3;
 }
 
 .sustainability-mission h3 {
-    font-size: 2rem; /* Küçültüldü: 2.2rem'den 2rem'e düşürüldü */
+    font-size: 2.2rem;
     margin-bottom: 1rem;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .sustainability-mission p {
-    font-size: 1.1rem; /* Küçültüldü: 1.2rem'den 1.1rem'e düşürüldü */
+    font-size: 1.2rem;
     max-width: 800px;
     margin: 0 auto;
     opacity: 0.9;
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
 }
+.video-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.video-background video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.sustainability-mission .container {
+    position: relative;
+    z-index: 3;
+}
+.sustainability-mission h3 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+}
+.sustainability-mission p {
+    font-size: 1.2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 0.9;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+.section-divider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+    z-index: 3;
+    transform: rotate(180deg);
+}
+.section-divider svg {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 150px;
+}
+.section-divider .shape-fill {
+    fill: var(--secondary-color);
+}
 .how-it-works {
+    background: var(--white-color);
     padding: 4rem 0;
     text-align: center;
 }
@@ -212,7 +233,7 @@ body {
 }
 
 /* =================================
-   4. Yükleme Alanı ve Liste Stilleri
+   4. Yükleme Alanı ve Sonuç Listesi
    ================================= */
 .upload-area {
     background: var(--white-color);
@@ -302,6 +323,11 @@ body {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+.result-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
 /* =================================
    5. Butonlar ve Kontroller
@@ -336,6 +362,7 @@ body {
     padding: 0.3rem 0.8rem;
     font-size: 0.8rem;
     border-radius: 3px;
+    margin-left: 0;
 }
 .btn-compare {
     background-color: #f8f9fa;
@@ -360,7 +387,7 @@ body {
     width: 100%;
 }
 #optimize-all-btn {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
 }
 #download-all-btn {
     background-color: var(--success-color);
@@ -383,7 +410,6 @@ body {
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
-    margin-bottom: 1.5rem;
 }
 .format-label {
     font-weight: 500;
@@ -421,7 +447,7 @@ body {
     border-radius: 6px;
     padding: 1rem;
     position: absolute;
-    z-index: 1;
+    z-index: 10;
     bottom: 125%;
     left: 50%;
     margin-left: -140px;
@@ -463,23 +489,20 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    padding: 20px; /* Kenarlara boşluk ekleyelim */
+    padding: 20px;
 }
-
 .modal-content {
     background-color: white;
     padding: 10px;
     border-radius: 8px;
-    max-width: 95vw;  /* Maksimum genişliği biraz artıralım */
-    max-height: 95vh; /* Maksimum yüksekliği biraz artıralım */
+    max-width: 95vw;
+    max-height: 95vh;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Yüksekliğin otomatik ayarlanmasını sağlıyoruz */
     height: auto; 
 }
-
 .modal-close-btn {
     position: absolute;
     top: -15px;
@@ -497,24 +520,20 @@ body {
     line-height: 1;
     padding: 0;
 }
-
-/* Karşılaştırma aracının kendisi için yeni kurallar */
 .modal-content img-comparison-slider {
     max-width: 100%;
     max-height: 100%;
     overflow: hidden;
 }
-
-/* İçindeki resimler için en önemli kural */
 img-comparison-slider img {
-    object-fit: contain; /* Bu, resmin oranını koruyarak konteynere sığmasını sağlar */
-    max-width: 90vw;     /* Resmin genişliği ekran genişliğinin %90'ını geçemez */
-    max-height: 85vh;    /* Resmin yüksekliği ekran yüksekliğinin %85'ini geçemez */
+    object-fit: contain;
+    max-width: 90vw;
+    max-height: 85vh;
     display: block;
 }
 
 /* =================================
-   8. Statik Sayfalar (About, Privacy)
+   8. Statik Sayfalar (About, Privacy, Blog)
    ================================= */
 .content-page {
     padding-top: 4rem;
@@ -537,85 +556,6 @@ img-comparison-slider img {
     line-height: 1.8;
     color: #495057;
 }
-
-/* =================================
-   9. Mobil Uyumluluk (Responsive Design)
-   ================================= */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2.2rem;
-    }
-    .upload-area {
-        padding: 1.5rem;
-        border-width: 2px;
-    }
-    .how-it-works h2 {
-        font-size: 1.8rem;
-    }
-    .file-list-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.8rem;
-    }
-    .file-item-status {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    .format-options-header {
-        justify-content: center;
-        margin-bottom: 1rem;
-    }
-    .format-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        margin-left: auto;
-        margin-right: auto;
-        width: fit-content;
-    }
-    .action-buttons-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    .steps {
-        flex-direction: column;
-    }
-    .footer .container {
-        flex-direction: column;
-        gap: 1rem;
-    }
-}
-/* Sonuç satırındaki butonlar için yeni bir konteyner */
-.result-buttons {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Masaüstünde butonlar arası boşluk */
-}
-
-/* Mobil medya sorgusunun içini güncelliyoruz */
-@media (max-width: 768px) {
-    /* ... (mevcut mobil kurallarınız burada kalacak) ... */
-
-    /* YENİ EKLENEN KURALLAR */
-    .file-item-status {
-        flex-direction: column; /* Durum ve butonları dikeyde hizala */
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .result-buttons {
-        flex-direction: column; /* Butonları dikeyde sırala */
-        align-items: stretch;   /* Butonların genişliğini eşitle */
-        width: 100%;            /* Konteynerin tamamını kapla */
-    }
-
-    .result-buttons > * { /* İçindeki tüm buton/linkleri ortala */
-        text-align: center;
-        margin-left: 0 !important; /* Eski boşlukları sıfırla */
-    }
-}
-
-/* Blog Sayfası Stilleri */
 .blog-post-list {
     margin-top: 3rem;
 }
@@ -641,8 +581,6 @@ img-comparison-slider img {
     font-weight: 500;
     color: var(--primary-color);
 }
-
-/* Smart Tip Style */
 .smart-tip {
     font-size: 0.9rem;
     color: #6c757d;
@@ -654,20 +592,64 @@ img-comparison-slider img {
     text-align: left;
 }
 
-/* Logo Stilleri */
-.logo a {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Logo ile metin arasına boşluk koyar */
-}
-
-.logo-image {
-    height: 40px; /* Logonun yüksekliğini ayarlar */
-    width: auto;
-}
-
-.logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-color);
+/* =================================
+   9. Mobil Uyumluluk (Responsive Design)
+   ================================= */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+    .upload-area {
+        padding: 1.5rem;
+    }
+    .how-it-works h2, .sustainability-mission h3 {
+        font-size: 1.8rem;
+    }
+    .sustainability-mission p {
+        font-size: 1rem;
+    }
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    .file-item-status {
+        width: 100%;
+        justify-content: flex-start;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .result-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+    .result-buttons > * {
+        text-align: center;
+    }
+    .format-options-header {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .format-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-left: auto;
+        margin-right: auto;
+        width: fit-content;
+    }
+    .action-buttons-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .steps {
+        flex-direction: column;
+    }
+    .footer .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
 }
