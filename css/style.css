@@ -653,3 +653,24 @@ img-comparison-slider img {
         gap: 1rem;
     }
 }
+/* Single Blog Post Styles */
+.post-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.post-content {
+    margin-top: 1.5rem;
+}
+
+.post-content h2 {
+    font-size: 1.6rem;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
