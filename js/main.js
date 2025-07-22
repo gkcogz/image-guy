@@ -65,17 +65,13 @@ function handleFiles(files) {
 
 // Replace the updateUIForFileList function in your main.js with this one
 
+// main.js içindeki updateUIForFileList fonksiyonunu bununla değiştirin
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
-    
-    let containsPng = false; // Check if any of the uploaded files are PNGs
-
     fileQueue.forEach(file => {
-        if (file.name.toLowerCase().endsWith('.png')) {
-            containsPng = true;
-        }
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
@@ -92,7 +88,8 @@ function updateUIForFileList() {
                     <h4>JPEG (.jpg)</h4><p><strong>Best for:</strong> Photographs...</p><hr>
                     <h4>PNG</h4><p><strong>Best for:</strong> Graphics & logos with transparency...</p><hr>
                     <h4>WebP</h4><p><strong>Best for:</strong> Web use...</p><hr>
-                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web...</p>
+                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web...</p><hr>
+                    <h4>Favicon</h4><p><strong>Best for:</strong> Website icons. Converts your image to a 32x32 transparent PNG file.</p>
                 </div>
             </div>
         </div>
@@ -101,28 +98,17 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
             <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
             <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
+            <div class="radio-group"><input type="radio" id="favicon" name="format" value="favicon"><label for="favicon">Favicon</label></div>
         </div>
     `;
 
-    // --- NEW "SMART TIP" LOGIC STARTS HERE ---
-    let smartTipHTML = '';
-    if (containsPng) {
-        smartTipHTML = `
-            <div class="smart-tip">
-                💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.
-            </div>
-        `;
-    }
-    // --- NEW "SMART TIP" LOGIC ENDS HERE ---
-
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    // Add the smart tip before the optimize button
-    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>` + smartTipHTML;
+    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
     
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
-    uploadArea.classList.add("file-selected");
+    uploadArea.classList.add('file-selected');
 }
 
 // Helper function to format file size into KB/MB

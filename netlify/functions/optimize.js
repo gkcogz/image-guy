@@ -1,9 +1,10 @@
-// Dosya Adı: netlify/functions/optimize.js (Hızlı ve Yüksek Kaliteli Versiyon)
+// Dosya Adı: netlify/functions/optimize.js (Favicon Desteği Eklenmiş)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
 
+// ... (s3Client ve streamToBuffer fonksiyonları aynı kalacak)
 const s3Client = new S3Client({ 
     region: process.env.IMAGEGUY_AWS_S3_REGION,
     credentials: {
@@ -19,6 +20,7 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
     stream.on('end', () => resolve(Buffer.concat(chunks)));
 });
 
+
 exports.handler = async (event, context) => {
     try {
         const { key, outputFormat } = JSON.parse(event.body);
@@ -31,33 +33,42 @@ exports.handler = async (event, context) => {
         const response = await s3Client.send(getCommand);
         const fileDataBuffer = await streamToBuffer(response.Body);
         
-        console.log(`Optimizing file: ${originalFilename} to format: ${outputFormat}`);
+        console.log(`Processing file: ${originalFilename} to format: ${outputFormat}`);
 
-        let sharpInstance = sharp(fileDataBuffer)
-            .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
-
+        let sharpInstance = sharp(fileDataBuffer);
         let contentType, newExtension;
         
-        // SSIM döngüsü yerine, her format için tek seferde, yüksek kaliteli ayarlar kullanıyoruz.
+        // Formata göre işlem seçimi
         switch (outputFormat) {
+            // --- YENİ EKLENEN FAVICON DURUMU ---
+            case 'favicon':
+                sharpInstance = sharpInstance.resize({
+                    width: 32,
+                    height: 32,
+                    fit: 'contain', // Oranı koruyarak 32x32'lik alana sığdır
+                    background: { r: 0, g: 0, b: 0, alpha: 0 } // Artan alanı şeffaf yap
+                }).png();
+                contentType = 'image/png';
+                newExtension = 'png';
+                break;
             case 'png':
-                sharpInstance = sharpInstance.png({ quality: 90, compressionLevel: 9 }); // Yüksek sıkıştırma eforu
+                sharpInstance = sharpInstance.resize({ width: 1920, height: 1920, fit: 'inside' }).png({ quality: 90 });
                 contentType = 'image/png';
                 newExtension = 'png';
                 break;
             case 'webp':
-                sharpInstance = sharpInstance.webp({ quality: 80 }); // Yüksek kalite WebP
+                sharpInstance = sharpInstance.resize({ width: 1920, height: 1920, fit: 'inside' }).webp({ quality: 80 });
                 contentType = 'image/webp';
                 newExtension = 'webp';
                 break;
             case 'avif':
-                sharpInstance = sharpInstance.avif({ quality: 60 }); // Yüksek kalite AVIF
+                sharpInstance = sharpInstance.resize({ width: 1920, height: 1920, fit: 'inside' }).avif({ quality: 60 });
                 contentType = 'image/avif';
                 newExtension = 'avif';
                 break;
             case 'jpeg':
             default:
-                sharpInstance = sharpInstance.jpeg({ quality: 85, progressive: true, mozjpeg: true }); // Yüksek kalite JPEG
+                sharpInstance = sharpInstance.resize({ width: 1920, height: 1920, fit: 'inside' }).jpeg({ quality: 85, progressive: true, mozjpeg: true });
                 contentType = 'image/jpeg';
                 newExtension = 'jpg';
                 break;

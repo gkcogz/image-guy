@@ -653,3 +653,21 @@ img-comparison-slider img {
     margin-top: 1.5rem;
     text-align: left;
 }
+
+/* Logo Stilleri */
+.logo a {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Logo ile metin arasına boşluk koyar */
+}
+
+.logo-image {
+    height: 40px; /* Logonun yüksekliğini ayarlar */
+    width: auto;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
