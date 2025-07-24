@@ -45,35 +45,33 @@ uploadArea.addEventListener('drop', (e) => {
 
 // Global listener for dynamically created modals (Compare & Crop) and their actions
 document.body.addEventListener('click', (e) => {
-    // Close any open modal
+    // Modal closing logic
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            if (cropper) { // If the cropper is active, destroy it to free up memory
+            if (cropper) {
                 cropper.destroy();
                 cropper = null;
             }
             modal.remove();
         }
     }
-    // Handle "Compare" button click
+    // Compare button logic
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-    // Handle "Edit & Crop" button click
+    // "Edit & Crop" button logic
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(optimizedUrl);
     }
-    // Handle "Apply Crop" button click inside the crop modal
+    // "Apply Crop" button logic
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
-        const croppedCanvas = cropper.getCroppedCanvas({
-            imageSmoothingQuality: 'high',
-        });
+        const croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
         if (!croppedCanvas) return;
 
         croppedCanvas.toBlob((blob) => {
@@ -81,26 +79,33 @@ document.body.addEventListener('click', (e) => {
             const downloadLink = currentCropTarget.querySelector('.btn-download-item');
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             
-            downloadLink.href = newUrl; // Update the download link with the new cropped image
-            if (compareButton) compareButton.dataset.optimizedUrl = newUrl; // Update the compare button as well
+            if (downloadLink) downloadLink.href = newUrl;
+            if (compareButton) compareButton.dataset.optimizedUrl = newUrl;
             
-            // Close the modal
             const modal = document.querySelector('.modal-overlay');
             if (modal) modal.remove();
             if (cropper) { cropper.destroy(); cropper = null; }
-
-        }, 'image/png'); // Output as PNG to preserve transparency from circular crops
+        }, 'image/png');
     }
-    // Handle "Crop as Circle" button click inside the crop modal
-    if (e.target.id === 'crop-circle-btn') {
-        if(cropper) {
-            cropper.setAspectRatio(1/1); // A circle must have a 1:1 aspect ratio
-            // Apply CSS to make the crop box look like a circle
-            const cropBox = document.querySelector('.cropper-view-box');
-            const cropFace = document.querySelector('.cropper-face');
-            if(cropBox) cropBox.style.borderRadius = '50%';
-            if(cropFace) cropFace.style.borderRadius = '50%';
+    // Crop shape button logic
+    if (e.target.classList.contains('crop-shape-btn')) {
+        if (!cropper) return;
+        const shape = e.target.dataset.shape;
+        const cropBox = document.querySelector('.cropper-view-box');
+        const cropFace = document.querySelector('.cropper-face');
+        
+        if (shape === 'circle') {
+            cropper.setAspectRatio(1/1);
+            if (cropBox) cropBox.style.borderRadius = '50%';
+            if (cropFace) cropFace.style.borderRadius = '50%';
+        } else if (shape === 'rectangle') {
+            cropper.setAspectRatio(NaN); // Free aspect ratio
+            if (cropBox) cropBox.style.borderRadius = '0';
+            if (cropFace) cropFace.style.borderRadius = '0';
         }
+        
+        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
     }
 });
 
@@ -225,14 +230,15 @@ function showComparisonModal(originalUrl, optimizedUrl) {
 function showCropModal(imageUrl) {
     const modalHTML = `
         <div class="modal-overlay">
-            <div class="modal-content">
+            <div class="crop-modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <h2>Edit & Crop Image</h2>
                 <div class="crop-image-container">
                     <img id="image-to-crop" src="${imageUrl}">
                 </div>
                 <div class="crop-actions">
-                    <button class="btn btn-secondary" id="crop-circle-btn">Crop as Circle</button>
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
@@ -248,6 +254,10 @@ function showCropModal(imageUrl) {
             viewMode: 1,
             background: false,
             autoCropArea: 0.8,
+            ready: function () {
+                // Make "Rectangle" the default active button
+                document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+            }
         });
     };
     if (image.complete) {

@@ -706,3 +706,31 @@ img-comparison-slider img {
     gap: 1rem;
     margin-top: 1rem;
 }
+
+/* Crop Modal Style Improvements */
+.crop-modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.crop-modal-content h2 {
+    margin-bottom: 1rem;
+}
+
+.crop-image-container {
+    max-width: 60vw;
+    max-height: 60vh;
+    margin-bottom: 1.5rem;
+}
+
+.crop-image-container img {
+    max-width: 100%;
+    display: block;
+}
