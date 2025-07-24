@@ -1,10 +1,16 @@
 let fileQueue = []; 
+let cropper = null; // Cropper.js instance
+let currentCropTarget = null; // To track which file item is being edited
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
-const initialUploadAreaHTML = uploadArea.innerHTML; // Save the initial state for the reset button
+const initialUploadAreaHTML = uploadArea.innerHTML;
 
-// Main event listener for dynamic buttons inside the upload area
+// ===============================================
+// EVENT LISTENERS
+// ===============================================
+
+// Main listener for buttons created dynamically inside the upload area
 uploadArea.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -21,13 +27,13 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
-// Event listener for file selection via the input
+// Listener for file selection via the hidden input
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Event listeners for Drag & Drop functionality
+// Listeners for Drag & Drop functionality
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -37,43 +43,78 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Event listener for the dynamically created "Compare" modal and Crop buttons
+// Global listener for dynamically created modals (Compare & Crop) and their actions
 document.body.addEventListener('click', (e) => {
-    // Compare Modal
+    // Close any open modal
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            if (cropper) { // If the cropper is active, destroy it to free up memory
+                cropper.destroy();
+                cropper = null;
+            }
+            modal.remove();
+        }
+    }
+    // Handle "Compare" button click
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            modal.remove();
-        }
-    }
-    // Crop Modal (from previous implementation)
+    // Handle "Edit & Crop" button click
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(optimizedUrl);
     }
+    // Handle "Apply Crop" button click inside the crop modal
     if (e.target.id === 'apply-crop-btn') {
-        // ... Crop logic would go here if re-implemented
+        if (!cropper) return;
+        const croppedCanvas = cropper.getCroppedCanvas({
+            imageSmoothingQuality: 'high',
+        });
+        if (!croppedCanvas) return;
+
+        croppedCanvas.toBlob((blob) => {
+            const newUrl = URL.createObjectURL(blob);
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            
+            downloadLink.href = newUrl; // Update the download link with the new cropped image
+            if (compareButton) compareButton.dataset.optimizedUrl = newUrl; // Update the compare button as well
+            
+            // Close the modal
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) modal.remove();
+            if (cropper) { cropper.destroy(); cropper = null; }
+
+        }, 'image/png'); // Output as PNG to preserve transparency from circular crops
+    }
+    // Handle "Crop as Circle" button click inside the crop modal
+    if (e.target.id === 'crop-circle-btn') {
+        if(cropper) {
+            cropper.setAspectRatio(1/1); // A circle must have a 1:1 aspect ratio
+            // Apply CSS to make the crop box look like a circle
+            const cropBox = document.querySelector('.cropper-view-box');
+            const cropFace = document.querySelector('.cropper-face');
+            if(cropBox) cropBox.style.borderRadius = '50%';
+            if(cropFace) cropFace.style.borderRadius = '50%';
+        }
     }
 });
 
+
 // ===============================================
-// FUNCTIONS
+// UI AND HELPER FUNCTIONS
 // ===============================================
 
-// Handles newly added files and updates the UI
 function handleFiles(files) {
     fileQueue = [];
     for (const file of files) { fileQueue.push(file); }
     updateUIForFileList();
 }
 
-// Creates the UI for the file list and format options
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -96,7 +137,7 @@ function updateUIForFileList() {
                     <h4>PNG</h4><p>Best for graphics with transparency.</p><hr>
                     <h4>WebP</h4><p>Modern format for web use.</p><hr>
                     <h4>AVIF</h4><p>Newest format with highest compression.</p><hr>
-                    <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon. PNG is modern, ICO is for maximum compatibility.</p>
+                    <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p>
                 </div>
             </div>
         </div>
@@ -119,7 +160,6 @@ function updateUIForFileList() {
     uploadArea.classList.add('file-selected');
 }
 
-// Helper function to format file size into KB/MB
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -128,7 +168,6 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Helper function to upload a file with progress tracking using XMLHttpRequest
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -149,14 +188,84 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
-// Processes a single file from the queue (gets link, uploads, triggers optimization)
+function updateMainButtonAfterCompletion() {
+    const actionArea = document.querySelector('.action-area');
+    if (actionArea) {
+        actionArea.innerHTML = `
+            <div class="action-buttons-container">
+                <button class="btn btn-primary" id="download-all-btn">Download All as .ZIP</button>
+                <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
+            </div>
+        `;
+    }
+}
+
+function resetUI() {
+    console.log('Resetting UI to initial state.');
+    fileQueue = [];
+    uploadArea.innerHTML = initialUploadAreaHTML;
+    uploadArea.classList.remove('file-selected');
+}
+
+function showComparisonModal(originalUrl, optimizedUrl) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <img-comparison-slider>
+                    <img slot="first" src="${originalUrl}" />
+                    <img slot="second" src="${optimizedUrl}" />
+                </img-comparison-slider>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function showCropModal(imageUrl) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <h2>Edit & Crop Image</h2>
+                <div class="crop-image-container">
+                    <img id="image-to-crop" src="${imageUrl}">
+                </div>
+                <div class="crop-actions">
+                    <button class="btn btn-secondary" id="crop-circle-btn">Crop as Circle</button>
+                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const image = document.getElementById('image-to-crop');
+    image.crossOrigin = "anonymous";
+
+    image.onload = () => {
+         cropper = new Cropper(image, {
+            viewMode: 1,
+            background: false,
+            autoCropArea: 0.8,
+        });
+    };
+    if (image.complete) {
+        image.onload();
+    }
+}
+
+
+// ===============================================
+// CORE PROCESSING FUNCTIONS
+// ===============================================
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
-        // Step 1: Get secure upload link
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -166,22 +275,18 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Step 2: Upload file to S3 with progress bar
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
         await new Promise(resolve => setTimeout(resolve, 50)); 
-        
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        
         await new Promise(resolve => setTimeout(resolve, 400)); 
         
-        // Step 3: Trigger optimization
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -194,13 +299,13 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Step 4: Show results
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         
         const resultActions = `
             <div class="result-buttons">
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
+                <button class="btn-crop" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
@@ -220,7 +325,6 @@ async function processSingleFile(file, listItem) {
     }
 }
 
-// Starts the batch optimization process
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
@@ -237,20 +341,6 @@ async function startBatchOptimization() {
     updateMainButtonAfterCompletion();
 }
 
-// Updates the main action buttons after the process is complete
-function updateMainButtonAfterCompletion() {
-    const actionArea = document.querySelector('.action-area');
-    if (actionArea) {
-        actionArea.innerHTML = `
-            <div class="action-buttons-container">
-                <button class="btn btn-primary" id="download-all-btn">Download All as .ZIP</button>
-                <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
-            </div>
-        `;
-    }
-}
-
-// Handles the "Download All as .ZIP" functionality
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn) return;
@@ -287,28 +377,4 @@ async function handleZipDownload() {
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
     }
-}
-
-// Resets the UI to its initial state
-function resetUI() {
-    console.log('Resetting UI to initial state.');
-    fileQueue = [];
-    uploadArea.innerHTML = initialUploadAreaHTML;
-    uploadArea.classList.remove('file-selected');
-}
-
-// Shows the Before/After comparison modal
-function showComparisonModal(originalUrl, optimizedUrl) {
-    const modalHTML = `
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <button class="modal-close-btn">&times;</button>
-                <img-comparison-slider>
-                    <img slot="first" src="${originalUrl}" />
-                    <img slot="second" src="${optimizedUrl}" />
-                </img-comparison-slider>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
