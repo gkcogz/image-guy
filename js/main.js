@@ -1,16 +1,16 @@
 let fileQueue = []; 
-let cropper = null; // Cropper.js instance
-let currentCropTarget = null; // To track which file item is being edited
+let cropper = null; // Kırpma kütüphanesi için genel değişken
+let currentCropTarget = null; // Hangi dosya satırının düzenlendiğini takip etmek için
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 const initialUploadAreaHTML = uploadArea.innerHTML;
 
 // ===============================================
-// EVENT LISTENERS
+// OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
 // ===============================================
 
-// Main listener for buttons created dynamically inside the upload area
+// Yükleme alanı içindeki dinamik butonlar için ana dinleyici
 uploadArea.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -27,13 +27,13 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
-// Listener for file selection via the hidden input
+// Dosya input'u ile dosya seçimi
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Listeners for Drag & Drop functionality
+// Sürükle-Bırak (Drag & Drop)
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -43,9 +43,9 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Global listener for dynamically created modals (Compare & Crop) and their actions
+// Modal pencereleri ve Kırpma butonları için genel dinleyici
 document.body.addEventListener('click', (e) => {
-    // Modal closing logic
+    // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -56,38 +56,56 @@ document.body.addEventListener('click', (e) => {
             modal.remove();
         }
     }
-    // Compare button logic
+    // Compare butonuna basıldığında
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-    // "Edit & Crop" button logic
+    // "Edit & Crop" butonuna basıldığında
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(optimizedUrl);
     }
-    // "Apply Crop" button logic
+    // "Apply Crop" butonuna basıldığında
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
-        const croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        if (!croppedCanvas) return;
+        
+        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+
+        if (isCircle) {
+            const circleCanvas = document.createElement('canvas');
+            const context = circleCanvas.getContext('2d');
+            const size = croppedCanvas.width;
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            context.beginPath();
+            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            croppedCanvas = circleCanvas;
+        }
 
         croppedCanvas.toBlob((blob) => {
             const newUrl = URL.createObjectURL(blob);
             const downloadLink = currentCropTarget.querySelector('.btn-download-item');
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             
-            if (downloadLink) downloadLink.href = newUrl;
-            if (compareButton) compareButton.dataset.optimizedUrl = newUrl;
+            if(downloadLink) downloadLink.href = newUrl;
+            if(compareButton) compareButton.dataset.optimizedUrl = newUrl;
             
             const modal = document.querySelector('.modal-overlay');
-            if (modal) modal.remove();
-            if (cropper) { cropper.destroy(); cropper = null; }
+            if (modal) {
+                cropper.destroy();
+                cropper = null;
+                modal.remove();
+            }
         }, 'image/png');
     }
-    // Crop shape button logic
+    // Kırpma şekli butonlarına basıldığında
     if (e.target.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
         const shape = e.target.dataset.shape;
@@ -98,8 +116,8 @@ document.body.addEventListener('click', (e) => {
             cropper.setAspectRatio(1/1);
             if (cropBox) cropBox.style.borderRadius = '50%';
             if (cropFace) cropFace.style.borderRadius = '50%';
-        } else if (shape === 'rectangle') {
-            cropper.setAspectRatio(NaN); // Free aspect ratio
+        } else {
+            cropper.setAspectRatio(NaN);
             if (cropBox) cropBox.style.borderRadius = '0';
             if (cropFace) cropFace.style.borderRadius = '0';
         }
@@ -109,9 +127,8 @@ document.body.addEventListener('click', (e) => {
     }
 });
 
-
 // ===============================================
-// UI AND HELPER FUNCTIONS
+// ARAYÜZ VE YARDIMCI FONKSİYONLAR
 // ===============================================
 
 function handleFiles(files) {
@@ -250,12 +267,12 @@ function showCropModal(imageUrl) {
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
+        if (cropper) { cropper.destroy(); }
          cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
             autoCropArea: 0.8,
             ready: function () {
-                // Make "Rectangle" the default active button
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
         });
@@ -267,7 +284,7 @@ function showCropModal(imageUrl) {
 
 
 // ===============================================
-// CORE PROCESSING FUNCTIONS
+// ANA İŞLEM FONKSİYONLARI
 // ===============================================
 
 async function processSingleFile(file, listItem) {
