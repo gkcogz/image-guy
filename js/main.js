@@ -67,6 +67,8 @@ function handleFiles(files) {
 
 // main.js içindeki updateUIForFileList fonksiyonunu bununla değiştirin
 
+// main.js dosyanızdaki updateUIForFileList fonksiyonunun bu şekilde olduğundan emin olun
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
@@ -85,11 +87,11 @@ function updateUIForFileList() {
             <div class="tooltip-container">
                 <span class="info-icon">?</span>
                 <div class="tooltip-content">
-                    <h4>JPEG (.jpg)</h4><p><strong>Best for:</strong> Photographs...</p><hr>
-                    <h4>PNG</h4><p><strong>Best for:</strong> Graphics & logos with transparency...</p><hr>
-                    <h4>WebP</h4><p><strong>Best for:</strong> Web use...</p><hr>
-                    <h4>AVIF</h4><p><strong>Best for:</strong> Modern web...</p><hr>
-                    <h4>Favicon</h4><p><strong>Best for:</strong> Website icons. Converts your image to a 32x32 transparent PNG file.</p>
+                    <h4>JPEG (.jpg)</h4><p>Best for photographs.</p><hr>
+                    <h4>PNG</h4><p>Best for graphics with transparency.</p><hr>
+                    <h4>WebP</h4><p>Modern format for web use.</p><hr>
+                    <h4>AVIF</h4><p>Newest format with highest compression.</p><hr>
+                    <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon. PNG is modern, ICO is for maximum compatibility.</p>
                 </div>
             </div>
         </div>
@@ -98,7 +100,8 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
             <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
             <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
-            <div class="radio-group"><input type="radio" id="favicon" name="format" value="favicon"><label for="favicon">Favicon</label></div>
+            <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
+            <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
         </div>
     `;
 
