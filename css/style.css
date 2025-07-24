@@ -736,3 +736,59 @@ img-comparison-slider img {
     color: var(--white-color);
     border-color: var(--primary-color);
 }
+
+/* =================================
+   Button Style Refresh
+   ================================= */
+
+/* General Button Style */
+.btn {
+    border-radius: 8px; /* More rounded corners */
+    font-weight: 600; /* Bolder text */
+    padding: 10px 24px; /* Adjust padding */
+    font-size: 1rem;
+    transition: transform 0.1s ease, box-shadow 0.2s ease; /* Add transitions */
+    border: 1px solid transparent;
+}
+
+.btn:hover {
+    transform: translateY(-2px); /* Add a slight lift on hover */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary Button (Optimize All, Download All) */
+.btn-primary, #download-all-btn {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    font-size: 1.1rem; /* Make primary buttons slightly larger */
+    padding: 12px 28px;
+}
+
+/* Secondary Button (Start Over) */
+.btn-secondary {
+    background-color: var(--white-color);
+    border-color: var(--light-gray);
+    color: var(--dark-gray);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: #dbe1e8;
+}
+
+/* Small Action Buttons (Compare, Edit & Crop, Download) */
+.btn-compare, .btn-crop, .btn-download-item {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    font-weight: 500;
+    box-shadow: none; /* Remove box-shadow for smaller buttons */
+}
+.btn-download-item {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    border-color: var(--dark-gray);
+}
+.btn-download-item:hover {
+    background-color: #555;
+    transform: translateY(-1px);
+}
