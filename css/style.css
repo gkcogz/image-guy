@@ -674,3 +674,35 @@ img-comparison-slider img {
     border-radius: 8px;
     margin: 1.5rem 0;
 }
+
+/* Kırpma (Crop) Butonu ve Penceresi Stilleri */
+.btn-crop {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+}
+.btn-crop:hover {
+    background-color: #e9ecef;
+}
+
+/* Kırpma için kullanılan resmin konteyneri */
+.crop-image-container {
+    max-width: 70vw;
+    max-height: 60vh;
+    margin-bottom: 1rem;
+}
+
+.crop-image-container img {
+    max-width: 100%;
+}
+
+.crop-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
