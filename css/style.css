@@ -131,7 +131,7 @@ body {
     padding: 6rem 0;
     overflow: hidden;
     color: var(--white-color);
-    background-image: url('../assets/videos/poster.png');
+    background-image: url('../assets/videos/poster.jpg');
     background-size: cover;
     background-position: center center;
 }
@@ -506,8 +506,13 @@ img-comparison-slider img {
     max-height: 85vh;
     display: block;
 }
+.crop-modal-content {
+    width: auto;
+    height: auto;
+}
 .crop-modal-content h2 {
     margin-bottom: 1.5rem;
+    text-align: center;
 }
 .crop-image-container {
     max-width: 70vw;
@@ -523,6 +528,7 @@ img-comparison-slider img {
     justify-content: center;
     gap: 1rem;
     margin-top: 1rem;
+    width: 100%;
 }
 .crop-shape-btn.active {
     background-color: var(--primary-color);
