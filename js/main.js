@@ -404,9 +404,10 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
+// Replace the entire document.body.addEventListener function in main.js with this one.
+
 document.body.addEventListener('click', async (e) => {
-    // Compare ve Crop Modallarını kapatma
+    // Modal closing logic
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -418,85 +419,60 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-    // Compare butonuna basıldığında
+    // Compare button logic
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-
-    // "Edit & Crop" butonuna basıldığında
+    
+    // "Edit & Crop" button logic
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
-        const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
-        showCropModal(originalUrl, optimizedUrl); // Artık iki URL'i de gönderiyoruz
+        const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
+        showCropModal(originalUrl, optimizedUrl);
     }
 
-    // "Apply Crop" butonuna basıldığında
+    // "Apply Crop" button logic
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
         
-        // Gerekli URL'leri ve verileri al
-        const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
-        const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        
-        // 1. Optimize edilmiş ve kırpılmış versiyonu oluştur (Blob olarak)
-        const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
-        
-        // 2. Orijinal resmi de aynı şekilde kırp (Blob olarak)
-        const originalCroppedBlob = await new Promise((resolve, reject) => {
-            const originalImage = new Image();
-            originalImage.crossOrigin = "anonymous";
-            originalImage.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const cropBoxData = cropper.getData(true); // Kırpma kutusu verilerini al
-                
-                // Orijinal resmin boyutlarına göre kırpma koordinatlarını ölçekle
-                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
-                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
+        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
 
-                canvas.width = cropBoxData.width * scaleX;
-                canvas.height = cropBoxData.height * scaleY;
-                
-                ctx.drawImage(
-                    originalImage,
-                    cropBoxData.x * scaleX, cropBoxData.y * scaleY,
-                    cropBoxData.width * scaleX, cropBoxData.height * scaleY,
-                    0, 0,
-                    canvas.width, canvas.height
-                );
-                canvas.toBlob(resolve, 'image/png');
-            };
-            originalImage.onerror = reject;
-            originalImage.src = originalUrl;
-        });
-
-        // 3. Yeni, eşleşen ve geçici URL'ler oluştur
-        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
-        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
-
-        // 4. Arayüzdeki linkleri ve data-attributeları bu yeni URL'lerle güncelle
-        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
-        const compareButton = currentCropTarget.querySelector('.btn-compare');
-        
-        if (downloadLink) downloadLink.href = newOptimizedUrl;
-        if (compareButton) {
-            compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            compareButton.dataset.originalUrl = newOriginalUrl;
+        if (isCircle) {
+            const circleCanvas = document.createElement('canvas');
+            const context = circleCanvas.getContext('2d');
+            const size = croppedCanvas.width;
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            context.beginPath();
+            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            croppedCanvas = circleCanvas;
         }
-        
-        // 5. Modal'ı kapat ve cropper'ı yok et
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            cropper.destroy();
-            cropper = null;
-            modal.remove();
-        }
+
+        croppedCanvas.toBlob((blob) => {
+            const newUrl = URL.createObjectURL(blob);
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            
+            if (downloadLink) downloadLink.href = newUrl;
+            if (compareButton) compareButton.dataset.optimizedUrl = newUrl;
+            
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                cropper.destroy();
+                cropper = null;
+                modal.remove();
+            }
+        }, 'image/png');
     }
 
-    // Kırpma şekli butonlarına basıldığında
+    // Crop shape button logic
     if (e.target.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
         const shape = e.target.dataset.shape;
@@ -508,9 +484,9 @@ document.body.addEventListener('click', async (e) => {
             if (cropBox) cropBox.style.borderRadius = '50%';
             if (cropFace) cropFace.style.borderRadius = '50%';
         } else {
-            cropper.setAspectRatio(NaN); // Serbest oran
+            cropper.setAspectRatio(NaN);
             if (cropBox) cropBox.style.borderRadius = '0';
-            if (cropFace) cropBox.style.borderRadius = '0';
+            if (cropFace) cropFace.style.borderRadius = '0';
         }
         
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
