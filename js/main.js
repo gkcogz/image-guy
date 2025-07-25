@@ -406,21 +406,21 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyasının en altına bu bloğu ekleyin
+// Bu kod bloğunu main.js dosyasının en altına ekleyin
 
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
-    if (!menuToggle) {
-        console.error('Mobile menu button not found!');
-        return; 
-    }
+    if (!menuToggle) return; 
 
     const mainNav = document.querySelector('.main-nav');
     const openIcon = document.getElementById('menu-open-icon');
     const closeIcon = document.getElementById('menu-close-icon');
+    const body = document.body;
 
     menuToggle.addEventListener('click', () => {
         const isActive = mainNav.classList.toggle('mobile-active');
+        body.classList.toggle('mobile-menu-active'); // Arka planı karartmak için
+
         if (openIcon && closeIcon) {
             openIcon.style.display = isActive ? 'none' : 'block';
             closeIcon.style.display = isActive ? 'block' : 'none';
