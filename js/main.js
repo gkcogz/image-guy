@@ -406,24 +406,17 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyasının en altına eklenecek
+
 document.addEventListener('DOMContentLoaded', () => {
-    const menuToggle = document.createElement('button');
-    menuToggle.id = 'mobile-menu-toggle';
-    menuToggle.className = 'mobile-menu-button';
-    menuToggle.innerHTML = `
-        <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    `;
-    document.body.appendChild(menuToggle);
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    if (!menuToggle) return; // Buton yoksa hiçbir şey yapma
 
     const mainNav = document.querySelector('.main-nav');
-    const openIcon = menuToggle.querySelector('#menu-open-icon');
-    const closeIcon = menuToggle.querySelector('#menu-close-icon');
+    const openIcon = document.getElementById('menu-open-icon');
+    const closeIcon = document.getElementById('menu-close-icon');
 
     menuToggle.addEventListener('click', () => {
-        mainNav.classList.toggle('mobile-active');
-        const isActive = mainNav.classList.contains('mobile-active');
+        const isActive = mainNav.classList.toggle('mobile-active');
         openIcon.style.display = isActive ? 'none' : 'block';
         closeIcon.style.display = isActive ? 'block' : 'none';
     });
