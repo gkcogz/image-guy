@@ -406,10 +406,14 @@ async function handleZipDownload() {
     }
 }
 
+// main.js dosyasının en altına bu bloğu ekleyin
 
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
-    if (!menuToggle) return; // Buton yoksa hiçbir şey yapma
+    if (!menuToggle) {
+        console.error('Mobile menu button not found!');
+        return; 
+    }
 
     const mainNav = document.querySelector('.main-nav');
     const openIcon = document.getElementById('menu-open-icon');
@@ -417,7 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     menuToggle.addEventListener('click', () => {
         const isActive = mainNav.classList.toggle('mobile-active');
-        openIcon.style.display = isActive ? 'none' : 'block';
-        closeIcon.style.display = isActive ? 'block' : 'none';
+        if (openIcon && closeIcon) {
+            openIcon.style.display = isActive ? 'none' : 'block';
+            closeIcon.style.display = isActive ? 'block' : 'none';
+        }
     });
 });

@@ -679,6 +679,7 @@ img-comparison-slider img {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* Mobil medya sorgusunun içindeki menü stillerini güncelliyoruz */
 @media (max-width: 768px) {
     /* Masaüstü menüsünü mobilde gizle */
     .header .main-nav {
@@ -705,11 +706,12 @@ img-comparison-slider img {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 1001; /* Butonun bir katman altında */
+        z-index: 1001;
     }
 
     /* Menü aktif olduğunda paneli ekranın içine kaydır */
     .main-nav.mobile-active {
+        display: flex; /* Görünür yap */
         transform: translateX(0);
     }
     
