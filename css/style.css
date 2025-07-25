@@ -131,7 +131,7 @@ body {
     padding: 6rem 0;
     overflow: hidden;
     color: var(--white-color);
-    background-image: url('../assets/videos/poster.jpg');
+    background-image: url('../assets/videos/poster.png');
     background-size: cover;
     background-position: center center;
 }
