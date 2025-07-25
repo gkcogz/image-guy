@@ -1,5 +1,5 @@
 /* =================================
-   1. Temel Stiller ve Değişkenler
+   1. Core Styles & Variables
    ================================= */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -33,7 +33,7 @@ body {
 }
 
 /* =================================
-   2. Ana Bölümler (Header, Footer)
+   2. Main Layout (Header, Footer)
    ================================= */
 .header {
     background: var(--white-color);
@@ -109,7 +109,7 @@ body {
 }
 
 /* =================================
-   3. Ana Sayfa Bölümleri
+   3. Homepage Sections
    ================================= */
 .hero {
     background: var(--secondary-color);
@@ -131,7 +131,7 @@ body {
     padding: 6rem 0;
     overflow: hidden;
     color: var(--white-color);
-    background-image: url('../assets/videos/poster.png');
+    background-image: url('../assets/videos/poster.jpg');
     background-size: cover;
     background-position: center center;
 }
@@ -180,7 +180,7 @@ body {
 }
 
 /* =================================
-   4. Yükleme Alanı ve Sonuç Listesi
+   4. Upload Area & Results List
    ================================= */
 .upload-area {
     background: var(--white-color);
@@ -302,7 +302,7 @@ body {
 }
 
 /* =================================
-   5. Butonlar ve Kontroller
+   5. Buttons & Controls
    ================================= */
 .btn {
     border-radius: 8px;
@@ -376,7 +376,7 @@ body {
 }
 
 /* =================================
-   6. Format Seçenekleri ve Tooltip
+   6. Format Options & Tooltip
    ================================= */
 .format-options-header {
     display: flex;
@@ -459,8 +459,6 @@ body {
 /* =================================
    7. Modals (Compare & Crop)
    ================================= */
-
-/* General style for the dark background overlay */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -474,9 +472,7 @@ body {
     z-index: 1000;
     padding: 20px;
 }
-
-/* General style for the white content box of any modal */
-.modal-content {
+.modal-content, .crop-modal-content {
     background-color: white;
     padding: 1.5rem;
     border-radius: 8px;
@@ -487,8 +483,6 @@ body {
     flex-direction: column;
     align-items: center;
 }
-
-/* Close button for all modals */
 .modal-close-btn {
     position: absolute;
     top: -15px;
@@ -506,37 +500,29 @@ body {
     line-height: 1;
     padding: 0;
 }
-
-/* --- Styles specific to the Compare Slider Modal --- */
 img-comparison-slider img {
     object-fit: contain;
     max-width: 85vw;
     max-height: 85vh;
     display: block;
 }
-
-/* --- Styles specific to the Crop Modal --- */
 .crop-modal-content {
-    width: auto; /* Let the content define the width */
-    height: auto; /* Let the content define the height */
+    width: auto;
+    height: auto;
 }
-
 .crop-modal-content h2 {
     margin-bottom: 1.5rem;
     text-align: center;
 }
-
 .crop-image-container {
     max-width: 70vw;
-    max-height: 60vh; /* Limit the max height of the image area */
+    max-height: 60vh;
     margin-bottom: 1.5rem;
 }
-
 .crop-image-container img {
     max-width: 100%;
     display: block;
 }
-
 .crop-actions {
     display: flex;
     justify-content: center;
@@ -544,7 +530,6 @@ img-comparison-slider img {
     margin-top: 1rem;
     width: 100%;
 }
-
 .crop-shape-btn.active {
     background-color: var(--primary-color);
     color: var(--white-color);
@@ -552,7 +537,7 @@ img-comparison-slider img {
 }
 
 /* =================================
-   8. Statik Sayfalar (About, Blog)
+   8. Static & Blog Pages
    ================================= */
 .content-page {
     padding-top: 4rem;
@@ -629,7 +614,7 @@ img-comparison-slider img {
 }
 
 /* =================================
-   9. Mobil Menü ve Uyumluluk
+   9. Mobile Menu & Responsive Design
    ================================= */
 body.mobile-menu-active {
     overflow: hidden;
