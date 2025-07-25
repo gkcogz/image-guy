@@ -406,7 +406,7 @@ async function handleZipDownload() {
     }
 }
 
-// Bu kod bloğunu main.js dosyasının en altına ekleyin
+// main.js dosyasındaki mevcut 'DOMContentLoaded' bloğunu bununla değiştirin
 
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
@@ -419,7 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     menuToggle.addEventListener('click', () => {
         const isActive = mainNav.classList.toggle('mobile-active');
-        body.classList.toggle('mobile-menu-active'); // Arka planı karartmak için
+        // YENİ EKLENEN SATIR: body etiketine sınıf ekleyip/kaldırıyoruz
+        body.classList.toggle('mobile-menu-active');
 
         if (openIcon && closeIcon) {
             openIcon.style.display = isActive ? 'none' : 'block';

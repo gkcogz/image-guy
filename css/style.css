@@ -2,64 +2,107 @@
    1. Temel Stiller ve Değişkenler
    ================================= */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 :root {
-    --primary-color: #007bff; --secondary-color: #f8f9fa; --dark-gray: #343a40;
-    --light-gray: #e9ecef; --white-color: #ffffff; --success-color: #28a745;
+    --primary-color: #007bff;
+    --secondary-color: #f8f9fa;
+    --dark-gray: #343a40;
+    --light-gray: #e9ecef;
+    --white-color: #ffffff;
+    --success-color: #28a745;
     --warning-color: #fd7e14;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-gray); background-color: var(--white-color); }
-.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-gray);
+    background-color: var(--white-color);
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 
 /* =================================
    2. Ana Bölümler (Header, Footer)
    ================================= */
-.header { background: var(--white-color); padding: 1rem 0; border-bottom: 1px solid var(--light-gray); }
-.header .container { display: flex; justify-content: space-between; align-items: center; }
-.logo a { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.logo-image { height: 50px; width: auto; }
-.logo-text { font-size: 1.8rem; font-weight: 700; color: var(--primary-color); }
-.main-nav ul { list-style: none; display: flex; }
-.main-nav ul li { margin-left: 20px; }
-.main-nav a { text-decoration: none; color: var(--dark-gray); font-weight: 500; }
-/* =================================
-   Footer Styles
-   ================================= */
+.header {
+    background: var(--white-color);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--light-gray);
+}
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+.logo-image {
+    height: 50px;
+    width: auto;
+}
+.logo-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+.main-nav ul {
+    list-style: none;
+    display: flex;
+}
+.main-nav ul li {
+    margin-left: 20px;
+}
+.main-nav a {
+    text-decoration: none;
+    color: var(--dark-gray);
+    font-weight: 500;
+}
 .footer {
     background: var(--dark-gray);
     color: var(--white-color);
-    padding: 2.5rem 0; /* Increased padding slightly */
+    padding: 2.5rem 0;
 }
-
 .footer-container {
     display: flex;
-    flex-direction: column; /* Stack links and copyright vertically */
-    align-items: center; /* Center everything */
-    gap: 1.5rem; /* Space between the two lines */
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
 }
-
 .footer-links {
     display: flex;
-    gap: 1.5rem; /* Space between each link */
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
 }
-
 .footer-links a {
     color: var(--white-color);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
 }
-
 .footer-links a:hover {
     color: var(--primary-color);
 }
-
 .footer-copyright {
     font-size: 0.9rem;
-    color: #adb5bd; /* A lighter gray for secondary text */
+    color: #adb5bd;
     text-align: center;
 }
-
 .footer-attribution a {
     color: #adb5bd;
     text-decoration: underline;
@@ -68,147 +111,637 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 /* =================================
    3. Ana Sayfa Bölümleri
    ================================= */
-.hero { background: var(--secondary-color); text-align: center; padding: 4rem 0; }
-.hero h1 { font-size: 3rem; margin-bottom: 1rem; }
-.hero .subtitle { font-size: 1.2rem; color: #6c757d; margin-bottom: 2.5rem; }
-.sustainability-mission { position: relative; text-align: center; padding: 6rem 0; overflow: hidden; color: var(--white-color); background-image: url('../assets/videos/poster.png'); background-size: cover; background-position: center center; }
-.section-overlay { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 1; }
-.sustainability-mission .container { position: relative; z-index: 2; }
-.sustainability-mission h3 { font-size: 2rem; margin-bottom: 1rem; text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5); }
-.sustainability-mission p { font-size: 1.1rem; max-width: 800px; margin: 0 auto; opacity: 0.9; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5); }
-.how-it-works { background: var(--white-color); padding: 4rem 0; text-align: center; }
-.how-it-works h2 { font-size: 2rem; margin-bottom: 3rem; }
-.steps { display: flex; justify-content: space-between; gap: 2rem; }
-.step { flex: 1; }
+.hero {
+    background: var(--secondary-color);
+    text-align: center;
+    padding: 4rem 0;
+}
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+.hero .subtitle {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-bottom: 2.5rem;
+}
+.sustainability-mission {
+    position: relative;
+    text-align: center;
+    padding: 6rem 0;
+    overflow: hidden;
+    color: var(--white-color);
+    background-image: url('../assets/videos/poster.jpg');
+    background-size: cover;
+    background-position: center center;
+}
+.section-overlay {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1;
+}
+.sustainability-mission .container {
+    position: relative;
+    z-index: 2;
+}
+.sustainability-mission h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+}
+.sustainability-mission p {
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 0.9;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+.how-it-works {
+    background: var(--white-color);
+    padding: 4rem 0;
+    text-align: center;
+}
+.how-it-works h2 {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+.steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+.step {
+    flex: 1;
+}
 
 /* =================================
    4. Yükleme Alanı ve Sonuç Listesi
    ================================= */
-.upload-area { background: var(--white-color); border: 3px dashed var(--light-gray); border-radius: 10px; padding: 3rem; max-width: 700px; margin: 0 auto; transition: background-color 0.3s, border-color 0.3s; }
-.upload-area:hover, .upload-area.drag-over { border-color: var(--primary-color); }
-.upload-area.file-selected { border-style: solid; padding: 1.5rem; }
-.file-list { list-style: none; width: 100%; margin-bottom: 2rem; }
-.file-list-item { display: flex; align-items: center; justify-content: space-between; background-color: var(--secondary-color); padding: 0.8rem 1.2rem; border-radius: 5px; margin-bottom: 0.5rem; gap: 1rem; }
-.file-info { display: flex; align-items: center; gap: 15px; flex-grow: 1; min-width: 0; }
-.file-icon { font-size: 2.5rem; color: #6c757d; }
-.file-details { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-.file-name { font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.file-size { font-size: 0.85rem; line-height: 1.2; color: #6c757d; }
-.file-item-status { display: flex; align-items: center; justify-content: flex-end; gap: 15px; flex-shrink: 0; white-space: nowrap; }
-.savings { color: var(--success-color); font-weight: 700; }
-.savings-increase { color: var(--warning-color); font-weight: 700; }
-.spinner-small { border: 3px solid rgba(0, 0, 0, 0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: var(--primary-color); display: inline-block; animation: spin 1s ease infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.result-buttons { display: flex; align-items: center; gap: 10px; }
-.progress-bar-container { width: 100%; background-color: #e9ecef; border-radius: 5px; position: relative; height: 24px; overflow: hidden; }
-.progress-bar-fill { height: 100%; width: 0%; background-color: var(--primary-color); border-radius: 5px; transition: width 0.3s ease-in-out; }
-.progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--dark-gray); font-size: 0.8rem; font-weight: 500; text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7); }
+.upload-area {
+    background: var(--white-color);
+    border: 3px dashed var(--light-gray);
+    border-radius: 10px;
+    padding: 3rem;
+    max-width: 700px;
+    margin: 0 auto;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.upload-area:hover, .upload-area.drag-over {
+    border-color: var(--primary-color);
+}
+.upload-area.file-selected {
+    border-style: solid;
+    padding: 1.5rem;
+}
+.file-list {
+    list-style: none;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+.file-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--secondary-color);
+    padding: 0.8rem 1.2rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    min-width: 0;
+}
+.file-icon {
+    font-size: 2.5rem;
+    color: #6c757d;
+}
+.file-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.file-name {
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.file-size {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: #6c757d;
+}
+.file-item-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 15px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.savings {
+    color: var(--success-color);
+    font-weight: 700;
+}
+.savings-increase {
+    color: var(--warning-color);
+    font-weight: 700;
+}
+.spinner-small {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    display: inline-block;
+    animation: spin 1s ease infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.result-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.progress-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    position: relative;
+    height: 24px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out;
+}
+.progress-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--dark-gray);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+}
 
 /* =================================
    5. Butonlar ve Kontroller
    ================================= */
-.btn { border-radius: 8px; font-weight: 600; padding: 10px 24px; font-size: 1rem; transition: transform 0.1s ease, box-shadow 0.2s ease; border: 1px solid transparent; cursor: pointer; text-decoration: none; }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-.btn-primary { background-color: var(--primary-color); color: var(--white-color); font-size: 1.1rem; padding: 12px 28px; }
-.btn-secondary { background-color: var(--white-color); border-color: var(--light-gray); color: var(--dark-gray); }
-.btn-secondary:hover { background-color: var(--secondary-color); border-color: #dbe1e8; }
-.btn-compare, .btn-crop, .btn-download-item { font-size: 0.85rem; padding: 6px 12px; font-weight: 500; box-shadow: none; }
-.btn-download-item { background-color: var(--dark-gray); color: var(--white-color); border-color: var(--dark-gray); }
-.btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
-.btn-compare, .btn-crop { background-color: #f8f9fa; color: var(--dark-gray); border: 1px solid #ced4da; }
-.btn-compare:hover, .btn-crop:hover { background-color: #e9ecef; transform: translateY(-1px); }
-.action-area { text-align: center; width: 100%; }
-.action-buttons-container { display: flex; justify-content: center; gap: 1rem; width: 100%; margin-top: 1.5rem; }
-#optimize-all-btn { margin-top: 1.5rem; }
-#download-all-btn { background-color: var(--success-color); }
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 24px;
+    font-size: 1rem;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    font-size: 1.1rem;
+    padding: 12px 28px;
+}
+.btn-secondary {
+    background-color: var(--white-color);
+    border-color: var(--light-gray);
+    color: var(--dark-gray);
+}
+.btn-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: #dbe1e8;
+}
+.btn-compare, .btn-crop, .btn-download-item {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    font-weight: 500;
+    box-shadow: none;
+}
+.btn-download-item {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    border-color: var(--dark-gray);
+}
+.btn-download-item:hover {
+    background-color: #555;
+    transform: translateY(-1px);
+}
+.btn-compare, .btn-crop {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    border: 1px solid #ced4da;
+}
+.btn-compare:hover, .btn-crop:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+.action-area {
+    text-align: center;
+    width: 100%;
+}
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+#optimize-all-btn {
+    margin-top: 1.5rem;
+}
+#download-all-btn {
+    background-color: var(--success-color);
+}
 
 /* =================================
    6. Format Seçenekleri ve Tooltip
    ================================= */
-.format-options-header { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-.format-options { display: flex; justify-content: center; align-items: center; gap: 1.5rem; }
-.format-label { font-weight: 500; }
-.radio-group { display: flex; align-items: center; gap: 0.5rem; }
-.tooltip-container { position: relative; display: inline-block; }
-.info-icon { display: flex; justify-content: center; align-items: center; width: 20px; height: 20px; border-radius: 50%; background-color: #e9ecef; color: #6c757d; font-weight: 700; font-size: 0.8rem; cursor: pointer; user-select: none; }
-.tooltip-content { visibility: hidden; opacity: 0; width: 280px; background-color: var(--dark-gray); color: var(--white-color); text-align: left; border-radius: 6px; padding: 1rem; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -140px; transition: opacity 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.tooltip-container:hover .tooltip-content { visibility: visible; opacity: 1; }
-.tooltip-content h4 { font-size: 1rem; color: var(--primary-color); margin-top: 0; margin-bottom: 0.5rem; }
-.tooltip-content p { font-size: 0.85rem; line-height: 1.6; margin-bottom: 0; }
-.tooltip-content hr { border: none; border-top: 1px solid #495057; margin: 0.8rem 0; }
+.format-options-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.format-options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+}
+.format-label {
+    font-weight: 500;
+}
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+.info-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+}
+.tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    width: 280px;
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    text-align: left;
+    border-radius: 6px;
+    padding: 1rem;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -140px;
+    transition: opacity 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+.tooltip-content h4 {
+    font-size: 1rem;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+.tooltip-content p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+.tooltip-content hr {
+    border: none;
+    border-top: 1px solid #495057;
+    margin: 0.8rem 0;
+}
 
 /* =================================
    7. Modallar (Compare & Crop)
    ================================= */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-.modal-content, .crop-modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; }
-.modal-close-btn { position: absolute; top: -15px; right: -15px; background-color: white; border: none; font-size: 2rem; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; line-height: 1; padding: 0; }
-img-comparison-slider img { object-fit: contain; max-width: 85vw; max-height: 85vh; display: block; }
-.crop-modal-content h2 { margin-bottom: 1.5rem; }
-.crop-image-container { max-width: 70vw; max-height: 60vh; margin-bottom: 1.5rem; }
-.crop-image-container img { max-width: 100%; display: block; }
-.crop-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
-.crop-shape-btn.active { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+.modal-content, .crop-modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.modal-close-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background-color: white;
+    border: none;
+    font-size: 2rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    padding: 0;
+}
+img-comparison-slider img {
+    object-fit: contain;
+    max-width: 85vw;
+    max-height: 85vh;
+    display: block;
+}
+.crop-modal-content h2 {
+    margin-bottom: 1.5rem;
+}
+.crop-image-container {
+    max-width: 70vw;
+    max-height: 60vh;
+    margin-bottom: 1.5rem;
+}
+.crop-image-container img {
+    max-width: 100%;
+    display: block;
+}
+.crop-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.crop-shape-btn.active {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
+}
 
 /* =================================
    8. Statik Sayfalar (About, Blog)
    ================================= */
-.content-page { padding-top: 4rem; padding-bottom: 4rem; max-width: 800px; }
-.content-page h1 { font-size: 2.8rem; margin-bottom: 1rem; border-bottom: 2px solid var(--light-gray); padding-bottom: 1rem; }
-.content-page h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
-.content-page p { font-size: 1.1rem; line-height: 1.8; color: #495057; }
-.blog-post-list { margin-top: 3rem; }
-.blog-post-item { border-bottom: 1px solid var(--light-gray); padding-bottom: 2rem; margin-bottom: 2rem; }
-.blog-post-item h2 a { text-decoration: none; color: var(--dark-gray); }
-.blog-post-item h2 a:hover { color: var(--primary-color); }
-.post-excerpt { margin-top: 0.5rem; }
-.btn-read-more { display: inline-block; margin-top: 1rem; text-decoration: none; font-weight: 500; color: var(--primary-color); }
-.smart-tip { font-size: 0.9rem; color: #6c757d; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 0.8rem 1rem; margin-top: 1.5rem; text-align: left; }
-.post-meta { font-size: 0.9rem; color: #6c757d; margin-bottom: 2rem; }
-.post-content { margin-top: 1.5rem; }
-.post-content h2 { font-size: 1.6rem; }
-.post-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1.5rem 0; }
+.content-page {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+    max-width: 800px;
+}
+.content-page h1 {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--light-gray);
+    padding-bottom: 1rem;
+}
+.content-page h2 {
+    font-size: 1.8rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+}
+.content-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #495057;
+}
+.blog-post-list {
+    margin-top: 3rem;
+}
+.blog-post-item {
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+}
+.blog-post-item h2 a {
+    text-decoration: none;
+    color: var(--dark-gray);
+}
+.blog-post-item h2 a:hover {
+    color: var(--primary-color);
+}
+.post-excerpt {
+    margin-top: 0.5rem;
+}
+.btn-read-more {
+    display: inline-block;
+    margin-top: 1rem;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+.smart-tip {
+    font-size: 0.9rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 0.8rem 1rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
+.post-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+.post-content {
+    margin-top: 1.5rem;
+}
+.post-content h2 {
+    font-size: 1.6rem;
+}
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
 
 /* =================================
    9. Mobil Menü ve Uyumluluk
    ================================= */
-body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 1000; }
-.mobile-menu-button { display: none; position: fixed; top: 20px; right: 20px; z-index: 1002; background: var(--white-color); border-radius: 50%; padding: 8px; cursor: pointer; border: 1px solid var(--light-gray); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+body.mobile-menu-active {
+    overflow: hidden;
+}
+body.mobile-menu-active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+.mobile-menu-button {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1002;
+    background: var(--white-color);
+    border-radius: 50%;
+    padding: 8px;
+    cursor: pointer;
+    border: 1px solid var(--light-gray);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 @media (max-width: 768px) {
-    .header .main-nav { display: none; }
-    .mobile-menu-button { display: block; }
-    .main-nav { display: flex; position: fixed; top: 0; right: 0; width: 250px; height: 100%; background: var(--white-color); box-shadow: -5px 0 20px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.3s ease-in-out; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; }
-    .main-nav.mobile-active { display: flex; transform: translateX(0); }
-    .main-nav ul { flex-direction: column; gap: 1.5rem; text-align: center; padding: 0; }
-    .main-nav ul li { margin-left: 0; }
-    .main-nav a { font-size: 1.2rem; font-weight: 500; padding: 10px 30px; border-radius: 8px; transition: background-color 0.2s; }
-    .main-nav a:hover { background-color: var(--secondary-color); }
-    .hero h1 { font-size: 2.2rem; }
-    .upload-area { padding: 1.5rem; }
-    .how-it-works h2, .sustainability-mission h3 { font-size: 1.8rem; }
-    .sustainability-mission p { font-size: 1rem; }
-    .file-list-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
-    .file-item-status { width: 100%; justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 10px; }
-    .result-buttons { flex-direction: column; align-items: stretch; width: 100%; gap: 10px; }
-    .result-buttons > * { text-align: center; margin-left: 0 !important; }
-    .format-options-header { justify-content: center; margin-bottom: 1rem; }
-    .format-options { flex-wrap: wrap; justify-content: center; gap: 1rem; }
-    .action-buttons-container { flex-direction: column; align-items: stretch; }
-    .steps { flex-direction: column; }
-    /* --- YENİ EKLENEN KIRPMA BUTONU DÜZELTMESİ --- */
+    .header .main-nav {
+        display: none;
+    }
+    .mobile-menu-button {
+        display: block;
+    }
+    .main-nav {
+        display: flex;
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 250px;
+        height: 100%;
+        background: var(--white-color);
+        box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+    }
+    .main-nav.mobile-active {
+        display: flex;
+        transform: translateX(0);
+    }
+    .main-nav ul {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+        padding: 0;
+    }
+    .main-nav ul li {
+        margin-left: 0;
+    }
+    .main-nav a {
+        font-size: 1.2rem;
+        font-weight: 500;
+        padding: 10px 30px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+    .main-nav a:hover {
+        background-color: var(--secondary-color);
+    }
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+    .upload-area {
+        padding: 1.5rem;
+    }
+    .how-it-works h2, .sustainability-mission h3 {
+        font-size: 1.8rem;
+    }
+    .sustainability-mission p {
+        font-size: 1rem;
+    }
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    .file-item-status {
+        width: 100%;
+        justify-content: flex-start;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .result-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+    .result-buttons > * {
+        text-align: center;
+        margin-left: 0 !important;
+    }
+    .format-options-header {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .format-options {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    .action-buttons-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .steps {
+        flex-direction: column;
+    }
+    .footer-container {
+        gap: 1rem;
+    }
+    .footer-links {
+        gap: 1rem 1.5rem;
+    }
     .crop-actions {
         flex-direction: column;
         align-items: stretch;
         width: 100%;
-        gap: 0.5rem; /* Butonlar arası dikey boşluk */
-    }
-    .footer .container {
-        flex-direction: column; /* Stack items vertically on mobile */
-        gap: 1rem; /* Add some space between the lines */
-    }
-    .footer-links {
-        flex-wrap: wrap; /* Allow links to wrap to the next line if needed */
-        justify-content: center; /* Center the links */
-        gap: 1rem 1.5rem; /* Vertical and horizontal gap */
+        gap: 0.5rem;
     }
 }
