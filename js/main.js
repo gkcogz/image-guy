@@ -244,14 +244,16 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-function showCropModal(imageUrl) {
+// Also, REPLACE your existing showCropModal function with this one.
+
+function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
             <div class="crop-modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <h2>Edit & Crop Image</h2>
                 <div class="crop-image-container">
-                    <img id="image-to-crop" src="${imageUrl}">
+                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
                 </div>
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
@@ -267,7 +269,9 @@ function showCropModal(imageUrl) {
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
-        if (cropper) { cropper.destroy(); }
+         if (cropper) {
+            cropper.destroy();
+         }
          cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
@@ -281,7 +285,6 @@ function showCropModal(imageUrl) {
         image.onload();
     }
 }
-
 
 // main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 
