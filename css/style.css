@@ -751,3 +751,41 @@ body.mobile-menu-active::before {
         gap: 0.5rem;
     }
 }
+
+/* =================================
+   10. Anons Çubuğu Stilleri
+   ================================= */
+
+.announcement-bar {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    padding: 0.5rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.announcement-text {
+    display: inline-block;
+    /* --- CHANGE IS HERE --- */
+    /* Make the container twice as wide as the screen */
+    width: 200%; 
+    animation: scroll 25s linear infinite;
+}
+
+.announcement-text span {
+    font-size: 0.9rem;
+    /* Make each sentence take up half of the container's width */
+    width: 50%;
+    display: inline-block;
+    padding-right: 50px;
+}
+
+/* The animation remains the same */
+@keyframes scroll {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
