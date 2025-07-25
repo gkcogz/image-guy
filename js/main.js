@@ -283,9 +283,7 @@ function showCropModal(imageUrl) {
 }
 
 
-// ===============================================
-// ANA İŞLEM FONKSİYONLARI
-// ===============================================
+// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
@@ -326,17 +324,17 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        let successHTML;
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
-        
+        // --- DEĞİŞİKLİK BURADA: "Edit & Crop" butonuna orijinal URL'i de ekliyoruz ---
         const resultActions = `
             <div class="result-buttons">
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
-                <button class="btn-crop" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
+                <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
 
+        let successHTML;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
             successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
         } else {
@@ -406,25 +404,116 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyasındaki mevcut 'DOMContentLoaded' bloğunu bununla değiştirin
-
-document.addEventListener('DOMContentLoaded', () => {
-    const menuToggle = document.getElementById('mobile-menu-toggle');
-    if (!menuToggle) return; 
-
-    const mainNav = document.querySelector('.main-nav');
-    const openIcon = document.getElementById('menu-open-icon');
-    const closeIcon = document.getElementById('menu-close-icon');
-    const body = document.body;
-
-    menuToggle.addEventListener('click', () => {
-        const isActive = mainNav.classList.toggle('mobile-active');
-        // YENİ EKLENEN SATIR: body etiketine sınıf ekleyip/kaldırıyoruz
-        body.classList.toggle('mobile-menu-active');
-
-        if (openIcon && closeIcon) {
-            openIcon.style.display = isActive ? 'none' : 'block';
-            closeIcon.style.display = isActive ? 'block' : 'none';
+// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
+document.body.addEventListener('click', async (e) => {
+    // Compare ve Crop Modallarını kapatma
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            modal.remove();
         }
-    });
+    }
+
+    // Compare butonuna basıldığında
+    if (e.target.classList.contains('btn-compare')) {
+        const originalUrl = e.target.dataset.originalUrl;
+        const optimizedUrl = e.target.dataset.optimizedUrl;
+        showComparisonModal(originalUrl, optimizedUrl);
+    }
+
+    // "Edit & Crop" butonuna basıldığında
+    if (e.target.classList.contains('btn-crop')) {
+        currentCropTarget = e.target.closest('.result-buttons');
+        const originalUrl = e.target.dataset.originalUrl;
+        const optimizedUrl = e.target.dataset.optimizedUrl;
+        showCropModal(originalUrl, optimizedUrl); // Artık iki URL'i de gönderiyoruz
+    }
+
+    // "Apply Crop" butonuna basıldığında
+    if (e.target.id === 'apply-crop-btn') {
+        if (!cropper) return;
+        
+        // Gerekli URL'leri ve verileri al
+        const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
+        const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+        
+        // 1. Optimize edilmiş ve kırpılmış versiyonu oluştur (Blob olarak)
+        const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
+        
+        // 2. Orijinal resmi de aynı şekilde kırp (Blob olarak)
+        const originalCroppedBlob = await new Promise((resolve, reject) => {
+            const originalImage = new Image();
+            originalImage.crossOrigin = "anonymous";
+            originalImage.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const cropBoxData = cropper.getData(true); // Kırpma kutusu verilerini al
+                
+                // Orijinal resmin boyutlarına göre kırpma koordinatlarını ölçekle
+                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
+                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
+
+                canvas.width = cropBoxData.width * scaleX;
+                canvas.height = cropBoxData.height * scaleY;
+                
+                ctx.drawImage(
+                    originalImage,
+                    cropBoxData.x * scaleX, cropBoxData.y * scaleY,
+                    cropBoxData.width * scaleX, cropBoxData.height * scaleY,
+                    0, 0,
+                    canvas.width, canvas.height
+                );
+                canvas.toBlob(resolve, 'image/png');
+            };
+            originalImage.onerror = reject;
+            originalImage.src = originalUrl;
+        });
+
+        // 3. Yeni, eşleşen ve geçici URL'ler oluştur
+        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
+        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
+
+        // 4. Arayüzdeki linkleri ve data-attributeları bu yeni URL'lerle güncelle
+        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+        const compareButton = currentCropTarget.querySelector('.btn-compare');
+        
+        if (downloadLink) downloadLink.href = newOptimizedUrl;
+        if (compareButton) {
+            compareButton.dataset.optimizedUrl = newOptimizedUrl;
+            compareButton.dataset.originalUrl = newOriginalUrl;
+        }
+        
+        // 5. Modal'ı kapat ve cropper'ı yok et
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
+    }
+
+    // Kırpma şekli butonlarına basıldığında
+    if (e.target.classList.contains('crop-shape-btn')) {
+        if (!cropper) return;
+        const shape = e.target.dataset.shape;
+        const cropBox = document.querySelector('.cropper-view-box');
+        const cropFace = document.querySelector('.cropper-face');
+        
+        if (shape === 'circle') {
+            cropper.setAspectRatio(1/1);
+            if (cropBox) cropBox.style.borderRadius = '50%';
+            if (cropFace) cropFace.style.borderRadius = '50%';
+        } else {
+            cropper.setAspectRatio(NaN); // Serbest oran
+            if (cropBox) cropBox.style.borderRadius = '0';
+            if (cropFace) cropBox.style.borderRadius = '0';
+        }
+        
+        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+    }
 });
