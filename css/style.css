@@ -664,13 +664,25 @@ img-comparison-slider img {
    Mobil "Slide-Out" Menü Stilleri
    ================================= */
 
-/* Hamburger Menü Butonu */
+/* A semi-transparent overlay for the main content when the menu is open */
+body.mobile-menu-active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+/* Hamburger Menu Button */
 .mobile-menu-button {
-    display: none; /* Varsayılan olarak gizli */
+    display: none;
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1002; /* Her şeyin üstünde */
+    z-index: 1002;
     background: var(--white-color);
     border-radius: 50%;
     padding: 8px;
@@ -679,29 +691,28 @@ img-comparison-slider img {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Mobil medya sorgusunun içindeki menü stillerini güncelliyoruz */
 @media (max-width: 768px) {
-    /* Masaüstü menüsünü mobilde gizle */
+    /* Hide the desktop navigation on mobile */
     .header .main-nav {
         display: none;
     }
 
-    /* Hamburger menü butonunu mobilde göster */
+    /* Show the hamburger button on mobile */
     .mobile-menu-button {
         display: block;
     }
 
-    /* Yandan açılacak panelin kendisi */
+    /* The slide-out panel itself */
     .main-nav {
         display: flex;
         position: fixed;
         top: 0;
         right: 0;
-        width: 280px; /* Panelin genişliği */
+        width: 250px; /* Made the panel slightly smaller */
         height: 100%;
         background: var(--white-color);
-        box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-        transform: translateX(100%); /* Başlangıçta ekranın dışında */
+        box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+        transform: translateX(100%);
         transition: transform 0.3s ease-in-out;
         flex-direction: column;
         justify-content: center;
@@ -709,15 +720,15 @@ img-comparison-slider img {
         z-index: 1001;
     }
 
-    /* Menü aktif olduğunda paneli ekranın içine kaydır */
+    /* Slide the panel in when active */
     .main-nav.mobile-active {
-        display: flex; /* Görünür yap */
+        display: flex;
         transform: translateX(0);
     }
     
     .main-nav ul {
         flex-direction: column;
-        gap: 2rem;
+        gap: 1.5rem; /* Reduced the space between links */
         text-align: center;
         padding: 0;
     }
@@ -727,10 +738,17 @@ img-comparison-slider img {
     }
     
     .main-nav a {
-        font-size: 1.5rem;
+        font-size: 1.2rem; /* Made the font size smaller */
+        font-weight: 500;
+        padding: 10px 30px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+
+    .main-nav a:hover {
+        background-color: var(--secondary-color);
     }
 }
-
 
 /* --- Sorun 3 Çözümü: Mobil Kırpma Butonları --- */
 @media (max-width: 768px) {
