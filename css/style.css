@@ -202,4 +202,13 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
         width: 100%;
         gap: 0.5rem; /* Butonlar arası dikey boşluk */
     }
+    .footer .container {
+        flex-direction: column; /* Stack items vertically on mobile */
+        gap: 1rem; /* Add some space between the lines */
+    }
+    .footer-links {
+        flex-wrap: wrap; /* Allow links to wrap to the next line if needed */
+        justify-content: center; /* Center the links */
+        gap: 1rem 1.5rem; /* Vertical and horizontal gap */
+    }
 }
