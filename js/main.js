@@ -339,16 +339,20 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
+        // --- DEĞİŞİKLİK BURADA: Yeni İkonlu Buton Grubu Oluşturuluyor ---
         const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                    <span class="icon-tooltip">Compare</span>
                 </button>
                 <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                    <span class="icon-tooltip">Edit & Crop</span>
                 </button>
                 <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span class="icon-tooltip">Copy</span>
                 </button>
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>

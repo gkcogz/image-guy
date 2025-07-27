@@ -71,28 +71,120 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 /* =================================
    5. Butonlar ve Kontroller
    ================================= */
-.btn { border-radius: 8px; font-weight: 600; padding: 10px 24px; font-size: 1rem; transition: transform 0.1s ease, box-shadow 0.2s ease; border: 1px solid transparent; cursor: pointer; text-decoration: none; }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-.btn-primary { background-color: var(--primary-color); color: var(--white-color); font-size: 1.1rem; padding: 12px 28px; }
-.btn-secondary { background-color: var(--white-color); border-color: var(--light-gray); color: var(--dark-gray); }
-.btn-secondary:hover { background-color: var(--secondary-color); border-color: #dbe1e8; }
-.btn-compare, .btn-crop, .btn-download-item, .btn-copy { font-size: 0.85rem; padding: 6px 12px; font-weight: 500; box-shadow: none; }
-.btn-download-item { background-color: var(--dark-gray); color: var(--white-color); border-color: var(--dark-gray); }
-.btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
-.btn-compare, .btn-crop, .btn-copy { background-color: #f8f9fa; color: var(--dark-gray); border: 1px solid #ced4da; }
-.btn-compare:hover, .btn-crop:hover, .btn-copy:hover { background-color: #e9ecef; transform: translateY(-1px); }
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 24px;
+    font-size: 1rem;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    font-size: 1.1rem;
+    padding: 12px 28px;
+}
+.btn-secondary {
+    background-color: var(--white-color);
+    border-color: var(--light-gray);
+    color: var(--dark-gray);
+}
+.btn-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: #dbe1e8;
+}
+.action-icon-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.icon-btn {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    position: relative;
+}
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+.icon-btn:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+.icon-btn .icon-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+}
+.icon-btn:hover .icon-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
 .icon-btn.copied {
     background-color: var(--success-color);
     color: var(--white-color);
     border-color: var(--success-color);
 }
 .icon-btn.copied svg {
-    display: none; /* Kopyalandığında ikonu gizle */
+    display: none;
 }
-.action-area { text-align: center; width: 100%; }
-.action-buttons-container { display: flex; justify-content: center; gap: 1rem; width: 100%; margin-top: 1.5rem; }
-#optimize-all-btn { margin-top: 1.5rem; }
-#download-all-btn { background-color: var(--success-color); }
+.btn-download-item {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    border-color: var(--dark-gray);
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    font-weight: 500;
+    box-shadow: none;
+}
+.btn-download-item:hover {
+    background-color: #555;
+    transform: translateY(-1px);
+}
+.action-area {
+    text-align: center;
+    width: 100%;
+}
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+#optimize-all-btn {
+    margin-top: 1.5rem;
+}
+#download-all-btn {
+    background-color: var(--success-color);
+}
 
 /* =================================
    6. Format Seçenekleri ve Tooltip
