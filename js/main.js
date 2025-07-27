@@ -382,11 +382,22 @@ async function processSingleFile(file, listItem) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
+        // main.js, processSingleFile fonksiyonu içindeki resultActions değişkenini güncelleyin
         const resultActions = `
             <div class="result-buttons">
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
                 <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
-                <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
+                
+                <div class="tooltip-container">
+                    <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span class="icon-tooltip">Copy</span>
+                    </button>
+                    <div class="tooltip-content copy-tooltip">
+                        For compatibility, image is copied as PNG and may have a slightly larger file size.
+                    </div>
+                </div>
+
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
