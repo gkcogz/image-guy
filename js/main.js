@@ -48,9 +48,8 @@ uploadArea.addEventListener('drop', (e) => {
 // main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
     const targetButton = e.target.closest('button');
-    if (!targetButton && !e.target.classList.contains('modal-overlay')) return;
+    if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) return;
 
-    // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -58,7 +57,6 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
-    // "Copy" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-copy')) {
         const copyBtn = targetButton;
         const imageUrl = copyBtn.dataset.optimizedUrl;
@@ -86,7 +84,6 @@ document.body.addEventListener('click', async (e) => {
             alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
-    // Compare butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-compare')) {
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
@@ -94,7 +91,8 @@ document.body.addEventListener('click', async (e) => {
     }
     // "Edit & Crop" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-crop')) {
-        currentCropTarget = targetButton.closest('.result-buttons');
+        // --- DÜZELTME BURADA: ".result-buttons" yerine ".action-icon-group" kullanıyoruz ---
+        currentCropTarget = targetButton.closest('.action-icon-group');
         const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
         showCropModal(originalUrl, optimizedUrl);
@@ -364,10 +362,12 @@ function showCropModal(originalUrl, optimizedUrl) {
 // ANA İŞLEM FONKSİYONLARI
 // ===============================================
 
+// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
+
     try {
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
@@ -377,16 +377,19 @@ async function processSingleFile(file, listItem) {
         });
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
+
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
+        
         await new Promise(resolve => setTimeout(resolve, 50));
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
         await new Promise(resolve => setTimeout(resolve, 400));
+        
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -398,7 +401,7 @@ async function processSingleFile(file, listItem) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
-        // main.js, processSingleFile fonksiyonu içindeki resultActions değişkenini güncelleyin
+
         const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
@@ -423,6 +426,7 @@ async function processSingleFile(file, listItem) {
             successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
+
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
