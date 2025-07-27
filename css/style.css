@@ -166,6 +166,18 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .footer-container { gap: 1rem; }
     .footer-links { gap: 1rem 1.5rem; }
     .crop-actions { flex-direction: column; align-items: stretch; width: 100%; gap: 0.5rem; }
+        .result-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    /* YENİ EKLENEN KURAL */
+    /* "Copy" butonunu mobil cihazlarda gizle */
+    .btn-copy {
+        display: none;
+    }
 }
 
 /* "Copy" Butonu Tooltip Stili */
