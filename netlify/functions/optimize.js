@@ -1,5 +1,3 @@
-// Dosya Adı: netlify/functions/optimize.js (ICO ve PNG Favicon Desteği ile)
-
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
@@ -20,17 +18,33 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
     stream.on('end', () => resolve(Buffer.concat(chunks)));
 });
 
+// S3 "eventual consistency" sorununu çözmek için yardımcı fonksiyonlar
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const getObjectWithRetry = async (bucket, key, retries = 3, delay = 500) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const getCommand = new GetObjectCommand({ Bucket: bucket, Key: key });
+            const response = await s3Client.send(getCommand);
+            return await streamToBuffer(response.Body);
+        } catch (error) {
+            if (error.Code === 'NoSuchKey' && i < retries - 1) {
+                console.log(`Key ${key} not found, retrying in ${delay}ms... (Attempt ${i + 1})`);
+                await sleep(delay);
+            } else {
+                throw error;
+            }
+        }
+    }
+};
+
 exports.handler = async (event, context) => {
     try {
         const { key, outputFormat } = JSON.parse(event.body);
         const originalFilename = key.replace(/original-\d+-/, '');
         
-        const getCommand = new GetObjectCommand({
-            Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
-            Key: key,
-        });
-        const response = await s3Client.send(getCommand);
-        const fileDataBuffer = await streamToBuffer(response.Body);
+        // Orijinal dosyayı S3'ten "tekrar deneme" mantığıyla indiriyoruz.
+        const fileDataBuffer = await getObjectWithRetry(process.env.IMAGEGUY_AWS_S3_BUCKET_NAME, key);
         
         console.log(`Processing file: ${originalFilename} to format: ${outputFormat}`);
 
@@ -84,7 +98,7 @@ exports.handler = async (event, context) => {
         }
         
         const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
-        const newFilename = `favicon-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
+        const newFilename = `optimized-${Date.now()}-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 
         const putCommand = new PutObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
