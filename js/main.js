@@ -410,8 +410,15 @@ async function processSingleFile(file, listItem) {
             <div class="result-buttons">
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
                 <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
-                <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+                
+                <div class="tooltip-container">
+                    <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
+                    <div class="tooltip-content copy-tooltip">
+                        For compatibility, the image will be copied as a PNG. This may slightly increase the file size.
+                    </div>
+                </div>
+
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn-download-item">Download</a>
             </div>
         `;
         let successHTML;

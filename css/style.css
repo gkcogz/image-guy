@@ -167,3 +167,14 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .footer-links { gap: 1rem 1.5rem; }
     .crop-actions { flex-direction: column; align-items: stretch; width: 100%; gap: 0.5rem; }
 }
+
+/* "Copy" Butonu Tooltip Stili */
+.result-buttons .tooltip-container {
+    display: flex; /* Butonların hizalanmasını korumak için */
+}
+
+.copy-tooltip {
+    white-space: normal; /* Metnin kutu içinde alt satıra geçmesini sağlar */
+    width: 220px; /* Kutunun genişliği */
+    margin-left: -110px; /* Kutuyu butona göre ortalamak için */
+}
