@@ -402,16 +402,26 @@ async function processSingleFile(file, listItem) {
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
+        // Find and replace these sections inside your processSingleFile function in main.js
 
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+        
+        // Format the new size to be readable
+        const newSizeFormatted = formatFileSize(data.optimizedSize);
+
         if (savings >= 0) {
-            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
+            successHTML = `
+                <span class="savings">✓ ${savings.toFixed(0)}% Saved (${newSizeFormatted})</span> 
+                ${resultActions}
+            `;
         } else {
             const increase = Math.abs(savings);
-            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
+            successHTML = `
+                <span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased (${newSizeFormatted})</span> 
+                ${resultActions}
+            `;
         }
-        statusElement.innerHTML = successHTML;
 
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
