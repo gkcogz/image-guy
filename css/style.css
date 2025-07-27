@@ -301,3 +301,38 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     margin-top: 1.5rem;
     text-align: left;
 }
+
+/* =================================
+   Base64 Modal Stilleri (Geliştirilmiş Tasarım)
+   ================================= */
+.modal-content h2 {
+    width: 100%; /* Başlığın tam genişliği kaplamasını sağlar */
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.modal-content p {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin-bottom: 1.5rem; /* Metin ve kutu arasına boşluk */
+}
+
+.base64-textarea {
+    width: 100%;
+    min-height: 200px; /* Yüksekliği artırdık */
+    margin-bottom: 1.5rem; /* Kutu ve buton arasına boşluk */
+    padding: 15px;
+    font-family: 'Courier New', Courier, monospace; /* Daha okunaklı bir font */
+    font-size: 0.9rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px; /* Daha yuvarlak köşeler */
+    resize: vertical;
+    background-color: #f8f9fa; /* Hafif arka plan rengi */
+}
+
+/* Kopyala butonunu konteynerin sonuna, sağa yaslıyoruz */
+#copy-base64-btn {
+    align-self: flex-end; /* Butonu sağa yaslar */
+    margin-top: 0;
+}
