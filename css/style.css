@@ -289,3 +289,15 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     width: 220px; /* Kutunun genişliği */
     margin-left: -110px; /* Kutuyu butona göre ortalamak için */
 }
+
+/* Akıllı İpucu Kutusu Stili */
+.smart-tip {
+    font-size: 0.9rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 0.8rem 1rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
