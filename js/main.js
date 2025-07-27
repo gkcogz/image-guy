@@ -54,23 +54,38 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
+    // Find and replace this block inside your document.body.addEventListener function
+
     // "Copy" butonuna basıldığında
     if (e.target.classList.contains('btn-copy')) {
         const copyBtn = e.target;
         const imageUrl = copyBtn.dataset.optimizedUrl;
+
+        // Give the user a quick warning/confirmation
+        if (!confirm("For compatibility, the image will be copied as a PNG. This may slightly increase the file size. Do you want to continue?")) {
+            return; // Stop if the user clicks "Cancel"
+        }
+
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
-            await navigator.clipboard.write([ new ClipboardItem({ [blob.type]: blob }) ]);
-            copyBtn.textContent = 'Copied!';
+            
+            await navigator.clipboard.write([
+                new ClipboardItem({ [blob.type]: blob })
+            ]);
+
+            // Give user feedback
+            const originalText = copyBtn.innerHTML; // Save original content
+            copyBtn.innerHTML = `✓ Copied!`;
             copyBtn.classList.add('copied');
             setTimeout(() => {
-                copyBtn.textContent = 'Copy';
+                copyBtn.innerHTML = originalText;
                 copyBtn.classList.remove('copied');
             }, 2000);
+
         } catch (error) {
             console.error('Failed to copy image:', error);
-            alert('Failed to copy image. Your browser might not fully support this action.');
+            alert('Failed to copy image to clipboard. Your browser might not support this feature.');
         }
     }
     
