@@ -284,7 +284,8 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
+// Replace your existing showCropModal function in main.js with this one
+
 function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -305,15 +306,21 @@ function showCropModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const image = document.getElementById('image-to-crop');
+    const modalContent = document.querySelector('.crop-modal-content');
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
-        if (cropper) { cropper.destroy(); }
+         if (cropper) {
+            cropper.destroy();
+         }
          cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
             autoCropArea: 0.8,
             ready: function () {
+                // THIS IS THE FIX:
+                // We add the 'ready' class only when Cropper.js is finished.
+                modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
         });
