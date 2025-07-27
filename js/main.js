@@ -45,119 +45,135 @@ uploadArea.addEventListener('drop', (e) => {
 
 // Replace the entire document.body.addEventListener function in main.js with this one.
 
+// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
-    // Modal closing logic
+    const targetButton = e.target.closest('button');
+    if (!targetButton && !e.target.classList.contains('modal-overlay')) return;
+
+    // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
+            if (cropper) { cropper.destroy(); cropper = null; }
             modal.remove();
         }
     }
-
-    // "Copy" button logic (CORRECTED)
-    if (e.target.classList.contains('btn-copy')) {
-        const copyBtn = e.target;
+    // "Copy" butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-copy')) {
+        const copyBtn = targetButton;
         const imageUrl = copyBtn.dataset.optimizedUrl;
-
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
-
-            // Create a canvas to "clean" the image's origin
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = await createImageBitmap(blob);
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
-
             canvas.toBlob(async (pngBlob) => {
-                // Now, copy the blob from the canvas
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': pngBlob })
-                ]);
-
-                // Give user feedback
+                await navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
                 const originalHTML = copyBtn.innerHTML;
-                copyBtn.innerHTML = `✓ Copied!`;
+                copyBtn.innerHTML = `✓`;
                 copyBtn.classList.add('copied');
                 setTimeout(() => {
                     copyBtn.innerHTML = originalHTML;
                     copyBtn.classList.remove('copied');
                 }, 2000);
             }, 'image/png');
-
         } catch (error) {
             console.error('Failed to copy image:', error);
-            alert('Failed to copy image to clipboard. Your browser might not support this feature.');
+            alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
-
-    // Compare button logic
-    if (e.target.classList.contains('btn-compare')) {
-        const originalUrl = e.target.dataset.originalUrl;
-        const optimizedUrl = e.target.dataset.optimizedUrl;
+    // Compare butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-compare')) {
+        const originalUrl = targetButton.dataset.originalUrl;
+        const optimizedUrl = targetButton.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-    
-    // "Edit & Crop" button logic
-    if (e.target.classList.contains('btn-crop')) {
-        currentCropTarget = e.target.closest('.result-buttons');
+    // "Edit & Crop" butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-crop')) {
+        currentCropTarget = targetButton.closest('.result-buttons');
         const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
-        const optimizedUrl = e.target.dataset.optimizedUrl;
+        const optimizedUrl = targetButton.dataset.optimizedUrl;
         showCropModal(originalUrl, optimizedUrl);
     }
-
-    // "Apply Crop" button logic
-    if (e.target.id === 'apply-crop-btn') {
+    // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
+    if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
         
-        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
-        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+        const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
+        const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+        
+        const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
+        
+        const originalCroppedBlob = await new Promise((resolve, reject) => {
+            const originalImage = new Image();
+            originalImage.crossOrigin = "anonymous";
+            originalImage.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const cropBoxData = cropper.getData(true);
+                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
+                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
+                canvas.width = cropBoxData.width * scaleX;
+                canvas.height = cropBoxData.height * scaleY;
+                ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
+                
+                let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+                if(isCircle) {
+                    const circleCanvas = document.createElement('canvas');
+                    const context = circleCanvas.getContext('2d');
+                    const size = Math.min(canvas.width, canvas.height);
+                    circleCanvas.width = size;
+                    circleCanvas.height = size;
+                    context.beginPath();
+                    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+                    context.closePath();
+                    context.clip();
+                    context.drawImage(canvas, 0, 0);
+                    circleCanvas.toBlob(resolve, 'image/png');
+                } else {
+                    canvas.toBlob(resolve, 'image/png');
+                }
+            };
+            originalImage.onerror = reject;
+            originalImage.src = originalUrl;
+        });
 
-        if (isCircle) {
-            const circleCanvas = document.createElement('canvas');
-            const context = circleCanvas.getContext('2d');
-            const size = croppedCanvas.width;
-            circleCanvas.width = size;
-            circleCanvas.height = size;
-            context.beginPath();
-            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-            context.closePath();
-            context.clip();
-            context.drawImage(croppedCanvas, 0, 0);
-            croppedCanvas = circleCanvas;
+        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
+        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
+
+        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+        const compareButton = currentCropTarget.querySelector('.btn-compare');
+        const cropButton = currentCropTarget.querySelector('.btn-crop');
+        const copyButton = currentCropTarget.querySelector('.btn-copy');
+
+        if(downloadLink) downloadLink.href = newOptimizedUrl;
+        if(compareButton) {
+            compareButton.dataset.optimizedUrl = newOptimizedUrl;
+            compareButton.dataset.originalUrl = newOriginalUrl;
         }
-
-        croppedCanvas.toBlob((blob) => {
-            const newUrl = URL.createObjectURL(blob);
-            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
-            const compareButton = currentCropTarget.querySelector('.btn-compare');
-            const cropButton = currentCropTarget.querySelector('.btn-crop');
-            const copyButton = currentCropTarget.querySelector('.btn-copy');
-
-            if (downloadLink) downloadLink.href = newUrl;
-            if (compareButton) compareButton.dataset.optimizedUrl = newUrl;
-            if (cropButton) cropButton.dataset.optimizedUrl = newUrl;
-            if (copyButton) copyButton.dataset.optimizedUrl = newUrl;
-            
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) {
-                cropper.destroy();
-                cropper = null;
-                modal.remove();
-            }
-        }, 'image/png');
+        if(cropButton) {
+            cropButton.dataset.optimizedUrl = newOptimizedUrl;
+            cropButton.dataset.originalUrl = newOriginalUrl;
+        }
+        if(copyButton) {
+            copyButton.dataset.optimizedUrl = newOptimizedUrl;
+        }
+        
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
     }
-
-    // Crop shape button logic
-    if (e.target.classList.contains('crop-shape-btn')) {
+    // Kırpma şekli butonlarına basıldığında
+    if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
-        const shape = e.target.dataset.shape;
+        const shape = targetButton.dataset.shape;
         const cropBox = document.querySelector('.cropper-view-box');
         const cropFace = document.querySelector('.cropper-face');
         
@@ -172,7 +188,7 @@ document.body.addEventListener('click', async (e) => {
         }
         
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
+        targetButton.classList.add('active');
     }
 });
 
@@ -384,23 +400,20 @@ async function processSingleFile(file, listItem) {
         const data = await optimizeResponse.json();
         // main.js, processSingleFile fonksiyonu içindeki resultActions değişkenini güncelleyin
         const resultActions = `
-            <div class="result-buttons">
-                <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
-                <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
-                
-                <div class="tooltip-container">
-                    <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span class="icon-tooltip">Copy</span>
-                    </button>
-                    <div class="tooltip-content copy-tooltip">
-                        For compatibility, image is copied as PNG and may have a slightly larger file size.
-                    </div>
-                </div>
-
+            <div class="action-icon-group">
+                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                </button>
+                <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                </button>
+                <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
+
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {

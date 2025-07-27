@@ -81,7 +81,14 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
 .btn-compare, .btn-crop, .btn-copy { background-color: #f8f9fa; color: var(--dark-gray); border: 1px solid #ced4da; }
 .btn-compare:hover, .btn-crop:hover, .btn-copy:hover { background-color: #e9ecef; transform: translateY(-1px); }
-.btn-copy.copied { background-color: var(--success-color); color: var(--white-color); border-color: var(--success-color); }
+.icon-btn.copied {
+    background-color: var(--success-color);
+    color: var(--white-color);
+    border-color: var(--success-color);
+}
+.icon-btn.copied svg {
+    display: none; /* Kopyalandığında ikonu gizle */
+}
 .action-area { text-align: center; width: 100%; }
 .action-buttons-container { display: flex; justify-content: center; gap: 1rem; width: 100%; margin-top: 1.5rem; }
 #optimize-all-btn { margin-top: 1.5rem; }
