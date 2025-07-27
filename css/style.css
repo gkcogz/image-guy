@@ -147,3 +147,27 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .footer-links { gap: 1rem 1.5rem; }
     .crop-actions { flex-direction: column; align-items: stretch; width: 100%; gap: 0.5rem; }
 }
+
+/* "Copy" Butonu Stili */
+.btn-copy {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.btn-copy:hover {
+    background-color: #e9ecef;
+}
+
+/* Kopyalama başarılı olduğunda görünecek geçici durum */
+.btn-copy.copied {
+    background-color: var(--success-color);
+    color: var(--white-color);
+    border-color: var(--success-color);
+}

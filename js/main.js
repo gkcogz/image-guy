@@ -50,6 +50,34 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
+        // --- YENİ EKLENEN KOPYALAMA MANTIĞI ---
+    if (e.target.classList.contains('btn-copy')) {
+        const copyBtn = e.target;
+        const imageUrl = copyBtn.dataset.optimizedUrl;
+
+        try {
+            // S3'teki resim verisini çek
+            const response = await fetch(imageUrl);
+            const imageBlob = await response.blob();
+
+            // Resmi panoya kopyala
+            await navigator.clipboard.write([
+                new ClipboardItem({ [imageBlob.type]: imageBlob })
+            ]);
+
+            // Kullanıcıya geri bildirim ver
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+                copyBtn.classList.remove('copied');
+            }, 2000); // 2 saniye sonra eski haline dön
+
+        } catch (error) {
+            console.error('Failed to copy image:', error);
+            alert('Failed to copy image to clipboard. Your browser might not support this feature.');
+        }
+    }
     // Compare butonuna basıldığında
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
@@ -379,7 +407,8 @@ async function processSingleFile(file, listItem) {
             <div class="result-buttons">
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
                 <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+                <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn-download-item">Download</a>
             </div>
         `;
 
