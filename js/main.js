@@ -1,6 +1,6 @@
 let fileQueue = []; 
-let cropper = null; // Kırpma kütüphanesi için genel değişken
-let currentCropTarget = null; // Hangi dosya satırının düzenlendiğini takip etmek için
+let cropper = null;
+let currentCropTarget = null;
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
@@ -10,7 +10,6 @@ const initialUploadAreaHTML = uploadArea.innerHTML;
 // OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
 // ===============================================
 
-// Yükleme alanı içindeki dinamik butonlar için ana dinleyici
 uploadArea.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -27,13 +26,11 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
-// Dosya input'u ile dosya seçimi
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Sürükle-Bırak (Drag & Drop)
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -43,13 +40,11 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Replace the entire document.body.addEventListener function in main.js with this one.
-
-// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
     const targetButton = e.target.closest('button');
     if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) return;
 
+    // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -57,6 +52,7 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
+    // "Copy" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-copy')) {
         const copyBtn = targetButton;
         const imageUrl = copyBtn.dataset.optimizedUrl;
@@ -84,6 +80,7 @@ document.body.addEventListener('click', async (e) => {
             alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
+    // Compare butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-compare')) {
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
@@ -91,7 +88,6 @@ document.body.addEventListener('click', async (e) => {
     }
     // "Edit & Crop" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-crop')) {
-        // --- DÜZELTME BURADA: ".result-buttons" yerine ".action-icon-group" kullanıyoruz ---
         currentCropTarget = targetButton.closest('.action-icon-group');
         const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
@@ -190,7 +186,6 @@ document.body.addEventListener('click', async (e) => {
     }
 });
 
-// Mobil menü için olay dinleyicisi
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return; 
@@ -288,6 +283,88 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
+async function processSingleFile(file, listItem) {
+    const statusElement = listItem.querySelector('.file-item-status');
+    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+    const originalObjectUrl = URL.createObjectURL(file);
+    try {
+        statusElement.textContent = 'Getting link...';
+        const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, fileType: file.type }),
+        });
+        if (!linkResponse.ok) throw new Error('Could not get upload link.');
+        const { uploadUrl, key } = await linkResponse.json();
+        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
+        statusElement.innerHTML = progressBarContainer;
+        const progressBarFill = listItem.querySelector('.progress-bar-fill');
+        const progressBarText = listItem.querySelector('.progress-bar-text');
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await uploadWithProgress(uploadUrl, file, (percent) => {
+            progressBarFill.style.width = `${percent.toFixed(0)}%`;
+            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+        });
+        await new Promise(resolve => setTimeout(resolve, 400));
+        statusElement.innerHTML = `<div class="spinner-small"></div>`;
+        const optimizeResponse = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, outputFormat: selectedFormat }),
+        });
+        if (!optimizeResponse.ok) {
+             const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
+             throw new Error(errorData.error);
+        }
+        const data = await optimizeResponse.json();
+        
+        const resultActions = `
+            <div class="action-icon-group">
+                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                </button>
+                <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                </button>
+                <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+            </div>
+        `;
+        
+        let successHTML;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+        if (savings >= 0) {
+            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
+        } else {
+            const increase = Math.abs(savings);
+            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
+        }
+        statusElement.innerHTML = successHTML;
+    } catch (error) {
+        console.error('Processing failed for', file.name, ':', error);
+        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
+        URL.revokeObjectURL(originalObjectUrl);
+    }
+}
+
+async function startBatchOptimization() {
+    console.log(`Starting optimization for ${fileQueue.length} files...`);
+    const optimizeBtn = document.getElementById('optimize-all-btn');
+    if (optimizeBtn) {
+        optimizeBtn.textContent = 'Processing...';
+        optimizeBtn.disabled = true;
+    }
+    const listItems = document.querySelectorAll('.file-list-item');
+    const optimizationPromises = fileQueue.map((file, index) => {
+        const listItem = listItems[index];
+        return processSingleFile(file, listItem);
+    });
+    await Promise.all(optimizationPromises);
+    updateMainButtonAfterCompletion();
+}
+
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
@@ -297,6 +374,44 @@ function updateMainButtonAfterCompletion() {
                 <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
             </div>
         `;
+    }
+}
+
+async function handleZipDownload() {
+    const downloadAllBtn = document.getElementById('download-all-btn');
+    if (!downloadAllBtn) return;
+    console.log('Starting ZIP download process...');
+    downloadAllBtn.textContent = 'Zipping...';
+    downloadAllBtn.disabled = true;
+    try {
+        const zip = new JSZip();
+        const downloadLinks = document.querySelectorAll('a.btn-download-item');
+        const fetchPromises = Array.from(downloadLinks).map(link => 
+            fetch(link.href)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch ${link.href}`);
+                    return response.blob();
+                })
+                .then(blob => ({ name: link.getAttribute('download'), blob: blob }))
+        );
+        const files = await Promise.all(fetchPromises);
+        files.forEach(file => { zip.file(file.name, file.blob); });
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const tempUrl = URL.createObjectURL(zipBlob);
+        const tempLink = document.createElement('a');
+        tempLink.href = tempUrl;
+        tempLink.setAttribute('download', 'image-guy-optimized.zip');
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        URL.revokeObjectURL(tempUrl);
+        downloadAllBtn.textContent = 'Download All as .ZIP';
+        downloadAllBtn.disabled = false;
+    } catch (error) {
+        console.error('Failed to create ZIP file:', error);
+        alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
+        downloadAllBtn.textContent = 'Download All as .ZIP';
+        downloadAllBtn.disabled = false;
     }
 }
 
@@ -356,134 +471,4 @@ function showCropModal(originalUrl, optimizedUrl) {
         });
     };
     if (image.complete) { image.onload(); }
-}
-
-// ===============================================
-// ANA İŞLEM FONKSİYONLARI
-// ===============================================
-
-// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
-async function processSingleFile(file, listItem) {
-    const statusElement = listItem.querySelector('.file-item-status');
-    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
-    const originalObjectUrl = URL.createObjectURL(file);
-
-    try {
-        statusElement.textContent = 'Getting link...';
-        const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: file.name, fileType: file.type }),
-        });
-        if (!linkResponse.ok) throw new Error('Could not get upload link.');
-        const { uploadUrl, key } = await linkResponse.json();
-
-        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
-        statusElement.innerHTML = progressBarContainer;
-        const progressBarFill = listItem.querySelector('.progress-bar-fill');
-        const progressBarText = listItem.querySelector('.progress-bar-text');
-        
-        await new Promise(resolve => setTimeout(resolve, 50));
-        await uploadWithProgress(uploadUrl, file, (percent) => {
-            progressBarFill.style.width = `${percent.toFixed(0)}%`;
-            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
-        });
-        await new Promise(resolve => setTimeout(resolve, 400));
-        
-        statusElement.innerHTML = `<div class="spinner-small"></div>`;
-        const optimizeResponse = await fetch('/.netlify/functions/optimize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key, outputFormat: selectedFormat }),
-        });
-        if (!optimizeResponse.ok) {
-             const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
-             throw new Error(errorData.error);
-        }
-        const data = await optimizeResponse.json();
-
-        const resultActions = `
-            <div class="action-icon-group">
-                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
-                </button>
-                <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
-                </button>
-                <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
-            </div>
-        `;
-
-        let successHTML;
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
-        if (savings >= 0) {
-            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
-        } else {
-            const increase = Math.abs(savings);
-            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
-        }
-        statusElement.innerHTML = successHTML;
-
-    } catch (error) {
-        console.error('Processing failed for', file.name, ':', error);
-        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
-        URL.revokeObjectURL(originalObjectUrl);
-    }
-}
-
-async function startBatchOptimization() {
-    console.log(`Starting optimization for ${fileQueue.length} files...`);
-    const optimizeBtn = document.getElementById('optimize-all-btn');
-    if (optimizeBtn) {
-        optimizeBtn.textContent = 'Processing...';
-        optimizeBtn.disabled = true;
-    }
-    const listItems = document.querySelectorAll('.file-list-item');
-    const optimizationPromises = fileQueue.map((file, index) => {
-        const listItem = listItems[index];
-        return processSingleFile(file, listItem);
-    });
-    await Promise.all(optimizationPromises);
-    updateMainButtonAfterCompletion();
-}
-
-async function handleZipDownload() {
-    const downloadAllBtn = document.getElementById('download-all-btn');
-    if (!downloadAllBtn) return;
-    console.log('Starting ZIP download process...');
-    downloadAllBtn.textContent = 'Zipping...';
-    downloadAllBtn.disabled = true;
-    try {
-        const zip = new JSZip();
-        const downloadLinks = document.querySelectorAll('a.btn-download-item');
-        const fetchPromises = Array.from(downloadLinks).map(link => 
-            fetch(link.href)
-                .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch ${link.href}`);
-                    return response.blob();
-                })
-                .then(blob => ({ name: link.getAttribute('download'), blob: blob }))
-        );
-        const files = await Promise.all(fetchPromises);
-        files.forEach(file => { zip.file(file.name, file.blob); });
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const tempUrl = URL.createObjectURL(zipBlob);
-        const tempLink = document.createElement('a');
-        tempLink.href = tempUrl;
-        tempLink.setAttribute('download', 'image-guy-optimized.zip');
-        document.body.appendChild(tempLink);
-        tempLink.click();
-        document.body.removeChild(tempLink);
-        URL.revokeObjectURL(tempUrl);
-        downloadAllBtn.textContent = 'Download All as .ZIP';
-        downloadAllBtn.disabled = false;
-    } catch (error) {
-        console.error('Failed to create ZIP file:', error);
-        alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
-        downloadAllBtn.textContent = 'Download All as .ZIP';
-        downloadAllBtn.disabled = false;
-    }
 }
