@@ -43,6 +43,7 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
+// Modal pencereleri ve dinamik butonlar için genel dinleyici
 document.body.addEventListener('click', async (e) => {
     // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
@@ -57,46 +58,28 @@ document.body.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-copy')) {
         const copyBtn = e.target;
         const imageUrl = copyBtn.dataset.optimizedUrl;
-
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
-
-            // Resmi panoya kopyalamadan önce PNG formatına çeviriyoruz (en iyi uyumluluk için)
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = await createImageBitmap(blob);
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            canvas.toBlob(async (pngBlob) => {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': pngBlob })
-                ]);
-                
-                copyBtn.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-
-            }, 'image/png');
-
+            await navigator.clipboard.write([ new ClipboardItem({ [blob.type]: blob }) ]);
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+                copyBtn.classList.remove('copied');
+            }, 2000);
         } catch (error) {
             console.error('Failed to copy image:', error);
-            alert('Failed to copy image to clipboard. Your browser might not support this feature.');
+            alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
-
+    
     // Compare butonuna basıldığında
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-
     // "Edit & Crop" butonuna basıldığında
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
@@ -104,16 +87,30 @@ document.body.addEventListener('click', async (e) => {
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(originalUrl, optimizedUrl);
     }
-
     // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
         
+        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+
+        if (isCircle) {
+            const circleCanvas = document.createElement('canvas');
+            const context = circleCanvas.getContext('2d');
+            const size = Math.min(croppedCanvas.width, croppedCanvas.height);
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            context.beginPath();
+            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            croppedCanvas = circleCanvas;
+        }
+
+        const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
+        
         const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
-        const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        
-        const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
-        
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
             originalImage.crossOrigin = "anonymous";
@@ -121,21 +118,27 @@ document.body.addEventListener('click', async (e) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const cropBoxData = cropper.getData(true);
-                
                 const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
                 const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
-
                 canvas.width = cropBoxData.width * scaleX;
                 canvas.height = cropBoxData.height * scaleY;
+                ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
                 
-                ctx.drawImage(
-                    originalImage,
-                    cropBoxData.x * scaleX, cropBoxData.y * scaleY,
-                    cropBoxData.width * scaleX, cropBoxData.height * scaleY,
-                    0, 0,
-                    canvas.width, canvas.height
-                );
-                canvas.toBlob(resolve, 'image/png');
+                if(isCircle) {
+                    const circleCanvas = document.createElement('canvas');
+                    const context = circleCanvas.getContext('2d');
+                    const size = Math.min(canvas.width, canvas.height);
+                    circleCanvas.width = size;
+                    circleCanvas.height = size;
+                    context.beginPath();
+                    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+                    context.closePath();
+                    context.clip();
+                    context.drawImage(canvas, 0, 0);
+                    circleCanvas.toBlob(resolve, 'image/png');
+                } else {
+                    canvas.toBlob(resolve, 'image/png');
+                }
             };
             originalImage.onerror = reject;
             originalImage.src = originalUrl;
@@ -147,6 +150,7 @@ document.body.addEventListener('click', async (e) => {
         const downloadLink = currentCropTarget.querySelector('.btn-download-item');
         const compareButton = currentCropTarget.querySelector('.btn-compare');
         const cropButton = currentCropTarget.querySelector('.btn-crop');
+        const copyButton = currentCropTarget.querySelector('.btn-copy');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
         if(compareButton) {
@@ -157,6 +161,9 @@ document.body.addEventListener('click', async (e) => {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
             cropButton.dataset.originalUrl = newOriginalUrl;
         }
+        if(copyButton) {
+            copyButton.dataset.optimizedUrl = newOptimizedUrl;
+        }
         
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -165,7 +172,6 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
-
     // Kırpma şekli butonlarına basıldığında
     if (e.target.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
@@ -192,16 +198,13 @@ document.body.addEventListener('click', async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return; 
-
     const mainNav = document.querySelector('.main-nav');
     const openIcon = document.getElementById('menu-open-icon');
     const closeIcon = document.getElementById('menu-close-icon');
     const body = document.body;
-
     menuToggle.addEventListener('click', () => {
         const isActive = mainNav.classList.toggle('mobile-active');
         body.classList.toggle('mobile-menu-active');
-
         if (openIcon && closeIcon) {
             openIcon.style.display = isActive ? 'none' : 'block';
             closeIcon.style.display = isActive ? 'block' : 'none';
@@ -230,7 +233,6 @@ function updateUIForFileList() {
         listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Ready</div>`;
         fileListElement.appendChild(listItem);
     });
-    
     const formatOptionsHTML = `
         <div class="format-options-header">
             <span class="format-label">Output Format:</span>
@@ -254,11 +256,9 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
         </div>
     `;
-
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
     actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>`;
-    
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add('file-selected');
@@ -344,11 +344,9 @@ function showCropModal(originalUrl, optimizedUrl) {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-
     const image = document.getElementById('image-to-crop');
     const modalContent = document.querySelector('.crop-modal-content');
     image.crossOrigin = "anonymous";
-
     image.onload = () => {
         if (cropper) { cropper.destroy(); }
          cropper = new Cropper(image, {
@@ -368,12 +366,10 @@ function showCropModal(originalUrl, optimizedUrl) {
 // ANA İŞLEM FONKSİYONLARI
 // ===============================================
 
-// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
-
     try {
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
@@ -383,11 +379,16 @@ async function processSingleFile(file, listItem) {
         });
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
-
-        const progressBarContainer = `<div class="progress-bar-container">...</div>`;
+        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
-        // ... (Progress bar logic remains the same)
-        
+        const progressBarFill = listItem.querySelector('.progress-bar-fill');
+        const progressBarText = listItem.querySelector('.progress-bar-text');
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await uploadWithProgress(uploadUrl, file, (percent) => {
+            progressBarFill.style.width = `${percent.toFixed(0)}%`;
+            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+        });
+        await new Promise(resolve => setTimeout(resolve, 400));
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -399,23 +400,14 @@ async function processSingleFile(file, listItem) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
-
-        // --- DEĞİŞİKLİK BURADA: Yeni İkonlu Buton Grubu Oluşturuluyor ---
         const resultActions = `
-            <div class="action-icon-group">
-                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
-                </button>
-                <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
-                </button>
-                <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
+            <div class="result-buttons">
+                <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
+                <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
+                <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
-
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
@@ -425,13 +417,13 @@ async function processSingleFile(file, listItem) {
             successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
-
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
         URL.revokeObjectURL(originalObjectUrl);
     }
 }
+
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
