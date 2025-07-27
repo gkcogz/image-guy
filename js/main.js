@@ -1,6 +1,6 @@
 let fileQueue = []; 
-let cropper = null;
-let currentCropTarget = null;
+let cropper = null; // Kırpma kütüphanesi için genel değişken
+let currentCropTarget = null; // Hangi dosya satırının düzenlendiğini takip etmek için
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
@@ -10,6 +10,7 @@ const initialUploadAreaHTML = uploadArea.innerHTML;
 // OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
 // ===============================================
 
+// Yükleme alanı içindeki dinamik butonlar için ana dinleyici
 uploadArea.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
         e.preventDefault();
@@ -26,11 +27,13 @@ uploadArea.addEventListener('click', (e) => {
     }
 });
 
+// Dosya input'u ile dosya seçimi
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
 });
 
+// Sürükle-Bırak (Drag & Drop)
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
 uploadArea.addEventListener('drop', (e) => {
@@ -40,7 +43,6 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
     // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
@@ -50,40 +52,51 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
-        // --- YENİ EKLENEN KOPYALAMA MANTIĞI ---
+
+    // "Copy" butonuna basıldığında
     if (e.target.classList.contains('btn-copy')) {
         const copyBtn = e.target;
         const imageUrl = copyBtn.dataset.optimizedUrl;
 
         try {
-            // S3'teki resim verisini çek
             const response = await fetch(imageUrl);
-            const imageBlob = await response.blob();
+            const blob = await response.blob();
 
-            // Resmi panoya kopyala
-            await navigator.clipboard.write([
-                new ClipboardItem({ [imageBlob.type]: imageBlob })
-            ]);
+            // Resmi panoya kopyalamadan önce PNG formatına çeviriyoruz (en iyi uyumluluk için)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await createImageBitmap(blob);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
 
-            // Kullanıcıya geri bildirim ver
-            copyBtn.textContent = 'Copied!';
-            copyBtn.classList.add('copied');
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-                copyBtn.classList.remove('copied');
-            }, 2000); // 2 saniye sonra eski haline dön
+            canvas.toBlob(async (pngBlob) => {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': pngBlob })
+                ]);
+                
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+
+            }, 'image/png');
 
         } catch (error) {
             console.error('Failed to copy image:', error);
             alert('Failed to copy image to clipboard. Your browser might not support this feature.');
         }
     }
+
     // Compare butonuna basıldığında
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
+
     // "Edit & Crop" butonuna basıldığında
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
@@ -91,17 +104,16 @@ document.body.addEventListener('click', async (e) => {
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(originalUrl, optimizedUrl);
     }
-    // "Apply Crop" butonuna basıldığında
+
+    // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
         
         const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
         const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
         
-        // 1. Optimize edilmiş ve kırpılmış versiyonu oluştur
         const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
         
-        // 2. Orijinal resmi de aynı şekilde kırp ("Akıllı Karşılaştırma" için)
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
             originalImage.crossOrigin = "anonymous";
@@ -153,6 +165,7 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
     }
+
     // Kırpma şekli butonlarına basıldığında
     if (e.target.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
@@ -175,6 +188,7 @@ document.body.addEventListener('click', async (e) => {
     }
 });
 
+// Mobil menü için olay dinleyicisi
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return; 
@@ -312,8 +326,6 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// Replace your existing showCropModal function in main.js with this one
-
 function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -338,37 +350,28 @@ function showCropModal(originalUrl, optimizedUrl) {
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
-         if (cropper) {
-            cropper.destroy();
-         }
+        if (cropper) { cropper.destroy(); }
          cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
             autoCropArea: 0.8,
             ready: function () {
-                // THIS IS THE FIX:
-                // We add the 'ready' class only when Cropper.js is finished.
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
         });
     };
-    if (image.complete) {
-        image.onload();
-    }
+    if (image.complete) { image.onload(); }
 }
-
 
 // ===============================================
 // ANA İŞLEM FONKSİYONLARI
 // ===============================================
 
-// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
-
     try {
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
@@ -384,12 +387,12 @@ async function processSingleFile(file, listItem) {
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        await new Promise(resolve => setTimeout(resolve, 50)); 
+        await new Promise(resolve => setTimeout(resolve, 50));
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        await new Promise(resolve => setTimeout(resolve, 400)); 
+        await new Promise(resolve => setTimeout(resolve, 400));
         
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
@@ -408,10 +411,9 @@ async function processSingleFile(file, listItem) {
                 <button class="btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Compare</button>
                 <button class="btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">Edit & Crop</button>
                 <button class="btn-copy" data-optimized-url="${data.downloadUrl}">Copy</button>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn-download-item">Download</a>
+                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
-
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
@@ -421,7 +423,6 @@ async function processSingleFile(file, listItem) {
             successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
-
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
