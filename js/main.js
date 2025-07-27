@@ -200,6 +200,25 @@ document.body.addEventListener('click', async (e) => {
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
         targetButton.classList.add('active');
     }
+        // "Get Base64" butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-base64')) {
+        const imageUrl = targetButton.dataset.optimizedUrl;
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            // FileReader kullanarak blob'u Base64 string'ine çevir
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                showBase64Modal(reader.result);
+            };
+            reader.readAsDataURL(blob);
+
+        } catch (error) {
+            console.error('Failed to get Base64 data:', error);
+            alert('Could not generate Base64 code.');
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -523,4 +542,35 @@ function showCropModal(originalUrl, optimizedUrl) {
         });
     };
     if (image.complete) { image.onload(); }
+}
+
+// Bu yeni fonksiyonu main.js dosyasının en altına ekleyin
+function showBase64Modal(base64String) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <h2>Base64 Code</h2>
+                <p>You can use this code directly in your CSS or HTML.</p>
+                <textarea class="base64-textarea" readonly>${base64String}</textarea>
+                <button class="btn btn-primary" id="copy-base64-btn">Copy to Clipboard</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Otomatik olarak tüm metni seç
+    const textarea = document.querySelector('.base64-textarea');
+    textarea.select();
+
+    // Kopyala butonuna işlevsellik ekle
+    const copyBtn = document.getElementById('copy-base64-btn');
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(base64String).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+        });
+    });
 }
