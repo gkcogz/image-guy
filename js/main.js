@@ -43,66 +43,76 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// Modal pencereleri ve dinamik butonlar için genel dinleyici
+// Replace the entire document.body.addEventListener function in main.js with this one.
+
 document.body.addEventListener('click', async (e) => {
-    // Compare ve Crop Modallarını kapatma
+    // Modal closing logic
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            if (cropper) { cropper.destroy(); cropper = null; }
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
             modal.remove();
         }
     }
 
-    // Find and replace this block inside your document.body.addEventListener function
-
-    // "Copy" butonuna basıldığında
+    // "Copy" button logic (CORRECTED)
     if (e.target.classList.contains('btn-copy')) {
         const copyBtn = e.target;
         const imageUrl = copyBtn.dataset.optimizedUrl;
 
-        // Give the user a quick warning/confirmation
-        if (!confirm("For compatibility, the image will be copied as a PNG. This may slightly increase the file size. Do you want to continue?")) {
-            return; // Stop if the user clicks "Cancel"
-        }
-
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
-            
-            await navigator.clipboard.write([
-                new ClipboardItem({ [blob.type]: blob })
-            ]);
 
-            // Give user feedback
-            const originalText = copyBtn.innerHTML; // Save original content
-            copyBtn.innerHTML = `✓ Copied!`;
-            copyBtn.classList.add('copied');
-            setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.classList.remove('copied');
-            }, 2000);
+            // Create a canvas to "clean" the image's origin
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await createImageBitmap(blob);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(async (pngBlob) => {
+                // Now, copy the blob from the canvas
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': pngBlob })
+                ]);
+
+                // Give user feedback
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = `✓ Copied!`;
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }, 'image/png');
 
         } catch (error) {
             console.error('Failed to copy image:', error);
             alert('Failed to copy image to clipboard. Your browser might not support this feature.');
         }
     }
-    
-    // Compare butonuna basıldığında
+
+    // Compare button logic
     if (e.target.classList.contains('btn-compare')) {
         const originalUrl = e.target.dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
-    // "Edit & Crop" butonuna basıldığında
+    
+    // "Edit & Crop" button logic
     if (e.target.classList.contains('btn-crop')) {
         currentCropTarget = e.target.closest('.result-buttons');
         const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
         const optimizedUrl = e.target.dataset.optimizedUrl;
         showCropModal(originalUrl, optimizedUrl);
     }
-    // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
+
+    // "Apply Crop" button logic
     if (e.target.id === 'apply-crop-btn') {
         if (!cropper) return;
         
@@ -112,7 +122,7 @@ document.body.addEventListener('click', async (e) => {
         if (isCircle) {
             const circleCanvas = document.createElement('canvas');
             const context = circleCanvas.getContext('2d');
-            const size = Math.min(croppedCanvas.width, croppedCanvas.height);
+            const size = croppedCanvas.width;
             circleCanvas.width = size;
             circleCanvas.height = size;
             context.beginPath();
@@ -123,71 +133,28 @@ document.body.addEventListener('click', async (e) => {
             croppedCanvas = circleCanvas;
         }
 
-        const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
-        
-        const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
-        const originalCroppedBlob = await new Promise((resolve, reject) => {
-            const originalImage = new Image();
-            originalImage.crossOrigin = "anonymous";
-            originalImage.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const cropBoxData = cropper.getData(true);
-                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
-                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
-                canvas.width = cropBoxData.width * scaleX;
-                canvas.height = cropBoxData.height * scaleY;
-                ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
-                
-                if(isCircle) {
-                    const circleCanvas = document.createElement('canvas');
-                    const context = circleCanvas.getContext('2d');
-                    const size = Math.min(canvas.width, canvas.height);
-                    circleCanvas.width = size;
-                    circleCanvas.height = size;
-                    context.beginPath();
-                    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-                    context.closePath();
-                    context.clip();
-                    context.drawImage(canvas, 0, 0);
-                    circleCanvas.toBlob(resolve, 'image/png');
-                } else {
-                    canvas.toBlob(resolve, 'image/png');
-                }
-            };
-            originalImage.onerror = reject;
-            originalImage.src = originalUrl;
-        });
+        croppedCanvas.toBlob((blob) => {
+            const newUrl = URL.createObjectURL(blob);
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            const cropButton = currentCropTarget.querySelector('.btn-crop');
+            const copyButton = currentCropTarget.querySelector('.btn-copy');
 
-        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
-        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
-
-        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
-        const compareButton = currentCropTarget.querySelector('.btn-compare');
-        const cropButton = currentCropTarget.querySelector('.btn-crop');
-        const copyButton = currentCropTarget.querySelector('.btn-copy');
-
-        if(downloadLink) downloadLink.href = newOptimizedUrl;
-        if(compareButton) {
-            compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            compareButton.dataset.originalUrl = newOriginalUrl;
-        }
-        if(cropButton) {
-            cropButton.dataset.optimizedUrl = newOptimizedUrl;
-            cropButton.dataset.originalUrl = newOriginalUrl;
-        }
-        if(copyButton) {
-            copyButton.dataset.optimizedUrl = newOptimizedUrl;
-        }
-        
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            cropper.destroy();
-            cropper = null;
-            modal.remove();
-        }
+            if (downloadLink) downloadLink.href = newUrl;
+            if (compareButton) compareButton.dataset.optimizedUrl = newUrl;
+            if (cropButton) cropButton.dataset.optimizedUrl = newUrl;
+            if (copyButton) copyButton.dataset.optimizedUrl = newUrl;
+            
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                cropper.destroy();
+                cropper = null;
+                modal.remove();
+            }
+        }, 'image/png');
     }
-    // Kırpma şekli butonlarına basıldığında
+
+    // Crop shape button logic
     if (e.target.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
         const shape = e.target.dataset.shape;
