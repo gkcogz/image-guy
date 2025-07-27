@@ -40,6 +40,7 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
+// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
     const targetButton = e.target.closest('button');
     if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) return;
@@ -97,11 +98,27 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
         
+        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+
+        // Dairesel kırpma seçildiyse, kare tuvali alıp daireye çeviriyoruz
+        if (isCircle) {
+            const circleCanvas = document.createElement('canvas');
+            const context = circleCanvas.getContext('2d');
+            const size = Math.min(croppedCanvas.width, croppedCanvas.height);
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            context.beginPath();
+            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            croppedCanvas = circleCanvas; // Artık kırpılmış tuvalimiz dairesel
+        }
+
+        const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
+        
         const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
-        const cropDataCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-        
-        const optimizedCroppedBlob = await new Promise(resolve => cropDataCanvas.toBlob(resolve, 'image/png'));
-        
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
             originalImage.crossOrigin = "anonymous";
@@ -115,7 +132,6 @@ document.body.addEventListener('click', async (e) => {
                 canvas.height = cropBoxData.height * scaleY;
                 ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
                 
-                let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
                 if(isCircle) {
                     const circleCanvas = document.createElement('canvas');
                     const context = circleCanvas.getContext('2d');
@@ -283,10 +299,12 @@ function uploadWithProgress(url, file, onProgress) {
     });
 }
 
+// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const originalObjectUrl = URL.createObjectURL(file);
+
     try {
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
@@ -296,16 +314,19 @@ async function processSingleFile(file, listItem) {
         });
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
+
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
+        
         await new Promise(resolve => setTimeout(resolve, 50));
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
         await new Promise(resolve => setTimeout(resolve, 400));
+        
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -317,7 +338,7 @@ async function processSingleFile(file, listItem) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
-        
+
         const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
@@ -332,7 +353,7 @@ async function processSingleFile(file, listItem) {
                 <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
-        
+
         let successHTML;
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         if (savings >= 0) {
@@ -342,6 +363,7 @@ async function processSingleFile(file, listItem) {
             successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
+
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
