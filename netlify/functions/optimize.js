@@ -84,7 +84,7 @@ exports.handler = async (event, context) => {
         }
         
         const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
-        const newFilename = `favicon-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
+        const newFilename = `optimized-${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 
         const putCommand = new PutObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
