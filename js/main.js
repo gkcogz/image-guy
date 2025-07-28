@@ -508,6 +508,7 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
+// Replace your existing showCropModal function in main.js with this one
 function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -520,17 +521,21 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset</button> <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+
     const image = document.getElementById('image-to-crop');
     const modalContent = document.querySelector('.crop-modal-content');
     image.crossOrigin = "anonymous";
+
     image.onload = () => {
-        if (cropper) { cropper.destroy(); }
+         if (cropper) {
+            cropper.destroy();
+         }
          cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
@@ -541,8 +546,51 @@ function showCropModal(originalUrl, optimizedUrl) {
             }
         });
     };
-    if (image.complete) { image.onload(); }
+    if (image.complete) {
+        image.onload();
+    }
 }
+
+
+// Also, replace the entire document.body.addEventListener function with this one
+document.body.addEventListener('click', async (e) => {
+    // Modal closing logic
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            modal.remove();
+        }
+    }
+    // ... (other button logic like compare, copy, etc. remains the same)
+
+    // "Apply Crop" button logic
+    if (e.target.id === 'apply-crop-btn') {
+        // ... (this logic remains the same)
+    }
+
+    // Crop shape button logic
+    if (e.target.classList.contains('crop-shape-btn')) {
+        // ... (this logic remains the same)
+    }
+
+    // --- NEW LOGIC FOR THE RESET BUTTON ---
+    if (e.target.id === 'crop-reset-btn') {
+        if (cropper) {
+            cropper.reset(); // Use Cropper.js's built-in reset function
+            // Also reset the circle/rectangle buttons
+            document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+            const cropBox = document.querySelector('.cropper-view-box');
+            const cropFace = document.querySelector('.cropper-face');
+            if (cropBox) cropBox.style.borderRadius = '0';
+            if (cropFace) cropFace.style.borderRadius = '0';
+        }
+    }
+});
 
 // Bu yeni fonksiyonu main.js dosyasının en altına ekleyin
 function showBase64Modal(base64String) {
