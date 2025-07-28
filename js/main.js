@@ -200,6 +200,25 @@ document.body.addEventListener('click', async (e) => {
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
         targetButton.classList.add('active');
     }
+        // --- YENİ EKLENEN VE GÜNCELLENEN "RESET" MANTIĞI ---
+    if (targetButton && targetButton.id === 'crop-reset-btn') {
+        if (cropper) {
+            // Cropper.js'in kendi sıfırlama fonksiyonunu kullanarak anlık değişiklikleri geri al
+            cropper.reset(); 
+            
+            // Ayrıca, resmi en baştaki orijinal haline DÖNDÜRMEK için
+            const originalUrl = cropper.element.dataset.originalUrl;
+            cropper.replace(originalUrl);
+
+            // Butonların görünümünü de sıfırla
+            document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+            const cropBox = document.querySelector('.cropper-view-box');
+            const cropFace = document.querySelector('.cropper-face');
+            if (cropBox) cropBox.style.borderRadius = '0';
+            if (cropFace) cropFace.style.borderRadius = '0';
+        }
+    }
         // "Get Base64" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-base64')) {
         const imageUrl = targetButton.dataset.optimizedUrl;
@@ -545,13 +564,13 @@ function showCropModal(originalUrl, optimizedUrl) {
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
+            
         });
     };
     if (image.complete) {
         image.onload();
     }
 }
-
 
 // Also, replace the entire document.body.addEventListener function with this one
 document.body.addEventListener('click', async (e) => {
