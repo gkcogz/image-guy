@@ -508,7 +508,7 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// Replace your existing showCropModal function in main.js with this one
+// main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -521,7 +521,8 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset</button> <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset</button>
+                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
         </div>
