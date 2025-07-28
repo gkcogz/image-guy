@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="The official blog of Image Guy. Learn the best tips and tricks for image optimization, web performance, and modern image formats like AVIF and WebP.">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The official blog of Image Guy. Learn the best tips and tricks for image optimization, web performance, and modern image formats like AVIF and WebP." />
     <title>Blog - Optimization Tips & Tricks | Image Guy</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -16,23 +16,30 @@
     <link rel="manifest" href="/site.webmanifest" />
 </head>
 <body>
-    <button id="mobile-menu-toggle" class="mobile-menu-button">
-        <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle menu">
+        <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
     </button>
 
     <header class="header">
         <div class="container">
             <div class="logo">
                 <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
-                    <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image">
+                    <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image" />
                     <span class="logo-text">Image Guy</span>
                 </a>
             </div>
-            
+
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/blog.html" aria-current="page">Blog</a></li>
                     <li><a href="/about.html">About</a></li>
                     <li><a href="/contact.html">Contact</a></li>
                 </ul>
@@ -44,30 +51,12 @@
         <div class="container content-page">
             <h1>Image Guy Blog</h1>
             <p>Tips, tricks, and insights on image optimization and web performance.</p>
-            
+
             <div class="blog-post-list">
                 <article class="blog-post-item">
-                    <h2><a href="/single-post.html">Why AVIF is the Future of Image Formats</a></h2>
-                    <p class="post-excerpt">AVIF offers superior compression compared to JPEG and WebP, making it the top choice for modern web developers. Let's dive into why you should be using it...</p>
-                    <a href="/single-post.html" class="btn-read-more">Read More &rarr;</a>
-                </article>
-
-                <article class="blog-post-item">
-                    <h2><a href="/single-post.html">How is reducing the size linked with sustainability-mission?</a></h2>
-                    <p class="post-excerpt">Images we take daily are stored as pixels, which are represented by bytes on a computer. Every operation on these images requires computational power and consumes electricity...</p>
-                    <a href="/single-post.html" class="btn-read-more">Read More &rarr;</a>
-                </article>
-
-                <article class="blog-post-item">
-                    <h2><a href="/single-post.html">5 Common Mistakes in Image Optimization</a></h2>
-                    <p class="post-excerpt">Are you slowing down your website with unoptimized images? Avoid these five common mistakes to improve your site's speed and user experience...</p>
-                    <a href="/single-post.html" class="btn-read-more">Read More &rarr;</a>
-                </article>
-
-                <article class="blog-post-item">
-                    <h2><a href="/single-post.html">5 Common Mistakes in Image Optimization</a></h2>
-                    <p class="post-excerpt">Are you slowing down your website with unoptimized images? Avoid these five common mistakes to improve your site's speed and user experience...</p>
-                    <a href="/single-post.html" class="btn-read-more">Read More &rarr;</a>
+                    <h2><a href="/into-to-optimization.html">Why is Image Optimization Important for Your Website?</a></h2>
+                    <p class="post-excerpt">Learn why optimizing images is critical for site speed, sustainability, and SEO, with practical tips for better web performance.</p>
+                    <a href="/into-to-optimization.html" class="btn-read-more">Read More &rarr;</a>
                 </article>
             </div>
         </div>
@@ -84,11 +73,11 @@
             </div>
             <div class="footer-copyright">
                 <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank">realfavicongenerator.net</a></span>
+                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank" rel="noopener">realfavicongenerator.net</a></span>
             </div>
         </div>
     </footer>
-    
+
     <script src="js/main.js" defer></script>
 </body>
 </html>

@@ -171,6 +171,10 @@ document.body.addEventListener('click', async (e) => {
         }
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
+
+        // --- EKLENECEK SATIR BURASI ---
+        const base64Button = currentCropTarget.querySelector('.btn-base64');
+        if(base64Button) base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
         
         const modal = document.querySelector('.modal-overlay');
