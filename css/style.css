@@ -239,3 +239,72 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     visibility: visible;
     opacity: 1;
 }
+
+/* Photo Strip Section Styles */
+.photo-strip {
+    width: 100%;
+    overflow: hidden;
+    padding: 10px 0 20px 0; 
+    background-color: #fff; 
+}
+
+/* YENİ KOD (Düzeltilmiş) */
+.photo-strip-container {
+    display: flex;
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: none; 
+    padding-left: 30px; /* Sabit bir sol boşluk değeri atandı */
+    padding-right: 30px; /* Sağ ve solu eşitlemek için bu da güncellendi */
+    box-sizing: border-box; /* Padding değerinin genişliğe dahil olmasını sağlar */
+}
+
+.photo-strip-container::-webkit-scrollbar {
+    display: none; 
+}
+
+.photo-strip-container img {
+    height: 180px; 
+    width: auto;
+    margin-right: 15px; 
+    border-radius: 8px; 
+    flex-shrink: 0; 
+    object-fit: cover; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    transition: transform 0.3s ease;
+}
+
+.photo-strip-container img:hover {
+    transform: scale(1.03); 
+}
+
+@media (max-width: 1200px) {
+    .photo-strip-container {
+        padding-left: 30px; 
+    }
+}
+ @media (max-width: 768px) {
+    .photo-strip-container {
+        padding-left: 20px;
+    }
+    .photo-strip-container img {
+         height: 150px; 
+    }
+}
+
+/* Footer'daki fotoğraf atfı için stil */
+.footer .photo-credit {
+    display: block; /* Kendi satırına geçmesini sağlar */
+    margin-top: 8px; /* Üstündeki yazı ile arasına boşluk koyar */
+    font-size: 0.85em; /* Telif hakkı yazısından biraz daha küçük yapar */
+    color: #999; /* Rengini biraz daha soluk yapar */
+}
+
+.footer .photo-credit a {
+    color: #888; /* Link rengi */
+    text-decoration: none;
+}
+
+.footer .photo-credit a:hover {
+    text-decoration: underline; /* Fare ile üzerine gelince altını çizer */
+}

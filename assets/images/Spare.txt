@@ -1,0 +1,41 @@
+  {
+    "id": "singapore-91253",
+    "author": "◎ OCG | 2025",
+    "country": "Singapore",
+    "city": "singapore",
+    "lens": "19mm",
+    "aperture": "f4",
+    "shutter": "1/60",
+    "iso": "1000",
+    "lensBrand": "Sigma",
+    "published": false,
+    "imageUrl": "assets/images/DSC08764_final.webp",
+    "altText": "Travel photo from Singapore by Night",
+    "title": "Singapore by Night",
+    "story": {
+      "title": {
+        "en": "Alley of Echoes",
+        "zh": "回响小巷"
+      },
+      "text": {
+        "en": "Where the warm glow of tradition meets the cool glass of the future. (Composition simplified for focus.)",
+        "zh": "传统温暖的光芒与未来冰冷的玻璃在此交汇。 (为突出焦点，构图已经过简化。)"
+      }
+      },
+  "variations": [
+      {
+        "name": "High Contrast",
+        "url": "assets/images/Kuni_1751131433496-01.webp"
+      },
+      {
+        "name": "Classic B&W",
+        "url": "assets/images/Kuni_1750801563310-01.webp"
+      },
+      {
+        "name": "Cinematic B&W",
+        "url": "assets/images/DSC08764.jpg",
+        "showAsDefault": false
+
+      }
+    ]
+  },
