@@ -239,6 +239,12 @@ document.body.addEventListener('click', async (e) => {
             alert('Could not generate Base64 code.');
         }
     }
+        // Kırpma penceresindeki "Reset" butonuna basıldığında
+    if (targetButton && targetButton.id === 'crop-reset-btn') {
+        if (cropper) {
+            cropper.reset(); // Cropper.js'in kendi resetleme fonksiyonunu çağırır.
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
