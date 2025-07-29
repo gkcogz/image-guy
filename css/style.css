@@ -202,19 +202,100 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .tooltip-content hr { border: none; border-top: 1px solid #495057; margin: 0.8rem 0; }
 
 /* =================================
-   7. Modallar (Compare & Crop)
+   7. Modals (Compare & Crop)
    ================================= */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-.modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; }
-.modal-close-btn { position: absolute; top: -15px; right: -15px; background-color: white; border: none; font-size: 2rem; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; line-height: 1; padding: 0; }
-img-comparison-slider img { object-fit: contain; max-width: 85vw; max-height: 85vh; display: block; }
-.crop-modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; width: auto; height: auto; visibility: hidden; }
-.crop-modal-content.ready { visibility: visible; }
-.crop-modal-content h2 { margin-bottom: 1.5rem; text-align: center; }
-.crop-image-container { max-width: 70vw; max-height: 60vh; margin-bottom: 1.5rem; }
-.crop-image-container img { max-width: 100%; display: block; }
-.crop-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; width: 100%; }
-.crop-shape-btn.active { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
+
+/* General style for the dark background overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Stays behind */
+    padding: 20px;
+}
+
+/* General style for the white content box of any modal */
+.modal-content, .crop-modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1001; /* THIS IS THE FIX: Ensures content is on top of the overlay */
+}
+
+/* Close button for all modals */
+.modal-close-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background-color: white;
+    border: none;
+    font-size: 2rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    padding: 0;
+    z-index: 1002; /* On top of everything */
+}
+
+/* --- Styles specific to the Compare Slider Modal --- */
+img-comparison-slider img {
+    object-fit: contain;
+    max-width: 85vw;
+    max-height: 85vh;
+    display: block;
+}
+
+/* --- Styles specific to the Crop Modal --- */
+.crop-modal-content {
+    width: auto;
+    height: auto;
+    visibility: hidden;
+}
+.crop-modal-content.ready {
+    visibility: visible;
+}
+.crop-modal-content h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.crop-image-container {
+    max-width: 70vw;
+    max-height: 60vh;
+    margin-bottom: 1.5rem;
+}
+.crop-image-container img {
+    max-width: 100%;
+    display: block;
+}
+.crop-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+}
+.crop-shape-btn.active {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
+}
 
 /* =================================
    8. Statik Sayfalar (About, Blog)
