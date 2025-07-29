@@ -170,7 +170,10 @@ document.body.addEventListener('click', async (e) => {
                 }
             };
             originalImage.onerror = reject;
-            originalImage.src = sourceForOriginalCrop;
+            // --- HATA BURADAYDI, ŞİMDİ DÜZELTİLDİ ---
+            // Kod "sourceForOriginalCrop" adında bir değişken arıyordu,
+            // ancak değişken yukarıda "originalUrl" olarak tanımlanmıştı.
+            originalImage.src = originalUrl;
         });
 
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
@@ -251,39 +254,44 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (!cropper) return;
 
+        // --- BÖLÜM 1: KIRPMA PENCERESİNİ SIFIRLAMA (Mevcut mantık) ---
         const image = document.getElementById('image-to-crop');
-        const currentSrc = image.src;
-        const originalUrl = image.dataset.originalUrl;
+        const ultimateOriginalUrl = image.dataset.originalUrl;
+        
+        cropper.destroy();
+        image.onload = () => {
+            cropper = new Cropper(image, {
+                viewMode: 1, background: false, autoCropArea: 0.8,
+                ready: function () {
+                    document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                }
+            });
+        };
+        image.src = ultimateOriginalUrl;
 
-        // Eğer mevcut resim, en baştaki orijinal resimden farklıysa...
-        if (currentSrc !== originalUrl) {
-            
-            // 1. Mevcut cropper örneğini tamamen yok et.
-            cropper.destroy();
+        // --- BÖLÜM 2: ANA EKRANDAKİ BUTONLARI SIFIRLAMA (Yeni mantık) ---
+        // `currentCropTarget` (yani .action-icon-group), Kırpma penceresi açıldığında zaten saklanmıştı.
+        if (currentCropTarget) {
+            const cropButton = currentCropTarget.querySelector('.btn-crop');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            const copyButton = currentCropTarget.querySelector('.btn-copy');
+            const base64Button = currentCropTarget.querySelector('.btn-base64');
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
 
-            // 2. YENİ MANTIK: Resim yüklendiğinde ne yapılacağını tanımla.
-            // Bu fonksiyon, sadece tarayıcı resmi tamamen yüklediğinde çalışacak.
-            image.onload = () => {
-                // 3. Resim hazır olduğuna göre, YENİ cropper örneğini oluştur.
-                cropper = new Cropper(image, {
-                    viewMode: 1,
-                    background: false,
-                    autoCropArea: 0.8,
-                    ready: function () {
-                        // Hazır olduğunda, şekil butonlarını varsayılan duruma getir.
-                        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                        document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
-                    }
-                });
-            };
+            // Sakladığımız en baştaki URL'leri alıyoruz.
+            const initialOriginalUrl = cropButton.dataset.originalUrl; // Bu zaten en baştaki orijinal.
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // Yeni eklediğimiz nitelikten alıyoruz.
 
-            // 4. Resim kaynağını değiştirerek yükleme işlemini başlat.
-            // Yukarıdaki onload fonksiyonu bu işlem bittiğinde tetiklenecek.
-            image.src = originalUrl;
-
-        } else {
-            // Eğer zaten orijinal resim üzerindeysek, sadece kırpma seçimini sıfırla.
-            cropper.reset();
+            // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndürüyoruz.
+            if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (compareButton) {
+                compareButton.dataset.originalUrl = initialOriginalUrl;
+                compareButton.dataset.optimizedUrl = initialOptimizedUrl;
+            }
+            if (copyButton) copyButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
+            if (downloadLink) downloadLink.href = initialOptimizedUrl;
         }
     }
 });
@@ -494,7 +502,12 @@ async function processSingleFile(file, listItem) {
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                 </button>
-                <button class="icon-btn btn-crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Edit & Crop">
+                <button 
+                    class="icon-btn btn-crop" 
+                    data-original-url="${originalObjectUrl}" 
+                    data-optimized-url="${data.downloadUrl}" 
+                    data-initial-optimized-url="${data.downloadUrl}"
+                    title="Edit & Crop">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
                 </button>
                 <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
