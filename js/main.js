@@ -282,6 +282,34 @@ function formatFileSize(bytes, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
+function uploadWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                onProgress(percentComplete);
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+        };
+
+        xhr.onerror = () => {
+            reject(new Error('Network error during upload.'));
+        };
+
+        xhr.send(file);
+    });
+}
 
 // ... (your existing updateUIForFileList function and other functions) ...
 // main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin

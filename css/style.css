@@ -59,7 +59,7 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .file-details { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
 .file-name { font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-size { font-size: 0.85rem; line-height: 1.2; color: #6c757d; }
-.file-item-status { display: flex; align-items: center; justify-content: flex-end; gap: 15px; flex-shrink: 0; white-space: nowrap; }
+.file-item-status { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; flex-shrink: 0; white-space: nowrap; } /* --- DÜZENLENDİ --- */
 .savings { color: var(--success-color); font-weight: 700; }
 .savings-increase { color: var(--warning-color); font-weight: 700; }
 .spinner-small { border: 3px solid rgba(0, 0, 0, 0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: var(--primary-color); display: inline-block; animation: spin 1s ease infinite; }
@@ -83,11 +83,13 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .icon-btn:hover .icon-tooltip { visibility: visible; opacity: 1; }
 .icon-btn.copied { background-color: var(--success-color); color: var(--white-color); border-color: var(--success-color); }
 .icon-btn.copied svg { display: none; }
+.btn-delete-item { border: none; background-color: transparent; padding: 4px; } /* --- YENİ EKLENDİ VE DÜZENLENDİ --- */
 .btn-download-item { background-color: var(--dark-gray); color: var(--white-color); border-color: var(--dark-gray); font-size: 0.85rem; padding: 6px 12px; font-weight: 500; box-shadow: none; }
 .btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
 .action-area { text-align: center; width: 100%; }
 .action-buttons-container { display: flex; justify-content: center; gap: 1rem; width: 100%; margin-top: 1.5rem; }
-#optimize-all-btn { margin-top: 1.5rem; }
+.initial-actions { margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; } /* --- YENİ EKLENDİ VE DÜZENLENDİ --- */
+/* --- KALDIRILDI --- #optimize-all-btn { margin-top: 1.5rem; } */
 #download-all-btn { background-color: var(--success-color); }
 
 /* =================================
@@ -109,115 +111,17 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 /* =================================
    7. Modallar (Compare & Crop)
    ================================= */
-.modal-overlay { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background-color: rgba(0, 0, 0, 0.8); 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    z-index: 1000; 
-    padding: 20px; 
-}
-
-.modal-content { 
-    background-color: white; 
-    padding: 1.5rem; 
-    border-radius: 8px; 
-    max-width: 90vw; 
-    max-height: 90vh; 
-    position: relative; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    z-index: 1001; 
-}
-
-.modal-close-btn { 
-    position: absolute; 
-    top: -15px; 
-    right: -15px; 
-    background-color: white; 
-    border: none; 
-    font-size: 2rem; 
-    width: 30px; 
-    height: 30px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    line-height: 1; 
-    padding: 0; 
-    z-index: 1002; 
-}
-
-img-comparison-slider img { 
-    object-fit: contain; 
-    max-width: 85vw; 
-    max-height: 85vh; 
-    display: block; 
-}
-
-/* GÜNCELLENMİŞ KISIM BAŞLANGICI */
-.crop-modal-content {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    max-width: 90vw;
-    max-height: 90vh;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: auto;
-    height: auto;
-    z-index: 1001;
-    /* 'visibility: hidden' yerine bunları ekleyin */
-    opacity: 0;
-    transform: scale(0.95);
-    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-
-.crop-modal-content.ready {
-    /* 'visibility: visible' yerine bunları ekleyin */
-    opacity: 1;
-    transform: scale(1);
-}
-/* GÜNCELLENMİŞ KISIM SONU */
-
-.crop-modal-content h2 { 
-    margin-bottom: 1.5rem; 
-    text-align: center; 
-}
-
-.crop-image-container { 
-    max-width: 70vw; 
-    max-height: 60vh; 
-    margin-bottom: 1.5rem; 
-}
-
-.crop-image-container img { 
-    max-width: 100%; 
-    display: block; 
-}
-
-.crop-actions { 
-    display: flex; 
-    justify-content: center; 
-    gap: 1rem; 
-    margin-top: 1rem; 
-    width: 100%; 
-}
-
-.crop-shape-btn.active { 
-    background-color: var(--primary-color); 
-    color: var(--white-color); 
-    border-color: var(--primary-color); 
-}
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+.modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 1001; }
+.modal-close-btn { position: absolute; top: -15px; right: -15px; background-color: white; border: none; font-size: 2rem; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; line-height: 1; padding: 0; z-index: 1002; }
+img-comparison-slider img { object-fit: contain; max-width: 85vw; max-height: 85vh; display: block; }
+.crop-modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; width: auto; height: auto; z-index: 1001; opacity: 0; transform: scale(0.95); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
+.crop-modal-content.ready { opacity: 1; transform: scale(1); }
+.crop-modal-content h2 { margin-bottom: 1.5rem; text-align: center; }
+.crop-image-container { max-width: 70vw; max-height: 60vh; margin-bottom: 1.5rem; }
+.crop-image-container img { max-width: 100%; display: block; }
+.crop-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; width: 100%; }
+.crop-shape-btn.active { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
 
 /* =================================
    8. Statik Sayfalar (About, Blog)
@@ -275,93 +179,13 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
 /* =================================
    10. Base64 Modal Stilleri
    ================================= */
-.base64-modal-content {
-    width: 100%;
-    max-width: 600px; /* Pencereyi biraz daha geniş yapalım */
-}
-
-.base64-modal-content h2 {
-    margin-bottom: 0.5rem;
-}
-
-.base64-modal-content p {
-    margin-bottom: 1.5rem;
-    color: #6c757d;
-}
-
-.base64-container {
-    width: 100%;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--light-gray);
-    border-radius: 8px;
-    padding: 0.5rem;
-    background-color: #f8f9fa;
-}
-
-.base64-textarea {
-    width: 100%;
-    min-height: 150px; /* Metin alanını daha uzun yapalım */
-    border: none;
-    resize: vertical;
-    font-family: 'Courier New', Courier, monospace; /* Kodu okunabilir kılan font */
-    font-size: 0.9rem;
-    color: var(--dark-gray);
-    background-color: transparent;
-    word-break: break-all; /* Uzun satırların kırılmasını sağla */
-}
-
-.base64-textarea:focus {
-    outline: none;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end; /* Butonları sağa yasla */
-    align-items: center;
-    gap: 1rem;
-    width: 100%;
-}
-
-/* Kopyala butonuna ikon ve metin için stil */
-#copy-base64-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.copy-success-msg {
-    visibility: hidden;
-    opacity: 0;
-    color: var(--success-color);
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.copy-success-msg.visible {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* style.css dosyasının sonuna ekleyin */
-
-/* Dosya listesindeki durum ve silme butonu için */
-.file-item-status {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* Silme butonunun kenarlığını kaldıralım */
-.btn-delete-item {
-    border: none;
-    background-color: transparent;
-    padding: 4px;
-}
-
-/* Optimizasyon öncesi buton konteyneri */
-.initial-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-}
+.base64-modal-content { width: 100%; max-width: 600px; }
+.base64-modal-content h2 { margin-bottom: 0.5rem; }
+.base64-modal-content p { margin-bottom: 1.5rem; color: #6c757d; }
+.base64-container { width: 100%; margin-bottom: 1.5rem; border: 1px solid var(--light-gray); border-radius: 8px; padding: 0.5rem; background-color: #f8f9fa; }
+.base64-textarea { width: 100%; min-height: 150px; border: none; resize: vertical; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; color: var(--dark-gray); background-color: transparent; word-break: break-all; }
+.base64-textarea:focus { outline: none; }
+.modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; width: 100%; }
+#copy-base64-btn { display: flex; align-items: center; gap: 8px; }
+.copy-success-msg { visibility: hidden; opacity: 0; color: var(--success-color); font-weight: 500; transition: all 0.3s ease; }
+.copy-success-msg.visible { visibility: visible; opacity: 1; }
