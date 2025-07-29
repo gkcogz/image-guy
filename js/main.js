@@ -106,10 +106,14 @@ document.body.addEventListener('click', async (e) => {
         showComparisonModal(originalUrl, optimizedUrl);
     }
     // "Edit & Crop" butonuna basıldığında
-    if (targetButton && targetButton.classList.contains('btn-crop')) {
+   if (targetButton && targetButton.classList.contains('btn-crop')) {
         currentCropTarget = targetButton.closest('.action-icon-group');
-        const originalUrl = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
+        
+        // --- DEĞİŞİKLİK BURADA ---
+        // Orijinal URL'yi, referansı hiç değişmeyen crop butonunun kendisinden alıyoruz.
+        const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
+        
         showCropModal(originalUrl, optimizedUrl);
     }
     // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
@@ -180,7 +184,12 @@ document.body.addEventListener('click', async (e) => {
         if(downloadLink) downloadLink.href = newOptimizedUrl;
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
+            // Bu satırı tekrar ekleyerek "Akıllı Compare" özelliğini geri getiriyoruz.
+            compareButton.dataset.originalUrl = newOriginalUrl; 
         }
+
+        // Crop butonu sadece optimize edilmiş URL'yi günceller.
+        // Orijinaline dokunmadığımız için Reset butonu doğru çalışmaya devam eder.
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
