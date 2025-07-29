@@ -170,7 +170,7 @@ document.body.addEventListener('click', async (e) => {
         });
 
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
-        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
+        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob); // Bu satır artık kullanılmıyor ama zararı yok.
 
         const downloadLink = currentCropTarget.querySelector('.btn-download-item');
         const compareButton = currentCropTarget.querySelector('.btn-compare');
@@ -178,22 +178,15 @@ document.body.addEventListener('click', async (e) => {
         const copyButton = currentCropTarget.querySelector('.btn-copy');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
-        // Compare butonu hem optimize edilmiş hem de yeni kırpılmış orijinali alır.
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            // compareButton.dataset.originalUrl = newOriginalUrl;
         }
-
-        // Crop butonu SADECE optimize edilmiş URL'yi günceller.
-        // Orijinal URL'ye dokunmayarak, en baştaki haline dönebilmemizi sağlar.
         if(cropButton) {
-            cropButton.dataset.optimizedUrl = newOptimizedUrl;crop-reset-btn
-            // cropButton.dataset.originalUrl'e dokunmuyoruz!
+            cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
         }
-
         const base64Button = currentCropTarget.querySelector('.btn-base64');
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
