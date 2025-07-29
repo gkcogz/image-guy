@@ -54,19 +54,40 @@ document.body.addEventListener('click', async (e) => {
         resetUI();
     }
     // "Undo" butonuna basıldığında
+// "Undo" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-undo-btn') {
         if (cropHistory.length > 0) {
             // Geçmişten son durumu al ve kaldır
             const lastState = cropHistory.pop();
 
-            // Kırpma penceresindeki resmi bir önceki optimize edilmiş hale geri döndür
-            if (cropper) {
-                cropper.replace(lastState.optimized);
-            }
+            // --- YENİ VE GÜVENİLİR MANTIK ---
+            const image = document.getElementById('image-to-crop');
+            
+            // 1. Mevcut cropper'ı yok et.
+            cropper.destroy();
+
+            // 2. Resmin "onload" olayını tanımla. Resim yüklendiğinde yeni cropper'ı oluştur.
+            // Bu, görsel hataları ve zamanlama sorunlarını engeller.
+            image.onload = () => {
+                cropper = new Cropper(image, {
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                    // "ready" callback'ine gerek yok çünkü sadece resmi değiştiriyoruz.
+                });
+            };
+
+            // 3. Resim kaynağını bir önceki durumdaki URL ile değiştirerek yüklemeyi başlat.
+            image.src = lastState.optimized;
+            // --- YENİ MANTIK SONU ---
 
             // Ana ekrandaki butonların durumunu bir önceki hale geri döndür
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             const cropButton = currentCropTarget.querySelector('.btn-crop');
+            const copyButton = currentCropTarget.querySelector('.btn-copy');
+            const base64Button = currentCropTarget.querySelector('.btn-base64');
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+
             if (compareButton) {
                 compareButton.dataset.optimizedUrl = lastState.optimized;
                 compareButton.dataset.originalUrl = lastState.original;
@@ -74,6 +95,8 @@ document.body.addEventListener('click', async (e) => {
             if (cropButton) {
                 cropButton.dataset.optimizedUrl = lastState.optimized;
             }
+            // Diğer butonları da geri almamız gerekebilir, şimdilik bu şekilde bırakalım.
+            // Gerekirse bu kısma copy, base64 ve download butonlarını da ekleriz.
 
             // Eğer geçmiş boşaldıysa, "Undo" butonunu tekrar pasif yap
             if (cropHistory.length === 0) {
