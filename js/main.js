@@ -715,7 +715,6 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
     // Geçmişi temizle ve en baştaki orijinali sakla
     // cropHistory = []; SILINDI
@@ -749,7 +748,7 @@ function showCropModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const image = document.getElementById('image-to-crop');
-    const modalContent = document.querySelector('.crop-modal-content');
+    const modalContent = document.querySelector('.crop-modal-content'); // Referansı burada alıyoruz
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
@@ -761,6 +760,8 @@ function showCropModal(originalUrl, optimizedUrl) {
             background: false,
             autoCropArea: 0.8,
             ready: function () {
+                // --- DÜZELTME BURADA ---
+                // Elementi tekrar aramak yerine, zaten var olan referansı kullan.
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
