@@ -244,7 +244,7 @@ document.body.addEventListener('click', async (e) => {
             alert('Could not generate Base64 code.');
         }
     }
-    // Kırpma penceresindeki "Reset" butonuna basıldığında
+// Kırpma penceresindeki "Reset" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (!cropper) return;
 
@@ -252,11 +252,30 @@ document.body.addEventListener('click', async (e) => {
         const currentSrc = image.src;
         const originalUrl = image.dataset.originalUrl;
 
-        // Eğer mevcut resim (src), en baştaki orijinal resimden farklıysa,
-        // bu, resmin daha önce kırpıldığı anlamına gelir. Orijinaline geri dön.
+        // Eğer mevcut resim, en baştaki orijinal resimden farklıysa...
         if (currentSrc !== originalUrl) {
-            // Cropper'daki resmi en baştaki orijinal resimle değiştir.
-            cropper.replace(originalUrl);
+            
+            // --- YENİ "YOK ET VE YENİDEN YARAT" MANTIĞI ---
+
+            // 1. Mevcut cropper örneğini tamamen yok et.
+            cropper.destroy();
+
+            // 2. Resim elementinin kaynağını en baştaki orijinal URL ile güncelle.
+            image.src = originalUrl;
+
+            // 3. Temiz bir başlangıç için aynı resim elementi üzerinde yeni bir cropper örneği yarat.
+            //    showCropModal'daki ayarların aynısını kullanıyoruz.
+            cropper = new Cropper(image, {
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+                ready: function () {
+                    // Hazır olduğunda, şekil butonlarını varsayılan duruma getir.
+                    document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                }
+            });
+
         } else {
             // Eğer zaten orijinal resim üzerindeysek, sadece kırpma seçimini sıfırla.
             cropper.reset();
