@@ -361,13 +361,6 @@ if (targetButton && targetButton.id === 'crop-reset-btn') {
         cropHistory = []; // Kırpma geçmişini temizle.
     }
 }
-        // --- YENİ EKLENEN BÖLÜM: PENCEREYİ KAPAT ---
-    const modal = document.querySelector('.modal-overlay');
-    if (modal) {
-        cropper.destroy();
-        cropper = null;
-        modal.remove();
-    }
 }); 
 
 document.addEventListener('DOMContentLoaded', () => {
