@@ -1,15 +1,11 @@
-/* =================================
-   1. Temel Stiller ve Değişkenler
-   ================================= */
+/* ================================= 1. Core Styles & Variables ================================= */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 :root { --primary-color: #007bff; --secondary-color: #f8f9fa; --dark-gray: #343a40; --light-gray: #e9ecef; --white-color: #ffffff; --success-color: #28a745; --warning-color: #fd7e14; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-gray); background-color: var(--white-color); }
 .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
-/* =================================
-   2. Ana Bölümler (Header, Footer)
-   ================================= */
+/* ================================= 2. Main Layout (Header, Footer) ================================= */
 .header { background: var(--white-color); padding: 1rem 0; border-bottom: 1px solid var(--light-gray); }
 .header .container { display: flex; justify-content: space-between; align-items: center; }
 .logo a { display: flex; align-items: center; gap: 12px; text-decoration: none; }
@@ -26,9 +22,7 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .footer-copyright { font-size: 0.9rem; color: #adb5bd; text-align: center; }
 .footer-attribution a { color: #adb5bd; text-decoration: underline; }
 
-/* =================================
-   3. Ana Sayfa Bölümleri
-   ================================= */
+/* ================================= 3. Homepage Sections ================================= */
 .hero { background: var(--secondary-color); text-align: center; padding: 4rem 0; }
 .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
 .hero .subtitle { font-size: 1.2rem; color: #6c757d; margin-bottom: 2.5rem; }
@@ -46,9 +40,7 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .announcement-text span { font-size: 0.9rem; width: 50%; display: inline-block; padding-right: 50px; }
 @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
 
-/* =================================
-   4. Yükleme Alanı ve Sonuç Listesi
-   ================================= */
+/* ================================= 4. Upload Area & Results List ================================= */
 .upload-area { background: var(--white-color); border: 3px dashed var(--light-gray); border-radius: 10px; padding: 3rem; max-width: 700px; margin: 0 auto; transition: background-color 0.3s, border-color 0.3s; }
 .upload-area:hover, .upload-area.drag-over { border-color: var(--primary-color); }
 .upload-area.file-selected { border-style: solid; padding: 1.5rem; }
@@ -68,127 +60,28 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .progress-bar-fill { height: 100%; width: 0%; background-color: var(--primary-color); border-radius: 5px; transition: width 0.3s ease-in-out; }
 .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--dark-gray); font-size: 0.8rem; font-weight: 500; text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7); }
 
-/* =================================
-   5. Butonlar ve Kontroller
-   ================================= */
-.btn {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 10px 24px;
-    font-size: 1rem;
-    transition: transform 0.1s ease, box-shadow 0.2s ease;
-    border: 1px solid transparent;
-    cursor: pointer;
-    text-decoration: none;
-}
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.btn-primary {
-    background-color: var(--primary-color);
-    color: var(--white-color);
-    font-size: 1.1rem;
-    padding: 12px 28px;
-}
-.btn-secondary {
-    background-color: var(--white-color);
-    border-color: var(--light-gray);
-    color: var(--dark-gray);
-}
-.btn-secondary:hover {
-    background-color: var(--secondary-color);
-    border-color: #dbe1e8;
-}
-.action-icon-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.icon-btn {
-    background-color: #f8f9fa;
-    color: var(--dark-gray);
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    padding: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: none;
-    position: relative;
-}
-.icon-btn svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2;
-}
-.icon-btn:hover {
-    background-color: #e9ecef;
-    transform: translateY(-1px);
-}
-.icon-btn .icon-tooltip {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--dark-gray);
-    color: var(--white-color);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    transition: opacity 0.2s;
-}
-.icon-btn:hover .icon-tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-.icon-btn.copied {
-    background-color: var(--success-color);
-    color: var(--white-color);
-    border-color: var(--success-color);
-}
-.icon-btn.copied svg {
-    display: none;
-}
-.btn-download-item {
-    background-color: var(--dark-gray);
-    color: var(--white-color);
-    border-color: var(--dark-gray);
-    font-size: 0.85rem;
-    padding: 6px 12px;
-    font-weight: 500;
-    box-shadow: none;
-}
-.btn-download-item:hover {
-    background-color: #555;
-    transform: translateY(-1px);
-}
-.action-area {
-    text-align: center;
-    width: 100%;
-}
-.action-buttons-container {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-    margin-top: 1.5rem;
-}
-#optimize-all-btn {
-    margin-top: 1.5rem;
-}
-#download-all-btn {
-    background-color: var(--success-color);
-}
+/* ================================= 5. Buttons & Controls ================================= */
+.btn { border-radius: 8px; font-weight: 600; padding: 10px 24px; font-size: 1rem; transition: transform 0.1s ease, box-shadow 0.2s ease; border: 1px solid transparent; cursor: pointer; text-decoration: none; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+.btn-primary { background-color: var(--primary-color); color: var(--white-color); font-size: 1.1rem; padding: 12px 28px; }
+.btn-secondary { background-color: var(--white-color); border-color: var(--light-gray); color: var(--dark-gray); }
+.btn-secondary:hover { background-color: var(--secondary-color); border-color: #dbe1e8; }
+.action-icon-group { display: flex; align-items: center; gap: 8px; }
+.icon-btn { background-color: #f8f9fa; color: var(--dark-gray); border: 1px solid #ced4da; border-radius: 6px; padding: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; box-shadow: none; position: relative; }
+.icon-btn svg { width: 20px; height: 20px; stroke-width: 2; }
+.icon-btn:hover { background-color: #e9ecef; transform: translateY(-1px); }
+.icon-btn .icon-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background-color: var(--dark-gray); color: var(--white-color); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; white-space: nowrap; transition: opacity 0.2s; pointer-events: none; }
+.icon-btn:hover .icon-tooltip { visibility: visible; opacity: 1; }
+.icon-btn.copied { background-color: var(--success-color); color: var(--white-color); border-color: var(--success-color); }
+.icon-btn.copied svg { display: none; }
+.btn-download-item { background-color: var(--dark-gray); color: var(--white-color); border-color: var(--dark-gray); font-size: 0.85rem; padding: 6px 12px; font-weight: 500; box-shadow: none; }
+.btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
+.action-area { text-align: center; width: 100%; }
+.action-buttons-container { display: flex; justify-content: center; gap: 1rem; width: 100%; margin-top: 1.5rem; }
+#optimize-all-btn { margin-top: 1.5rem; }
+#download-all-btn { background-color: var(--success-color); }
 
-/* =================================
-   6. Format Seçenekleri ve Tooltip
-   ================================= */
+/* ================================= 6. Format Options & Tooltip ================================= */
 .format-options-header { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
 .format-options { display: flex; justify-content: center; align-items: center; gap: 1.5rem; }
 .format-label { font-weight: 500; }
@@ -196,110 +89,26 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
 .tooltip-container { position: relative; display: inline-block; }
 .info-icon { display: flex; justify-content: center; align-items: center; width: 20px; height: 20px; border-radius: 50%; background-color: #e9ecef; color: #6c757d; font-weight: 700; font-size: 0.8rem; cursor: pointer; user-select: none; }
 .tooltip-content { visibility: hidden; opacity: 0; width: 280px; background-color: var(--dark-gray); color: var(--white-color); text-align: left; border-radius: 6px; padding: 1rem; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -140px; transition: opacity 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.copy-tooltip { white-space: normal; width: 240px; margin-left: -120px; pointer-events: none; }
 .tooltip-container:hover .tooltip-content { visibility: visible; opacity: 1; }
 .tooltip-content h4 { font-size: 1rem; color: var(--primary-color); margin-top: 0; margin-bottom: 0.5rem; }
 .tooltip-content p { font-size: 0.85rem; line-height: 1.6; margin-bottom: 0; }
 .tooltip-content hr { border: none; border-top: 1px solid #495057; margin: 0.8rem 0; }
 
-/* =================================
-   7. Modals (Compare & Crop)
-   ================================= */
+/* ================================= 7. Modals (Compare & Crop) ================================= */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+.modal-content, .crop-modal-content { background-color: white; padding: 1.5rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 1001; }
+.modal-close-btn { position: absolute; top: -15px; right: -15px; background-color: white; border: none; font-size: 2rem; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; line-height: 1; padding: 0; z-index: 1002; }
+img-comparison-slider img { object-fit: contain; max-width: 85vw; max-height: 85vh; display: block; }
+.crop-modal-content { width: auto; height: auto; visibility: hidden; }
+.crop-modal-content.ready { visibility: visible; }
+.crop-modal-content h2 { margin-bottom: 1.5rem; text-align: center; }
+.crop-image-container { max-width: 70vw; max-height: 60vh; margin-bottom: 1.5rem; }
+.crop-image-container img { max-width: 100%; display: block; }
+.crop-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; width: 100%; }
+.crop-shape-btn.active { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
 
-/* General style for the dark background overlay */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000; /* Stays behind */
-    padding: 20px;
-}
-
-/* General style for the white content box of any modal */
-.modal-content, .crop-modal-content {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    max-width: 90vw;
-    max-height: 90vh;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 1001; /* THIS IS THE FIX: Ensures content is on top of the overlay */
-}
-
-/* Close button for all modals */
-.modal-close-btn {
-    position: absolute;
-    top: -15px;
-    right: -15px;
-    background-color: white;
-    border: none;
-    font-size: 2rem;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    line-height: 1;
-    padding: 0;
-    z-index: 1002; /* On top of everything */
-}
-
-/* --- Styles specific to the Compare Slider Modal --- */
-img-comparison-slider img {
-    object-fit: contain;
-    max-width: 85vw;
-    max-height: 85vh;
-    display: block;
-}
-
-/* --- Styles specific to the Crop Modal --- */
-.crop-modal-content {
-    width: auto;
-    height: auto;
-    visibility: hidden;
-}
-.crop-modal-content.ready {
-    visibility: visible;
-}
-.crop-modal-content h2 {
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-.crop-image-container {
-    max-width: 70vw;
-    max-height: 60vh;
-    margin-bottom: 1.5rem;
-}
-.crop-image-container img {
-    max-width: 100%;
-    display: block;
-}
-.crop-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-    width: 100%;
-}
-.crop-shape-btn.active {
-    background-color: var(--primary-color);
-    color: var(--white-color);
-    border-color: var(--primary-color);
-}
-
-/* =================================
-   8. Statik Sayfalar (About, Blog)
-   ================================= */
+/* ================================= 8. Statik Sayfalar (About, Blog) ================================= */
 .content-page { padding-top: 4rem; padding-bottom: 4rem; max-width: 800px; }
 .content-page h1 { font-size: 2.8rem; margin-bottom: 1rem; border-bottom: 2px solid var(--light-gray); padding-bottom: 1rem; }
 .content-page h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
@@ -316,9 +125,7 @@ img-comparison-slider img {
 .post-content h2 { font-size: 1.6rem; }
 .post-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1.5rem 0; }
 
-/* =================================
-   9. Mobil Menü ve Uyumluluk
-   ================================= */
+/* ================================= 9. Mobil Menü ve Uyumluluk ================================= */
 body.mobile-menu-active { overflow: hidden; }
 body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 999; }
 .mobile-menu-button { display: none; position: fixed; top: 20px; right: 20px; z-index: 1002; background: var(--white-color); border-radius: 50%; padding: 8px; cursor: pointer; border: 1px solid var(--light-gray); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -339,6 +146,8 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .file-item-status { width: 100%; justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 10px; }
     .result-buttons { flex-direction: column; align-items: stretch; width: 100%; gap: 10px; }
     .result-buttons > * { text-align: center; margin-left: 0 !important; }
+    .action-icon-group { width: 100%; justify-content: space-around; }
+    .btn-download-item { flex-grow: 1; }
     .format-options-header { justify-content: center; margin-bottom: 1rem; }
     .format-options { flex-wrap: wrap; justify-content: center; gap: 1rem; }
     .action-buttons-container { flex-direction: column; align-items: stretch; }
@@ -346,83 +155,4 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .footer-container { gap: 1rem; }
     .footer-links { gap: 1rem 1.5rem; }
     .crop-actions { flex-direction: column; align-items: stretch; width: 100%; gap: 0.5rem; }
-        .result-buttons {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        gap: 10px;
-    }
-    
-    /* YENİ EKLENEN KURAL */
-    /* "Copy" butonunu mobil cihazlarda gizle */
-    .btn-copy {
-        display: none;
-    }
-}
-
-/* "Copy" Butonu Tooltip Stili */
-.result-buttons .tooltip-container {
-    display: flex; /* Butonların hizalanmasını korumak için */
-}
-
-.copy-tooltip {
-    white-space: normal; /* Metnin kutu içinde alt satıra geçmesini sağlar */
-    width: 220px; /* Kutunun genişliği */
-    margin-left: -110px; /* Kutuyu butona göre ortalamak için */
-}
-
-/* Akıllı İpucu Kutusu Stili */
-.smart-tip {
-    font-size: 0.9rem;
-    color: #6c757d;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 5px;
-    padding: 0.8rem 1rem;
-    margin-top: 1.5rem;
-    text-align: left;
-}
-
-/* =================================
-   Base64 Modal Stilleri (Geliştirilmiş Tasarım)
-   ================================= */
-.modal-content h2 {
-    width: 100%; /* Başlığın tam genişliği kaplamasını sağlar */
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
-.modal-content p {
-    font-size: 1rem;
-    color: #6c757d;
-    text-align: center;
-    margin-bottom: 1.5rem; /* Metin ve kutu arasına boşluk */
-}
-
-.base64-textarea {
-    width: 100%;
-    min-height: 200px; /* Yüksekliği artırdık */
-    margin-bottom: 1.5rem; /* Kutu ve buton arasına boşluk */
-    padding: 15px;
-    font-family: 'Courier New', Courier, monospace; /* Daha okunaklı bir font */
-    font-size: 0.9rem;
-    border: 1px solid var(--light-gray);
-    border-radius: 8px; /* Daha yuvarlak köşeler */
-    resize: vertical;
-    background-color: #f8f9fa; /* Hafif arka plan rengi */
-}
-
-/* Kopyala butonunu konteynerin sonuna, sağa yaslıyoruz */
-#copy-base64-btn {
-    align-self: flex-end; /* Butonu sağa yaslar */
-    margin-top: 0;
-}
-
-/* Styles for Modal Action Buttons */
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    width: 100%;
-    gap: 1rem;
-    margin-top: 1rem;
 }
