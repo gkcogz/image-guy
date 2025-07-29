@@ -555,20 +555,26 @@ function showCropModal(originalUrl, optimizedUrl) {
     }
 }
 
-
-// Replace your existing showBase64Modal function in main.js with this one
-
+// main.js dosyanızdaki mevcut showBase64Modal fonksiyonunu bununla değiştirin
 function showBase64Modal(base64String) {
     const modalHTML = `
         <div class="modal-overlay">
-            <div class="modal-content">
+            <div class="modal-content base64-modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <h2>Base64 Code</h2>
                 <p>You can use this code directly in your CSS or HTML.</p>
-                <textarea class="base64-textarea" readonly>${base64String}</textarea>
+                <div class="base64-container">
+                    <textarea class="base64-textarea" readonly>${base64String}</textarea>
+                </div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" id="check-base64-btn">Check Code</button>
-                    <button class="btn btn-primary" id="copy-base64-btn">Copy to Clipboard</button>
+                    <button class="btn btn-secondary" id="check-base64-btn">
+                        <span>Check Code</span>
+                    </button>
+                    <button class="btn btn-primary" id="copy-base64-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copy to Clipboard</span>
+                    </button>
+                    <span class="copy-success-msg">Copied!</span>
                 </div>
             </div>
         </div>
@@ -576,22 +582,21 @@ function showBase64Modal(base64String) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const textarea = document.querySelector('.base64-textarea');
-    textarea.select(); // Automatically select the text for the user
+    textarea.select();
 
     const copyBtn = document.getElementById('copy-base64-btn');
     const checkBtn = document.getElementById('check-base64-btn');
+    const successMsg = document.querySelector('.copy-success-msg');
 
-    // Add functionality to the "Copy" button
     copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(base64String).then(() => {
-            copyBtn.textContent = 'Copied!';
+            successMsg.classList.add('visible');
             setTimeout(() => {
-                copyBtn.textContent = 'Copy to Clipboard';
+                successMsg.classList.remove('visible');
             }, 2000);
         });
     });
 
-    // Add functionality to the new "Check Code" button
     checkBtn.addEventListener('click', () => {
         window.open(base64String, '_blank');
     });

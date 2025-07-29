@@ -271,3 +271,73 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .footer-links { gap: 1rem 1.5rem; }
     .crop-actions { flex-direction: column; align-items: stretch; width: 100%; gap: 0.5rem; }
 }
+
+/* =================================
+   10. Base64 Modal Stilleri
+   ================================= */
+.base64-modal-content {
+    width: 100%;
+    max-width: 600px; /* Pencereyi biraz daha geniş yapalım */
+}
+
+.base64-modal-content h2 {
+    margin-bottom: 0.5rem;
+}
+
+.base64-modal-content p {
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+}
+
+.base64-container {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.base64-textarea {
+    width: 100%;
+    min-height: 150px; /* Metin alanını daha uzun yapalım */
+    border: none;
+    resize: vertical;
+    font-family: 'Courier New', Courier, monospace; /* Kodu okunabilir kılan font */
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+    background-color: transparent;
+    word-break: break-all; /* Uzun satırların kırılmasını sağla */
+}
+
+.base64-textarea:focus {
+    outline: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end; /* Butonları sağa yasla */
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* Kopyala butonuna ikon ve metin için stil */
+#copy-base64-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-success-msg {
+    visibility: hidden;
+    opacity: 0;
+    color: var(--success-color);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.copy-success-msg.visible {
+    visibility: visible;
+    opacity: 1;
+}
