@@ -187,7 +187,7 @@ document.body.addEventListener('click', async (e) => {
         // Crop butonu SADECE optimize edilmiş URL'yi günceller.
         // Orijinal URL'ye dokunmayarak, en baştaki haline dönebilmemizi sağlar.
         if(cropButton) {
-            cropButton.dataset.optimizedUrl = newOptimizedUrl;
+            cropButton.dataset.optimizedUrl = newOptimizedUrl;crop-reset-btn
             // cropButton.dataset.originalUrl'e dokunmuyoruz!
         }
         if(copyButton) {
@@ -244,7 +244,7 @@ document.body.addEventListener('click', async (e) => {
             alert('Could not generate Base64 code.');
         }
     }
-// Kırpma penceresindeki "Reset" butonuna basıldığında
+    // Kırpma penceresindeki "Reset" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (!cropper) return;
 
@@ -255,26 +255,28 @@ document.body.addEventListener('click', async (e) => {
         // Eğer mevcut resim, en baştaki orijinal resimden farklıysa...
         if (currentSrc !== originalUrl) {
             
-            // --- YENİ "YOK ET VE YENİDEN YARAT" MANTIĞI ---
-
             // 1. Mevcut cropper örneğini tamamen yok et.
             cropper.destroy();
 
-            // 2. Resim elementinin kaynağını en baştaki orijinal URL ile güncelle.
-            image.src = originalUrl;
+            // 2. YENİ MANTIK: Resim yüklendiğinde ne yapılacağını tanımla.
+            // Bu fonksiyon, sadece tarayıcı resmi tamamen yüklediğinde çalışacak.
+            image.onload = () => {
+                // 3. Resim hazır olduğuna göre, YENİ cropper örneğini oluştur.
+                cropper = new Cropper(image, {
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                    ready: function () {
+                        // Hazır olduğunda, şekil butonlarını varsayılan duruma getir.
+                        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                        document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                    }
+                });
+            };
 
-            // 3. Temiz bir başlangıç için aynı resim elementi üzerinde yeni bir cropper örneği yarat.
-            //    showCropModal'daki ayarların aynısını kullanıyoruz.
-            cropper = new Cropper(image, {
-                viewMode: 1,
-                background: false,
-                autoCropArea: 0.8,
-                ready: function () {
-                    // Hazır olduğunda, şekil butonlarını varsayılan duruma getir.
-                    document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
-                }
-            });
+            // 4. Resim kaynağını değiştirerek yükleme işlemini başlat.
+            // Yukarıdaki onload fonksiyonu bu işlem bittiğinde tetiklenecek.
+            image.src = originalUrl;
 
         } else {
             // Eğer zaten orijinal resim üzerindeysek, sadece kırpma seçimini sıfırla.
