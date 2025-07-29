@@ -170,11 +170,11 @@ document.body.addEventListener('click', async (e) => {
                 }
             };
             originalImage.onerror = reject;
-            originalImage.src = originalUrl;
+            originalImage.src = sourceForOriginalCrop;
         });
 
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
-        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob); // Bu satır artık kullanılmıyor ama zararı yok.
+        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
 
         const downloadLink = currentCropTarget.querySelector('.btn-download-item');
         const compareButton = currentCropTarget.querySelector('.btn-compare');
@@ -182,17 +182,18 @@ document.body.addEventListener('click', async (e) => {
         const copyButton = currentCropTarget.querySelector('.btn-copy');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
+
+        // Compare butonunu yeni kırpılmış alanlarla güncelle
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            // Bu satırı tekrar ekleyerek "Akıllı Compare" özelliğini geri getiriyoruz.
             compareButton.dataset.originalUrl = newOriginalUrl; 
         }
 
         // Crop butonu sadece optimize edilmiş URL'yi günceller.
-        // Orijinaline dokunmadığımız için Reset butonu doğru çalışmaya devam eder.
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
+        
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
         }
