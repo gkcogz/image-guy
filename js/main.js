@@ -271,8 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function handleFiles(files) {
     fileQueue = [];
-    for (const file of files) { fileQueue.push(file); }
+    for (const file of files) { 
+        fileQueue.push(file); 
+    }
     updateUIForFileList();
+    
+    // --- ÇÖZÜM BU SATIR ---
+    // Dosya seçildikten sonra input'un değerini sıfırla.
+    // Bu, aynı dosyanın tekrar seçilebilmesini sağlar.
+    fileInput.value = null; 
 }
 
 function formatFileSize(bytes, decimals = 2) {
