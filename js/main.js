@@ -139,7 +139,7 @@ document.body.addEventListener('click', async (e) => {
 
         const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
         
-        const originalUrl = document.getElementById('image-to-crop').dataset.originalUrl;
+        const ultimateOriginalUrl = currentCropTarget.querySelector('.btn-crop').dataset.originalUrl;
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
             originalImage.crossOrigin = "anonymous";
@@ -173,7 +173,7 @@ document.body.addEventListener('click', async (e) => {
             // --- HATA BURADAYDI, ŞİMDİ DÜZELTİLDİ ---
             // Kod "sourceForOriginalCrop" adında bir değişken arıyordu,
             // ancak değişken yukarıda "originalUrl" olarak tanımlanmıştı.
-            originalImage.src = originalUrl;
+            originalImage.src = ultimateOriginalUrl;
         });
 
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
