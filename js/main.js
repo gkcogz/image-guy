@@ -208,7 +208,7 @@ document.body.addEventListener('click', async (e) => {
         
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            cropper.destroy();
+            cropper.destroy()
             cropper = null;
             modal.remove();
         }
@@ -611,21 +611,6 @@ function resetUI() {
     uploadArea.classList.remove('file-selected');
 }
 
-function showComparisonModal(originalUrl, optimizedUrl) {
-    const modalHTML = `
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <button class="modal-close-btn">&times;</button>
-                <img-comparison-slider>
-                    <img slot="first" src="${originalUrl}" />
-                    <img slot="second" src="${optimizedUrl}" />
-                </img-comparison-slider>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
 // main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
     const modalHTML = `
@@ -639,7 +624,13 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                    
+                    <button class="btn btn-secondary" id="crop-reset-btn">
+                        Reset All
+                        <span class="tooltip-text">
+                            Warning: All changes will be reset. You will revert to the initial optimized image.
+                        </span>
+                    </button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>

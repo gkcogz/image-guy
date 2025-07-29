@@ -189,3 +189,53 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
 #copy-base64-btn { display: flex; align-items: center; gap: 8px; }
 .copy-success-msg { visibility: hidden; opacity: 0; color: var(--success-color); font-weight: 500; transition: all 0.3s ease; }
 .copy-success-msg.visible { visibility: visible; opacity: 1; }
+
+/* =================================
+   11. Tooltip Stilleri
+   ================================= */
+
+/* Tooltip'in konumlanacağı butona göreceli pozisyon veriyoruz */
+#crop-reset-btn {
+    position: relative;
+}
+
+/* Tooltip metninin kendisi */
+#crop-reset-btn .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    width: 260px; /* Genişlik */
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Butonun üstünde konumlandır */
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.4;
+    pointer-events: none; /* Üzerine gelince fare olaylarını engelle */
+    white-space: normal; /* Uzun metinlerin alt satıra geçmesini sağla */
+}
+
+/* Tooltip'in altındaki küçük ok */
+#crop-reset-btn .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--dark-gray) transparent transparent transparent;
+}
+
+/* Butonun üzerine gelindiğinde tooltip'i göster */
+#crop-reset-btn:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
