@@ -610,6 +610,20 @@ function resetUI() {
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
 }
+function showComparisonModal(originalUrl, optimizedUrl) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <img-comparison-slider>
+                    <img slot="first" src="${originalUrl}" />
+                    <img slot="second" src="${optimizedUrl}" />
+                </img-comparison-slider>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
 
 // main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
