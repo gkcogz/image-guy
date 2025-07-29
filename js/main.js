@@ -67,14 +67,19 @@ document.body.addEventListener('click', async (e) => {
         resetUI();
     }
 
-    // "Undo" butonuna basıldığında
+// "Undo" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-undo-btn') {
         if (cropHistory.length > 0) {
+            // Geçmişten son durumu al ve kaldır
             const lastState = cropHistory.pop();
             const image = document.getElementById('image-to-crop');
             
+            // --- YENİ VE GÜVENİLİR MANTIK ---
+            // 1. Mevcut cropper'ı yok et.
             cropper.destroy();
 
+            // 2. Resmin "onload" olayını tanımla. Resim yüklendiğinde yeni cropper'ı oluştur.
+            // Bu, görsel hataları ve zamanlama sorunlarını engeller.
             image.onload = () => {
                 cropper = new Cropper(image, {
                     viewMode: 1,
@@ -83,8 +88,11 @@ document.body.addEventListener('click', async (e) => {
                 });
             };
 
+            // 3. Resim kaynağını bir önceki durumdaki URL ile değiştirerek yüklemeyi başlat.
             image.src = lastState.optimized;
+            // --- YENİ MANTIK SONU ---
 
+            // Ana ekrandaki butonların durumunu bir önceki hale geri döndür
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             const cropButton = currentCropTarget.querySelector('.btn-crop');
 
@@ -96,6 +104,7 @@ document.body.addEventListener('click', async (e) => {
                 cropButton.dataset.optimizedUrl = lastState.optimized;
             }
 
+            // Eğer geçmiş boşaldıysa, "Undo" butonunu tekrar pasif yap
             if (cropHistory.length === 0) {
                 targetButton.disabled = true;
             }
