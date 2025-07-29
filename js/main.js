@@ -263,13 +263,6 @@ document.body.addEventListener('click', async (e) => {
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
-        
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            cropper.destroy()
-            cropper = null;
-            modal.remove();
-        }
     }
     // Kırpma şekli butonlarına basıldığında
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
