@@ -178,13 +178,17 @@ document.body.addEventListener('click', async (e) => {
         const copyButton = currentCropTarget.querySelector('.btn-copy');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
+        // Compare butonu hem optimize edilmiş hem de yeni kırpılmış orijinali alır.
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
             compareButton.dataset.originalUrl = newOriginalUrl;
         }
+
+        // Crop butonu SADECE optimize edilmiş URL'yi günceller.
+        // Orijinal URL'ye dokunmayarak, en baştaki haline dönebilmemizi sağlar.
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
-            cropButton.dataset.originalUrl = newOriginalUrl;
+            // cropButton.dataset.originalUrl'e dokunmuyoruz!
         }
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
@@ -242,7 +246,19 @@ document.body.addEventListener('click', async (e) => {
     }
     // Kırpma penceresindeki "Reset" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-reset-btn') {
-        if (cropper) {
+        if (!cropper) return;
+
+        const image = document.getElementById('image-to-crop');
+        const currentSrc = image.src;
+        const originalUrl = image.dataset.originalUrl;
+
+        // Eğer mevcut resim (src), en baştaki orijinal resimden farklıysa,
+        // bu, resmin daha önce kırpıldığı anlamına gelir. Orijinaline geri dön.
+        if (currentSrc !== originalUrl) {
+            // Cropper'daki resmi en baştaki orijinal resimle değiştir.
+            cropper.replace(originalUrl);
+        } else {
+            // Eğer zaten orijinal resim üzerindeysek, sadece kırpma seçimini sıfırla.
             cropper.reset();
         }
     }
