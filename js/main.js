@@ -181,7 +181,7 @@ document.body.addEventListener('click', async (e) => {
         // Compare butonu hem optimize edilmiş hem de yeni kırpılmış orijinali alır.
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            compareButton.dataset.originalUrl = newOriginalUrl;
+            // compareButton.dataset.originalUrl = newOriginalUrl;
         }
 
         // Crop butonu SADECE optimize edilmiş URL'yi günceller.
