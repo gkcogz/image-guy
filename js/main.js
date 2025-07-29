@@ -116,7 +116,7 @@ document.body.addEventListener('click', async (e) => {
         
         showCropModal(originalUrl, optimizedUrl);
     }
-    // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
+// "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
     if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
         
@@ -139,7 +139,10 @@ document.body.addEventListener('click', async (e) => {
 
         const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
         
-        const ultimateOriginalUrl = currentCropTarget.querySelector('.btn-crop').dataset.originalUrl;
+        // --- DEĞİŞİKLİK 1: DOĞRU REFERANSI AL ---
+        // Kırpılacak orijinal resim olarak, "compare" butonunda saklanan en güncel versiyonu kullan.
+        const sourceForOriginalCrop = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
+        
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
             originalImage.crossOrigin = "anonymous";
@@ -170,10 +173,8 @@ document.body.addEventListener('click', async (e) => {
                 }
             };
             originalImage.onerror = reject;
-            // --- HATA BURADAYDI, ŞİMDİ DÜZELTİLDİ ---
-            // Kod "sourceForOriginalCrop" adında bir değişken arıyordu,
-            // ancak değişken yukarıda "originalUrl" olarak tanımlanmıştı.
-            originalImage.src = ultimateOriginalUrl;
+            // --- DEĞİŞİKLİK 2: DOĞRU KAYNAĞI KULLAN ---
+            originalImage.src = sourceForOriginalCrop;
         });
 
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
@@ -638,7 +639,7 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset</button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
