@@ -1,6 +1,9 @@
+
 let fileQueue = []; 
 let cropper = null;
 let currentCropTarget = null;
+let cropHistory = []; // Kırpma geçmişini tutacak dizi
+let ultimateOriginalUrl = null; // En baştaki orijinal URL'yi saklayacak
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
@@ -49,6 +52,34 @@ document.body.addEventListener('click', async (e) => {
     // Yeniden başlat butonu
     if (targetButton && targetButton.id === 'clear-all-btn') {
         resetUI();
+    }
+    // "Undo" butonuna basıldığında
+    if (targetButton && targetButton.id === 'crop-undo-btn') {
+        if (cropHistory.length > 0) {
+            // Geçmişten son durumu al ve kaldır
+            const lastState = cropHistory.pop();
+
+            // Kırpma penceresindeki resmi bir önceki optimize edilmiş hale geri döndür
+            if (cropper) {
+                cropper.replace(lastState.optimized);
+            }
+
+            // Ana ekrandaki butonların durumunu bir önceki hale geri döndür
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            const cropButton = currentCropTarget.querySelector('.btn-crop');
+            if (compareButton) {
+                compareButton.dataset.optimizedUrl = lastState.optimized;
+                compareButton.dataset.originalUrl = lastState.original;
+            }
+            if (cropButton) {
+                cropButton.dataset.optimizedUrl = lastState.optimized;
+            }
+
+            // Eğer geçmiş boşaldıysa, "Undo" butonunu tekrar pasif yap
+            if (cropHistory.length === 0) {
+                targetButton.disabled = true;
+            }
+        }
     }
 
     // Silme butonuna basıldığında
@@ -119,6 +150,18 @@ document.body.addEventListener('click', async (e) => {
 // "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
     if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
+
+        // --- YENİ: Geçmişi Kaydet ---
+        // İşleme başlamadan önce, o anki durumu geçmişe ekle.
+        const currentState = {
+            optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
+            original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
+        };
+        cropHistory.push(currentState);
+        
+        // "Undo" butonunu aktif et
+        const undoBtn = document.getElementById('crop-undo-btn');
+        if (undoBtn) undoBtn.disabled = false;
         
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
         let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
@@ -255,24 +298,8 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (!cropper) return;
 
-        // --- BÖLÜM 1: KIRPMA PENCERESİNİ SIFIRLAMA (Mevcut mantık) ---
-        const image = document.getElementById('image-to-crop');
-        const ultimateOriginalUrl = image.dataset.originalUrl;
-        
-        cropper.destroy();
-        image.onload = () => {
-            cropper = new Cropper(image, {
-                viewMode: 1, background: false, autoCropArea: 0.8,
-                ready: function () {
-                    document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
-                }
-            });
-        };
-        image.src = ultimateOriginalUrl;
-
-        // --- BÖLÜM 2: ANA EKRANDAKİ BUTONLARI SIFIRLAMA (Yeni mantık) ---
-        // `currentCropTarget` (yani .action-icon-group), Kırpma penceresi açıldığında zaten saklanmıştı.
+        // --- BÖLÜM 1: ANA EKRANDAKİ BUTONLARIN DURUMUNU SIFIRLA ---
+        // Bu işlem, Kırpma penceresi açıldığında saklanan `currentCropTarget` referansı üzerinden yapılır.
         if (currentCropTarget) {
             const cropButton = currentCropTarget.querySelector('.btn-crop');
             const compareButton = currentCropTarget.querySelector('.btn-compare');
@@ -281,10 +308,10 @@ document.body.addEventListener('click', async (e) => {
             const downloadLink = currentCropTarget.querySelector('.btn-download-item');
 
             // Sakladığımız en baştaki URL'leri alıyoruz.
-            const initialOriginalUrl = cropButton.dataset.originalUrl; // Bu zaten en baştaki orijinal.
-            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // Yeni eklediğimiz nitelikten alıyoruz.
+            const initialOriginalUrl = cropButton.dataset.originalUrl; // En baştaki orijinal.
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // En baştaki optimize edilmiş.
 
-            // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndürüyoruz.
+            // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndür.
             if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             if (compareButton) {
                 compareButton.dataset.originalUrl = initialOriginalUrl;
@@ -294,8 +321,39 @@ document.body.addEventListener('click', async (e) => {
             if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
             if (downloadLink) downloadLink.href = initialOptimizedUrl;
         }
+
+        // --- BÖLÜM 2: KIRPMA PENCERESİNİN GÖRÜNÜMÜNÜ SIFIRLA ---
+        const image = document.getElementById('image-to-crop');
+        const ultimateOriginalUrl = image.dataset.originalUrl;
+        
+        // Önce mevcut cropper'ı yok et.
+        cropper.destroy();
+
+        // Resim yüklendiğinde yeni cropper'ı başlat.
+        image.onload = () => {
+            cropper = new Cropper(image, {
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+                ready: function () {
+                    // Araç hazır olduğunda, şekil butonlarını varsayılana döndür.
+                    document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                }
+            });
+        };
+        
+        // Yüklemeyi başlat.
+        image.src = ultimateOriginalUrl;
+
+        // --- BÖLÜM 3: "UNDO" BUTONUNU VE GEÇMİŞİ SIFIRLA ---
+        const undoBtn = document.getElementById('crop-undo-btn');
+        if (undoBtn) {
+            undoBtn.disabled = true;
+            cropHistory = []; // Kırpma geçmişini temizle.
+        }
     }
-});
+}); 
 
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
@@ -627,6 +685,10 @@ function showComparisonModal(originalUrl, optimizedUrl) {
 
 // main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
+    // Geçmişi temizle ve en baştaki orijinali sakla
+    cropHistory = [];
+    ultimateOriginalUrl = originalUrl; 
+
     const modalHTML = `
         <div class="modal-overlay">
             <div class="crop-modal-content">
@@ -639,6 +701,8 @@ function showCropModal(originalUrl, optimizedUrl) {
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                     
+                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
+
                     <button class="btn btn-secondary" id="crop-reset-btn">
                         Reset All
                         <span class="tooltip-text">
