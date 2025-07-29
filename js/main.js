@@ -42,6 +42,20 @@ uploadArea.addEventListener('drop', (e) => {
 
 // main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
+    // Silme butonuna basıldığında
+    const deleteButton = e.target.closest('.btn-delete-item');
+    if (deleteButton) {
+        const indexToRemove = parseInt(deleteButton.dataset.fileIndex, 10);
+        fileQueue.splice(indexToRemove, 1); // Dosyayı listeden kaldır
+
+        if (fileQueue.length === 0) {
+            resetUI(); // Eğer hiç dosya kalmadıysa arayüzü sıfırla
+        } else {
+            updateUIForFileList(); // Kalan dosyalarla listeyi yeniden çiz
+        }
+        return; // Diğer click eventlerinin çalışmasını engelle
+    }
+    
     const targetButton = e.target.closest('button');
     if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) return;
 
@@ -171,10 +185,12 @@ document.body.addEventListener('click', async (e) => {
         }
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
-
-        // --- EKLENECEK SATIR BURASI ---
+            
+        }
+        // Kırpma sonrası Base64 butonunu da güncelle
         const base64Button = currentCropTarget.querySelector('.btn-base64');
-        if(base64Button) base64Button.dataset.optimizedUrl = newOptimizedUrl;
+        if (base64Button) {
+            base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
         
         const modal = document.querySelector('.modal-overlay');
@@ -259,17 +275,33 @@ function updateUIForFileList() {
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
     
-    let containsPng = false; // Yüklenenler arasında PNG olup olmadığını kontrol etmek için bir değişken
+    let containsPng = false;
 
-    fileQueue.forEach(file => {
-        // Dosya adını küçük harfe çevirip .png ile bitip bitmediğini kontrol et
+    // Her dosyayı index'i ile birlikte döngüye alıyoruz
+    fileQueue.forEach((file, index) => {
         if (file.name.toLowerCase().endsWith('.png')) {
             containsPng = true;
         }
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
-        listItem.innerHTML = `<div class="file-info"><span class="file-icon">📄</span><div class="file-details"><span class="file-name">${file.name}</span><span class="file-size">${formattedSize}</span></div></div><div class="file-item-status">Ready</div>`;
+        
+        // Her dosya satırına bir "sil" butonu ekliyoruz.
+        // data-file-index özelliği, hangi dosyanın silineceğini bilmemizi sağlar.
+        listItem.innerHTML = `
+            <div class="file-info">
+                <span class="file-icon">📄</span>
+                <div class="file-details">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formattedSize}</span>
+                </div>
+            </div>
+            <div class="file-item-status">
+                <span>Ready</span>
+                <button class="icon-btn btn-delete-item" data-file-index="${index}" title="Remove file">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>`;
         fileListElement.appendChild(listItem);
     });
     
@@ -297,7 +329,6 @@ function updateUIForFileList() {
         </div>
     `;
 
-    // --- YENİ "AKILLI İPUCU" MANTIĞI ---
     let smartTipHTML = '';
     if (containsPng) {
         smartTipHTML = `
@@ -306,44 +337,22 @@ function updateUIForFileList() {
             </div>
         `;
     }
-    // --- BİTİŞ ---
-
+    
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
-    // Akıllı ipucunu Optimize butonundan sonra ekliyoruz
-    actionArea.innerHTML = formatOptionsHTML + `<button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>` + smartTipHTML;
+
+    // Butonları bir konteyner içine alarak "Start Over" butonunu ekliyoruz.
+    // id="clear-all-btn" mevcut resetleme fonksiyonunu tetikleyecektir.
+    actionArea.innerHTML = formatOptionsHTML + `
+        <div class="action-buttons-container initial-actions">
+            <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
+            <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>
+        </div>
+    ` + smartTipHTML;
     
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add("file-selected");
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function uploadWithProgress(url, file, onProgress) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url, true);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = (event.loaded / event.total) * 100;
-                onProgress(percentComplete);
-            }
-        };
-        xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) { resolve(xhr.response); }
-            else { reject(new Error(`S3 upload failed: ${xhr.statusText}`)); }
-        };
-        xhr.onerror = () => reject(new Error('S3 upload failed due to a network error.'));
-        xhr.send(file);
-    });
 }
 
 // main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin

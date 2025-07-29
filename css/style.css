@@ -341,3 +341,27 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     visibility: visible;
     opacity: 1;
 }
+
+/* style.css dosyasının sonuna ekleyin */
+
+/* Dosya listesindeki durum ve silme butonu için */
+.file-item-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Silme butonunun kenarlığını kaldıralım */
+.btn-delete-item {
+    border: none;
+    background-color: transparent;
+    padding: 4px;
+}
+
+/* Optimizasyon öncesi buton konteyneri */
+.initial-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
