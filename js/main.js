@@ -32,9 +32,9 @@ document.body.addEventListener('click', async (e) => {
         return;
     }
 
-    // --- YENİ EKLENEN KOD BAŞLANGICI ---
-    // Ana ekrandaki "Choose File" butonu
-    if (targetButton && targetButton.id === 'choose-file-btn') {
+    // --- DÜZELTME BURADA ---
+    // Butonu ID ile değil, metin içeriği ile tanıyoruz.
+    if (targetButton && targetButton.textContent.includes('Choose File')) {
         e.preventDefault();
         fileInput.click();
     }
@@ -50,7 +50,6 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'clear-all-btn') {
         resetUI();
     }
-    // --- YENİ EKLENEN KOD SONU ---
 
     // Silme butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-delete-item')) {
@@ -120,7 +119,6 @@ document.body.addEventListener('click', async (e) => {
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
         let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
 
-        // Dairesel kırpma seçildiyse, kare tuvali alıp daireye çeviriyoruz
         if (isCircle) {
             const circleCanvas = document.createElement('canvas');
             const context = circleCanvas.getContext('2d');
@@ -132,7 +130,7 @@ document.body.addEventListener('click', async (e) => {
             context.closePath();
             context.clip();
             context.drawImage(croppedCanvas, 0, 0);
-            croppedCanvas = circleCanvas; // Artık kırpılmış tuvalimiz dairesel
+            croppedCanvas = circleCanvas;
         }
 
         const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
@@ -190,9 +188,8 @@ document.body.addEventListener('click', async (e) => {
         }
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
-            
         }
-        // Kırpma sonrası Base64 butonunu da güncelle
+
         const base64Button = currentCropTarget.querySelector('.btn-base64');
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
@@ -225,14 +222,13 @@ document.body.addEventListener('click', async (e) => {
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
         targetButton.classList.add('active');
     }
-        // "Get Base64" butonuna basıldığında
+    // "Get Base64" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-base64')) {
         const imageUrl = targetButton.dataset.optimizedUrl;
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
             
-            // FileReader kullanarak blob'u Base64 string'ine çevir
             const reader = new FileReader();
             reader.onloadend = () => {
                 showBase64Modal(reader.result);
@@ -244,10 +240,10 @@ document.body.addEventListener('click', async (e) => {
             alert('Could not generate Base64 code.');
         }
     }
-        // Kırpma penceresindeki "Reset" butonuna basıldığında
+    // Kırpma penceresindeki "Reset" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (cropper) {
-            cropper.reset(); // Cropper.js'in kendi resetleme fonksiyonunu çağırır.
+            cropper.reset();
         }
     }
 });
