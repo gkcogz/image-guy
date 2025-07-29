@@ -746,7 +746,8 @@ document.body.addEventListener('click', async (e) => {
     }
 });
 
-// Bu yeni fonksiyonu main.js dosyasının en altına ekleyin
+// Replace your existing showBase64Modal function in main.js with this one
+
 function showBase64Modal(base64String) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -755,18 +756,22 @@ function showBase64Modal(base64String) {
                 <h2>Base64 Code</h2>
                 <p>You can use this code directly in your CSS or HTML.</p>
                 <textarea class="base64-textarea" readonly>${base64String}</textarea>
-                <button class="btn btn-primary" id="copy-base64-btn">Copy to Clipboard</button>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="check-base64-btn">Check Code</button>
+                    <button class="btn btn-primary" id="copy-base64-btn">Copy to Clipboard</button>
+                </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Otomatik olarak tüm metni seç
     const textarea = document.querySelector('.base64-textarea');
-    textarea.select();
+    textarea.select(); // Automatically select the text for the user
 
-    // Kopyala butonuna işlevsellik ekle
     const copyBtn = document.getElementById('copy-base64-btn');
+    const checkBtn = document.getElementById('check-base64-btn');
+
+    // Add functionality to the "Copy" button
     copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(base64String).then(() => {
             copyBtn.textContent = 'Copied!';
@@ -774,5 +779,10 @@ function showBase64Modal(base64String) {
                 copyBtn.textContent = 'Copy to Clipboard';
             }, 2000);
         });
+    });
+
+    // Add functionality to the new "Check Code" button
+    checkBtn.addEventListener('click', () => {
+        window.open(base64String, '_blank');
     });
 }
