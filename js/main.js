@@ -30,13 +30,26 @@ uploadArea.addEventListener('drop', (e) => {
 document.body.addEventListener('click', async (e) => {
     const targetButton = e.target.closest('button');
 
-    // Tıklanan bir buton değilse veya modal kapatma değilse, işlemi durdur
+    // Tıklanan bir buton değilse VEYA modal kapatma elemanları değilse, işlemi durdur
     if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
         return;
     }
 
-    // --- DÜZELTME BURADA ---
-    // Butonu ID ile değil, metin içeriği ile tanıyoruz.
+    // Kapatma tuşuna veya pencere dışına tıklandığında
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            // Eğer cropper aktifse, hafızadan temizle
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            modal.remove();
+        }
+        return; // Diğer click olaylarının çalışmasını engelle
+    }
+
+    // Ana ekrandaki "Choose File" butonu
     if (targetButton && targetButton.textContent.includes('Choose File')) {
         e.preventDefault();
         fileInput.click();
@@ -53,40 +66,27 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'clear-all-btn') {
         resetUI();
     }
+
     // "Undo" butonuna basıldığında
-// "Undo" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-undo-btn') {
         if (cropHistory.length > 0) {
-            // Geçmişten son durumu al ve kaldır
             const lastState = cropHistory.pop();
-
-            // --- YENİ VE GÜVENİLİR MANTIK ---
             const image = document.getElementById('image-to-crop');
             
-            // 1. Mevcut cropper'ı yok et.
             cropper.destroy();
 
-            // 2. Resmin "onload" olayını tanımla. Resim yüklendiğinde yeni cropper'ı oluştur.
-            // Bu, görsel hataları ve zamanlama sorunlarını engeller.
             image.onload = () => {
                 cropper = new Cropper(image, {
                     viewMode: 1,
                     background: false,
                     autoCropArea: 0.8,
-                    // "ready" callback'ine gerek yok çünkü sadece resmi değiştiriyoruz.
                 });
             };
 
-            // 3. Resim kaynağını bir önceki durumdaki URL ile değiştirerek yüklemeyi başlat.
             image.src = lastState.optimized;
-            // --- YENİ MANTIK SONU ---
 
-            // Ana ekrandaki butonların durumunu bir önceki hale geri döndür
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             const cropButton = currentCropTarget.querySelector('.btn-crop');
-            const copyButton = currentCropTarget.querySelector('.btn-copy');
-            const base64Button = currentCropTarget.querySelector('.btn-base64');
-            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
 
             if (compareButton) {
                 compareButton.dataset.optimizedUrl = lastState.optimized;
@@ -95,10 +95,7 @@ document.body.addEventListener('click', async (e) => {
             if (cropButton) {
                 cropButton.dataset.optimizedUrl = lastState.optimized;
             }
-            // Diğer butonları da geri almamız gerekebilir, şimdilik bu şekilde bırakalım.
-            // Gerekirse bu kısma copy, base64 ve download butonlarını da ekleriz.
 
-            // Eğer geçmiş boşaldıysa, "Undo" butonunu tekrar pasif yap
             if (cropHistory.length === 0) {
                 targetButton.disabled = true;
             }
@@ -145,36 +142,32 @@ document.body.addEventListener('click', async (e) => {
             alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
+
     // Compare butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-compare')) {
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
         showComparisonModal(originalUrl, optimizedUrl);
     }
+
     // "Edit & Crop" butonuna basıldığında
-   if (targetButton && targetButton.classList.contains('btn-crop')) {
+    if (targetButton && targetButton.classList.contains('btn-crop')) {
         currentCropTarget = targetButton.closest('.action-icon-group');
-        
-        // --- DEĞİŞİKLİK BURADA ---
-        // Orijinal URL'yi, referansı hiç değişmeyen crop butonunun kendisinden alıyoruz.
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
-        
         showCropModal(originalUrl, optimizedUrl);
     }
-// "Apply Crop" butonuna basıldığında ("Akıllı Karşılaştırma" mantığı ile)
+
+    // "Apply Crop" butonuna basıldığında
     if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
 
-        // --- YENİ: Geçmişi Kaydet ---
-        // İşleme başlamadan önce, o anki durumu geçmişe ekle.
         const currentState = {
             optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
             original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
         };
         cropHistory.push(currentState);
         
-        // "Undo" butonunu aktif et
         const undoBtn = document.getElementById('crop-undo-btn');
         if (undoBtn) undoBtn.disabled = false;
         
@@ -197,8 +190,6 @@ document.body.addEventListener('click', async (e) => {
 
         const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
         
-        // --- DEĞİŞİKLİK 1: DOĞRU REFERANSI AL ---
-        // Kırpılacak orijinal resim olarak, "compare" butonunda saklanan en güncel versiyonu kullan.
         const sourceForOriginalCrop = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
         
         const originalCroppedBlob = await new Promise((resolve, reject) => {
@@ -231,7 +222,6 @@ document.body.addEventListener('click', async (e) => {
                 }
             };
             originalImage.onerror = reject;
-            // --- DEĞİŞİKLİK 2: DOĞRU KAYNAĞI KULLAN ---
             originalImage.src = sourceForOriginalCrop;
         });
 
@@ -242,16 +232,15 @@ document.body.addEventListener('click', async (e) => {
         const compareButton = currentCropTarget.querySelector('.btn-compare');
         const cropButton = currentCropTarget.querySelector('.btn-crop');
         const copyButton = currentCropTarget.querySelector('.btn-copy');
+        const base64Button = currentCropTarget.querySelector('.btn-base64');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
 
-        // Compare butonunu yeni kırpılmış alanlarla güncelle
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
             compareButton.dataset.originalUrl = newOriginalUrl; 
         }
 
-        // Crop butonu sadece optimize edilmiş URL'yi günceller.
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
@@ -259,11 +248,19 @@ document.body.addEventListener('click', async (e) => {
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
         }
-        const base64Button = currentCropTarget.querySelector('.btn-base64');
+        
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
+
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
     }
+    
     // Kırpma şekli butonlarına basıldığında
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
         if (!cropper) return;
@@ -284,6 +281,7 @@ document.body.addEventListener('click', async (e) => {
         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
         targetButton.classList.add('active');
     }
+
     // "Get Base64" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-base64')) {
         const imageUrl = targetButton.dataset.optimizedUrl;
@@ -302,11 +300,11 @@ document.body.addEventListener('click', async (e) => {
             alert('Could not generate Base64 code.');
         }
     }
-// Kırpma penceresindeki "Reset" butonuna basıldığında
+    
+    // Kırpma penceresindeki "Reset" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-reset-btn') {
         if (!cropper) return;
 
-        // BÖLÜM 1: ANA EKRANDAKİ BUTONLARIN DURUMUNU SIFIRLA
         if (currentCropTarget) {
             const cropButton = currentCropTarget.querySelector('.btn-crop');
             const compareButton = currentCropTarget.querySelector('.btn-compare');
@@ -314,11 +312,9 @@ document.body.addEventListener('click', async (e) => {
             const base64Button = currentCropTarget.querySelector('.btn-base64');
             const downloadLink = currentCropTarget.querySelector('.btn-download-item');
 
-            // Sakladığımız en baştaki URL'leri alıyoruz.
-            const initialOriginalUrl = cropButton.dataset.originalUrl; // En baştaki orijinal.
-            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // En baştaki optimize edilmiş.
+            const initialOriginalUrl = cropButton.dataset.originalUrl;
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
 
-            // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndür.
             if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             if (compareButton) {
                 compareButton.dataset.originalUrl = initialOriginalUrl;
@@ -329,15 +325,12 @@ document.body.addEventListener('click', async (e) => {
             if (downloadLink) downloadLink.href = initialOptimizedUrl;
         }
 
-        // BÖLÜM 2: "UNDO" BUTONUNU VE GEÇMİŞİ SIFIRLA
         const undoBtn = document.getElementById('crop-undo-btn');
         if (undoBtn) {
             undoBtn.disabled = true;
-            cropHistory = []; // Kırpma geçmişini temizle.
+            cropHistory = [];
         }
 
-        // BÖLÜM 3: PENCEREYİ KAPAT
-        // Tüm sıfırlama işlemleri bittiği için artık pencereyi kapatabiliriz.
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
             cropper.destroy();
@@ -346,6 +339,7 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return; 
