@@ -303,66 +303,49 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 // Kırpma penceresindeki "Reset" butonuna basıldığında
-if (targetButton && targetButton.id === 'crop-reset-btn') {
-    if (!cropper) return;
+    if (targetButton && targetButton.id === 'crop-reset-btn') {
+        if (!cropper) return;
 
-    // --- BÖLÜM 1: ANA EKRANDAKİ BUTONLARIN DURUMUNU SIFIRLA ---
-    // Bu işlem, Kırpma penceresi açıldığında saklanan `currentCropTarget` referansı üzerinden yapılır.
-    if (currentCropTarget) {
-        const cropButton = currentCropTarget.querySelector('.btn-crop');
-        const compareButton = currentCropTarget.querySelector('.btn-compare');
-        const copyButton = currentCropTarget.querySelector('.btn-copy');
-        const base64Button = currentCropTarget.querySelector('.btn-base64');
-        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+        // BÖLÜM 1: ANA EKRANDAKİ BUTONLARIN DURUMUNU SIFIRLA
+        if (currentCropTarget) {
+            const cropButton = currentCropTarget.querySelector('.btn-crop');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            const copyButton = currentCropTarget.querySelector('.btn-copy');
+            const base64Button = currentCropTarget.querySelector('.btn-base64');
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
 
-        // Sakladığımız en baştaki URL'leri alıyoruz.
-        const initialOriginalUrl = cropButton.dataset.originalUrl; // En baştaki orijinal.
-        const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // En baştaki optimize edilmiş.
+            // Sakladığımız en baştaki URL'leri alıyoruz.
+            const initialOriginalUrl = cropButton.dataset.originalUrl; // En baştaki orijinal.
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl; // En baştaki optimize edilmiş.
 
-        // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndür.
-        if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-        if (compareButton) {
-            compareButton.dataset.originalUrl = initialOriginalUrl;
-            compareButton.dataset.optimizedUrl = initialOptimizedUrl;
-        }
-        if (copyButton) copyButton.dataset.optimizedUrl = initialOptimizedUrl;
-        if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
-        if (downloadLink) downloadLink.href = initialOptimizedUrl;
-    }
-
-    // --- BÖLÜM 2: KIRPMA PENCERESİNİN GÖRÜNÜMÜNÜ SIFIRLA ---
-    const image = document.getElementById('image-to-crop');
-    const ultimateOriginalUrl = image.dataset.originalUrl;
-    
-    // Önce mevcut cropper'ı yok et.
-    cropper.destroy();
-
-    // Resim yüklendiğinde yeni cropper'ı başlat.
-    image.onload = () => {
-        cropper = new Cropper(image, {
-            viewMode: 1,
-            background: false,
-            autoCropArea: 0.8,
-            ready: function () {
-                // Araç hazır olduğunda, şekil butonlarını varsayılana döndür.
-                document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+            // Tüm butonların URL'lerini bu başlangıç değerlerine geri döndür.
+            if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (compareButton) {
+                compareButton.dataset.originalUrl = initialOriginalUrl;
+                compareButton.dataset.optimizedUrl = initialOptimizedUrl;
             }
-        });
-    };
-    
-    // Yüklemeyi başlat.
-    image.src = ultimateOriginalUrl;
+            if (copyButton) copyButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
+            if (downloadLink) downloadLink.href = initialOptimizedUrl;
+        }
 
-    // --- BÖLÜM 3: "UNDO" BUTONUNU VE GEÇMİŞİ SIFIRLA ---
-    const undoBtn = document.getElementById('crop-undo-btn');
-    if (undoBtn) {
-        undoBtn.disabled = true;
-        cropHistory = []; // Kırpma geçmişini temizle.
+        // BÖLÜM 2: "UNDO" BUTONUNU VE GEÇMİŞİ SIFIRLA
+        const undoBtn = document.getElementById('crop-undo-btn');
+        if (undoBtn) {
+            undoBtn.disabled = true;
+            cropHistory = []; // Kırpma geçmişini temizle.
+        }
+
+        // BÖLÜM 3: PENCEREYİ KAPAT
+        // Tüm sıfırlama işlemleri bittiği için artık pencereyi kapatabiliriz.
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
     }
-}
-}); 
-
+});
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return; 
