@@ -376,16 +376,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ARAYÜZ VE YARDIMCI FONKSİYONLAR
 // ===============================================
 
+// main.js dosyanızdaki handleFiles fonksiyonunu bununla değiştirin
 function handleFiles(files) {
     fileQueue = [];
+    cropHistory = []; // Yeni dosya yüklendiğinde geçmişi sıfırla
     for (const file of files) { 
         fileQueue.push(file); 
     }
     updateUIForFileList();
     
-    // --- ÇÖZÜM BU SATIR ---
-    // Dosya seçildikten sonra input'un değerini sıfırla.
-    // Bu, aynı dosyanın tekrar seçilebilmesini sağlar.
     fileInput.value = null; 
 }
 
@@ -662,12 +661,15 @@ async function handleZipDownload() {
     }
 }
 
+// main.js dosyanızdaki resetUI fonksiyonunu bununla değiştirin
 function resetUI() {
     console.log('Resetting UI to initial state.');
     fileQueue = [];
+    cropHistory = []; // Arayüz sıfırlandığında geçmişi sıfırla
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
 }
+
 function showComparisonModal(originalUrl, optimizedUrl) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -686,7 +688,7 @@ function showComparisonModal(originalUrl, optimizedUrl) {
 // main.js dosyanızdaki mevcut showCropModal fonksiyonunu bununla değiştirin
 function showCropModal(originalUrl, optimizedUrl) {
     // Geçmişi temizle ve en baştaki orijinali sakla
-    cropHistory = [];
+    // cropHistory = []; SILINDI
     ultimateOriginalUrl = originalUrl; 
 
     const modalHTML = `
