@@ -117,14 +117,6 @@ document.body.addEventListener('click', async (e) => {
         return; 
     }
     
-    // Compare ve Crop Modallarını kapatma
-    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            if (cropper) { cropper.destroy(); cropper = null; }
-            modal.remove();
-        }
-    }
     // "Copy" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-copy')) {
         const copyBtn = targetButton;
@@ -748,7 +740,7 @@ function showCropModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const image = document.getElementById('image-to-crop');
-    const modalContent = document.querySelector('.crop-modal-content'); // Referansı burada alıyoruz
+    const modalContent = document.querySelector('.crop-modal-content'); // Referans burada alınıyor
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
