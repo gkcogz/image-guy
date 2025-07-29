@@ -10,22 +10,6 @@ const initialUploadAreaHTML = uploadArea.innerHTML;
 // OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
 // ===============================================
 
-uploadArea.addEventListener('click', (e) => {
-    if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Choose File')) {
-        e.preventDefault();
-        fileInput.click();
-    }
-    if (e.target.id === 'optimize-all-btn') {
-        startBatchOptimization();
-    }
-    if (e.target.id === 'download-all-btn') {
-        handleZipDownload();
-    }
-    if (e.target.id === 'clear-all-btn') {
-        resetUI();
-    }
-});
-
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     if (files.length > 0) { handleFiles(files); }
@@ -40,25 +24,46 @@ uploadArea.addEventListener('drop', (e) => {
     if (files.length > 0) { handleFiles(files); }
 });
 
-// main.js dosyanızdaki mevcut document.body.addEventListener fonksiyonunu bununla değiştirin
 document.body.addEventListener('click', async (e) => {
-    // Silme butonuna basıldığında
-    const deleteButton = e.target.closest('.btn-delete-item');
-    if (deleteButton) {
-        const indexToRemove = parseInt(deleteButton.dataset.fileIndex, 10);
-        fileQueue.splice(indexToRemove, 1); // Dosyayı listeden kaldır
+    const targetButton = e.target.closest('button');
 
+    // Tıklanan bir buton değilse veya modal kapatma değilse, işlemi durdur
+    if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
+        return;
+    }
+
+    // --- YENİ EKLENEN KOD BAŞLANGICI ---
+    // Ana ekrandaki "Choose File" butonu
+    if (targetButton && targetButton.id === 'choose-file-btn') {
+        e.preventDefault();
+        fileInput.click();
+    }
+    // Optimizasyon butonu
+    if (targetButton && targetButton.id === 'optimize-all-btn') {
+        startBatchOptimization();
+    }
+    // Hepsini indir butonu
+    if (targetButton && targetButton.id === 'download-all-btn') {
+        handleZipDownload();
+    }
+    // Yeniden başlat butonu
+    if (targetButton && targetButton.id === 'clear-all-btn') {
+        resetUI();
+    }
+    // --- YENİ EKLENEN KOD SONU ---
+
+    // Silme butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-delete-item')) {
+        const indexToRemove = parseInt(targetButton.dataset.fileIndex, 10);
+        fileQueue.splice(indexToRemove, 1);
         if (fileQueue.length === 0) {
-            resetUI(); // Eğer hiç dosya kalmadıysa arayüzü sıfırla
+            resetUI();
         } else {
-            updateUIForFileList(); // Kalan dosyalarla listeyi yeniden çiz
+            updateUIForFileList();
         }
-        return; // Diğer click eventlerinin çalışmasını engelle
+        return; 
     }
     
-    const targetButton = e.target.closest('button');
-    if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) return;
-
     // Compare ve Crop Modallarını kapatma
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
