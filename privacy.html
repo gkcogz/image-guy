@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - Image Guy</title>
+    <title data-i18n-key="footer_privacy">Privacy Policy - Image Guy</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,43 +31,48 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="de">DE</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
             </nav>
         </div>
     </header>
 
     <main>
         <div class="container content-page">
-            <h1>Privacy Policy</h1>
-            <p><em>Last updated: July 20, 2025</em></p>
+            <h1 data-i18n-key="privacy_title">Privacy Policy</h1>
+            <p><em data-i18n-key="privacy_last_updated">Last updated: July 20, 2025</em></p>
             
-            <h2>Image Handling</h2>
-            <p>Images you upload are sent to our secure cloud servers (Amazon S3 and Netlify Functions) for the sole purpose of optimization. Original and optimized images may be stored temporarily to ensure service delivery and are automatically deleted. We do not access, share, or use your images for any other purpose.</p>
+            <h2 data-i18n-key="privacy_section1_title">Image Handling</h2>
+            <p data-i18n-key="privacy_section1_text">Images you upload are sent to our secure cloud servers (Amazon S3 and Netlify Functions) for the sole purpose of optimization. Original and optimized images may be stored temporarily to ensure service delivery and are automatically deleted. We do not access, share, or use your images for any other purpose.</p>
 
-            <h2>Information We Collect</h2>
-            <p>We do not collect any personal information. You are not required to create an account or provide any personal data to use Image Guy. We may use privacy-friendly analytics to monitor website traffic, but this data is anonymized and does not track individual users.</p>
+            <h2 data-i18n-key="privacy_section2_title">Information We Collect</h2>
+            <p data-i18n-key="privacy_section2_text">We do not collect any personal information. You are not required to create an account or provide any personal data to use Image Guy. We may use privacy-friendly analytics to monitor website traffic, but this data is anonymized and does not track individual users.</p>
             
-            <h2>Third-Party Services</h2>
-            <p>Our service is built upon professional cloud infrastructure provided by Netlify and Amazon Web Services (AWS). These services have their own robust privacy and security policies.</p>
+            <h2 data-i18n-key="privacy_section3_title">Third-Party Services</h2>
+            <p data-i18n-key="privacy_section3_text">Our service is built upon professional cloud infrastructure provided by Netlify and Amazon Web Services (AWS). These services have their own robust privacy and security policies.</p>
         </div>
     </main>
 
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank">realfavicongenerator.net</a></span>
-            </div>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+                </div>
         </div>
     </footer>
 

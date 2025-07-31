@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="The official blog of Image Guy. Learn the best tips and tricks for image optimization, web performance, and modern image formats like AVIF and WebP." />
-    <title>Blog - Optimization Tips & Tricks | Image Guy</title>
+    <title data-i18n-key="nav_blog">Blog - Optimization Tips & Tricks | Image Guy</title>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,24 +39,29 @@
 
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html" aria-current="page">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" aria-current="page" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="de">DE</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
             </nav>
         </div>
     </header>
 
     <main>
         <div class="container content-page">
-            <h1>Image Guy Blog</h1>
-            <p>Tips, tricks, and insights on image optimization and web performance.</p>
+            <h1 data-i18n-key="blog_title">Image Guy Blog</h1>
+            <p data-i18n-key="blog_subtitle">Tips, tricks, and insights on image optimization and web performance.</p>
 
             <div class="blog-post-list">
                 <article class="blog-post-item">
-                    <h2><a href="/intro-to-optimization.html">Why is Image Optimization Important for Your Website?</a></h2>
-                    <p class="post-excerpt">Learn why optimizing images is critical for site speed, sustainability, and SEO, with practical tips for better web performance.</p>
-                    <a href="/intro-to-optimization.html" class="btn-read-more">Read More &rarr;</a>
+                    <h2><a href="/intro-to-optimization.html" data-i18n-key="blog_post1_title">Why is Image Optimization Important for Your Website?</a></h2>
+                    <p class="post-excerpt" data-i18n-key="blog_post1_excerpt">Learn why optimizing images is critical for site speed, sustainability, and SEO, with practical tips for better web performance.</p>
+                    <a href="/intro-to-optimization.html" class="btn-read-more" data-i18n-key="blog_read_more">Read More &rarr;</a>
                 </article>
             </div>
         </div>
@@ -65,16 +70,16 @@
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank" rel="noopener">realfavicongenerator.net</a></span>
-            </div>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+                </div>
         </div>
     </footer>
 

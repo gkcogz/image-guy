@@ -41,31 +41,42 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+
+                <div class="language-switcher">
+                    <button id="lang-switcher-btn" class="icon-btn" title="Change Language">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    </button>
+                    <div id="language-dropdown" class="language-dropdown">
+                        <a href="#" class="lang-link" data-lang="en">English</a>
+                        <a href="#" class="lang-link" data-lang="de">Deutsch</a>
+                        <a href="#" class="lang-link" data-lang="zh">中文</a>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
 
     <div class="announcement-bar">
         <div class="announcement-text">
-            <span>Dear user, the compare function after cropping is being improved. Feel Free to Reach Me Out for Your Feedback!</span>
-            <span>Dear user, the compare function after cropping is being improved. Feel Free to Reach Me Out for Your Feedback!</span>
+            <span data-i18n-key="home_announcement">Dear user, the compare function after cropping is being improved. Feel Free to Reach Me Out for Your Feedback!</span>
+            <span data-i18n-key="home_announcement">Dear user, the compare function after cropping is being improved. Feel Free to Reach Me Out for Your Feedback!</span>
         </div>
     </div>
 
     <main>
         <section class="hero">
             <div class="container">
-                <h1>Smart Image Optimizer & Editor</h1>
-                <p class="subtitle">Instantly resize, compress, convert, and crop your images in seconds. Free and secure.</p>
+                <h1 data-i18n-key="home_title">Smart Image Optimizer & Editor</h1>
+                <p class="subtitle" data-i18n-key="home_subtitle">Instantly resize, compress, convert, and crop your images in seconds. Free and secure.</p>
                 
                 <div class="upload-area">
-                    <h2>Drag & Drop Your File Here</h2>
-                    <p>or</p>
-                    <button class="btn btn-primary">Choose File</button>
+                    <h2 data-i18n-key="home_upload_title">Drag & Drop Your File Here</h2>
+                    <p data-i18n-key="home_upload_or">or</p>
+                    <button class="btn btn-primary" id="choose-file-btn" data-i18n-key="home_upload_button">Choose File</button>
                     <input type="file" id="file-input" hidden multiple>
                 </div>
             </div>
@@ -74,8 +85,8 @@
         <section class="sustainability-mission">
             <div class="section-overlay"></div>
             <div class="container">
-                <h3>A Small Footprint, One Pixel at a Time.</h3>
-                <p>Every image you optimize doesn't just save space—it saves energy. Less data transfer and storage mean a smaller digital footprint for a healthier planet. Join us in making the web faster and greener.</p>
+                <h3 data-i18n-key="home_mission_title">A Small Footprint, One Pixel at a Time.</h3>
+                <p data-i18n-key="home_mission_text">Every image you optimize doesn't just save space—it saves energy. Less data transfer and storage mean a smaller digital footprint for a healthier planet. Join us in making the web faster and greener.</p>
             </div>
         </section>
 
@@ -94,19 +105,19 @@
         </section>
         <section class="how-it-works">
             <div class="container">
-                <h2>How It Works in 3 Simple Steps</h2>
+                <h2 data-i18n-key="home_howitworks_title">How It Works in 3 Simple Steps</h2>
                 <div class="steps">
                     <div class="step">
-                        <h3>1. Upload</h3>
-                        <p>Drag & drop or choose your image file. Make sure you have an internet connection.</p>
+                        <h3 data-i18n-key="home_howitworks_step1_title">1. Upload</h3>
+                        <p data-i18n-key="home_howitworks_step1_text">Drag & drop or choose your image. Select the output format and additionally you can adjust the quality to your liking.</p>
                     </div>
                     <div class="step">
-                        <h3>2. Optimize</h3>
-                        <p>Our server optimizes your image intelligently.</p>
+                        <h3 data-i18n-key="home_howitworks_step2_title">2. Optimize</h3>
+                        <p data-i18n-key="home_howitworks_step2_text">Our servers intelligently optimize your image, finding the perfect balance between the smallest file size and the best quality.</p>
                     </div>
                     <div class="step">
-                        <h3>3. Edit & Download</h3>
-                        <p>Edit & Download your perfectly sized new image.</p>
+                        <h3 data-i18n-key="home_howitworks_step3_title">3. Edit & Download</h3>
+                        <p data-i18n-key="home_howitworks_step3_text">Crop, compare, and download your new, perfectly-sized image as a single file or a convenient .ZIP archive.</p>
                     </div>
                 </div>
             </div>
@@ -117,14 +128,14 @@
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
                 <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
                 </div>
         </div>

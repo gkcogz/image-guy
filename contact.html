@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact - Image Guy</title>
+    <title data-i18n-key="nav_contact">Contact - Image Guy</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,42 +31,47 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="de">DE</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
             </nav>
         </div>
     </header>
 
     <main>
         <div class="container content-page">
-            <h1>Contact Us</h1>
-            <p>If you have any questions, feedback, or suggestions, we'd love to hear from you. The best way to reach us is by email.</p>
+            <h1 data-i18n-key="contact_title">Contact Us</h1>
+            <p data-i18n-key="contact_intro">If you have any questions, feedback, or suggestions, we'd love to hear from you. The best way to reach us is by email.</p>
             
-            <h2>Email</h2>
+            <h2 data-i18n-key="contact_email_header">Email</h2>
             <p><strong><a href="mailto:gokceoguz27@gmail.com">gokceoguz27@gmail.com</a></strong></p>
 
-            <h2>Business Phone</h2>
+            <h2 data-i18n-key="contact_phone_header">Business Phone</h2>
             <p><strong><a href="https://wa.me/905355617222">+905355617222</a></strong></p>
             
-            <p>We'll do our best to get back to you as soon as possible.</p>
+            <p data-i18n-key="contact_outro">We'll do our best to get back to you as soon as possible.</p>
         </div>
-    </main>s
+    </main>
 
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank">realfavicongenerator.net</a></span>
-            </div>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+                </div>
         </div>
     </footer>
     

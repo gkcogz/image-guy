@@ -1,3 +1,95 @@
+// ===============================================
+// DİL (i18n) AYARLARI
+// ===============================================
+
+let translations = {};
+const supportedLanguages = ['en', 'de', 'zh'];
+let currentLanguage = 'en'; // Varsayılan dil
+
+// Dil dosyasını yükleyen fonksiyon
+async function loadTranslations() {
+    try {
+        const response = await fetch('/languages.json');
+        if (!response.ok) {
+            throw new Error('Failed to load language file.');
+        }
+        translations = await response.json();
+        console.log("Translations loaded successfully.");
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Sayfadaki metinleri güncelleyen fonksiyon
+function translatePage() {
+    if (!translations[currentLanguage]) {
+        console.warn(`No translations found for language: ${currentLanguage}`);
+        return;
+    }
+    document.querySelectorAll('[data-i18n-key]').forEach(element => {
+        const key = element.getAttribute('data-i18n-key');
+        if (translations[currentLanguage][key]) {
+            element.innerHTML = translations[currentLanguage][key];
+        }
+    });
+    // Sayfanın dilini güncelle (SEO ve erişilebilirlik için önemli)
+    document.documentElement.lang = currentLanguage;
+
+    // Aktif dil butonunu güncelle
+    document.querySelectorAll('.lang-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.lang === currentLanguage);
+    });
+}
+
+// main.js'teki setLanguage fonksiyonunu güncelleyin
+function setLanguage(lang) {
+    if (supportedLanguages.includes(lang)) {
+        currentLanguage = lang;
+        localStorage.setItem('selectedLanguage', lang);
+        translatePage(); // async/await'e gerek yok
+    }
+}
+
+// Sayfa ilk yüklendiğinde çalışacak fonksiyon
+async function initializeI18n() {
+    await loadTranslations();
+    const savedLang = localStorage.getItem('selectedLanguage');
+    const browserLang = navigator.language.split('-')[0];
+
+    let initialLang = 'en'; // Varsayılan
+    if (savedLang && supportedLanguages.includes(savedLang)) {
+        initialLang = savedLang;
+    } else if (supportedLanguages.includes(browserLang)) {
+        initialLang = browserLang;
+    }
+    
+    await setLanguage(initialLang);
+
+    // Dropdown menü yönetimi
+    const switcherBtn = document.getElementById('lang-switcher-btn');
+    const dropdown = document.getElementById('language-dropdown');
+
+    switcherBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Click olayının body'e yayılmasını engelle
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Dropdown içindeki linklere tıklama
+    document.querySelectorAll('.lang-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            setLanguage(e.target.dataset.lang);
+            dropdown.style.display = 'none';
+        });
+    });
+
+    // Dışarıya tıklandığında menüyü kapat
+    document.addEventListener('click', () => {
+        if (dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        }
+    });
+}
 
 let fileQueue = []; 
 // --- YENİ ---
@@ -68,7 +160,7 @@ document.body.addEventListener('click', async (e) => {
     }
 
     // Ana ekrandaki "Choose File" butonu
-    if (targetButton && targetButton.textContent.includes('Choose File')) {
+    if (targetButton && targetButton.id === 'choose-file-btn') {
         e.preventDefault();
         fileInput.click();
     }
@@ -355,8 +447,10 @@ document.body.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    initializeI18n(); // DİL FONKSİYONUNU BAŞLAT
+
     const menuToggle = document.getElementById('mobile-menu-toggle');
-    if (!menuToggle) return; 
+    if (!menuToggle) return;
     const mainNav = document.querySelector('.main-nav');
     const openIcon = document.getElementById('menu-open-icon');
     const closeIcon = document.getElementById('menu-close-icon');
@@ -391,18 +485,24 @@ document.body.addEventListener('change', (e) => {
 // main.js dosyanızdaki handleFiles fonksiyonunu bununla değiştirin
 // main.js dosyanızın sonuna, diğer yardımcı fonksiyonların yanına ekleyin
 
+// main.js dosyanızdaki mevcut sanitizeFilename fonksiyonunu bununla değiştirin
+
 function sanitizeFilename(filename) {
     const extension = filename.slice(filename.lastIndexOf('.'));
     let baseName = filename.slice(0, filename.lastIndexOf('.'));
 
-    // Tüm karakterleri küçük harfe çevir
     baseName = baseName.toLowerCase();
-    // Aksanlı karakterleri ve umlaut'ları ana harflerine dönüştür
     baseName = baseName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    // Boşlukları ve tekrarlayan tireleri tek tireye dönüştür
     baseName = baseName.replace(/\s+/g, '-').replace(/-+/g, '-');
-    // Güvenli olmayan karakterleri kaldır (sadece harf, rakam ve tireye izin ver)
+    
+    // --- FIX IS ON THIS LINE ---
+    // Corrected the regex from [^a-z0--9-] to [^a-z0-9-]
     baseName = baseName.replace(/[^a-z0-9-]/g, '');
+
+    // EĞER temizlikten sonra dosya adı boş kalırsa, varsayılan bir isim ata
+    if (!baseName) {
+        baseName = `file-${Date.now()}`;
+    }
 
     return baseName + extension;
 }
@@ -474,7 +574,11 @@ function updateUIForFileList() {
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
-        
+
+        // --- YENİ EKLENEN SATIR ---
+        // Orijinal dosya adını daha sonra kullanmak üzere data niteliğinde saklıyoruz.
+        listItem.dataset.originalFilename = file.name;
+
         listItem.innerHTML = `
             <div class="file-info">
                 <span class="file-icon">📄</span>
@@ -661,6 +765,16 @@ async function processSingleFile(file, listItem) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
+        // --- YENİ MANTIK BAŞLANGICI ---
+        // 1. Sakladığımız orijinal tam adı al. (örn: "schönes-bild.jpg")
+        const originalFullName = listItem.dataset.originalFilename;
+        // 2. Orijinal adın uzantısız kısmını al. (örn: "schönes-bild")
+        const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+        // 3. Sunucudan gelen yeni dosyanın uzantısını al. (örn: ".webp")
+        const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
+        // 4. Kullanıcıya gösterilecek son indirme adını oluştur. (örn: "schönes-bild.webp")
+        const finalDownloadName = originalBaseName + newExtension;
+        // --- YENİ MANTIK SONU ---
 
         // Adım 4: Sonuçları arayüzde göster
         const resultActions = `

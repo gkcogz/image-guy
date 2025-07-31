@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - Image Guy</title>
+    <title data-i18n-key="footer_terms">Terms of Service - Image Guy</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
     <header class="header">
         <div class="container">
             <div class="logo">
-                <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items:center;">
                     <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image">
                     <span class="logo-text">Image Guy</span>
                 </a>
@@ -31,49 +31,54 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="de">DE</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
             </nav>
         </div>
     </header>
 
     <main>
         <div class="container content-page">
-            <h1>Terms of Service</h1>
-            <p><em>Last updated: July 20, 2025</em></p>
+            <h1 data-i18n-key="terms_title">Terms of Service</h1>
+            <p><em data-i18n-key="terms_last_updated">Last updated: July 20, 2025</em></p>
             
-            <h2>1. Acceptance of Terms</h2>
-            <p>By accessing and using Image Guy ("the Service"), you accept and agree to be bound by the terms and provisions of this agreement.</p>
+            <h2 data-i18n-key="terms_section1_title">1. Acceptance of Terms</h2>
+            <p data-i18n-key="terms_section1_text">By accessing and using Image Guy ("the Service"), you accept and agree to be bound by the terms and provisions of this agreement.</p>
             
-            <h2>2. Description of Service</h2>
-            <p>Image Guy is a free-to-use web tool that allows users to optimize and compress image files. The Service is provided on an "as-is" and "as-available" basis without any warranties.</p>
+            <h2 data-i18n-key="terms_section2_title">2. Description of Service</h2>
+            <p data-i18n-key="terms_section2_text">Image Guy is a free-to-use web tool that allows users to optimize and compress image files. The Service is provided on an "as-is" and "as-available" basis without any warranties.</p>
             
-            <h2>3. User Responsibilities</h2>
-            <p>You are solely responsible for the content (images) you upload. You must ensure you have the necessary rights and permissions for any content you process with the Service. You agree not to upload any content that is illegal, harmful, or otherwise objectionable.</p>
+            <h2 data-i18n-key="terms_section3_title">3. User Responsibilities</h2>
+            <p data-i18n-key="terms_section3_text">You are solely responsible for the content (images) you upload. You must ensure you have the necessary rights and permissions for any content you process with the Service. You agree not to upload any content that is illegal, harmful, or otherwise objectionable.</p>
             
-            <h2>4. Intellectual Property</h2>
-            <p>We claim no ownership rights over the images you upload. The intellectual property of your content remains entirely yours. The design, logo, and "Image Guy" brand are the property of this website.</p>
+            <h2 data-i18n-key="terms_section4_title">4. Intellectual Property</h2>
+            <p data-i18n-key="terms_section4_text">We claim no ownership rights over the images you upload. The intellectual property of your content remains entirely yours. The design, logo, and "Image Guy" brand are the property of this website.</p>
 
-            <h2>5. Disclaimer of Liability</h2>
-            <p>We are not liable for any loss of data or quality degradation that may occur. We reserve the right to block any user from the Service for misuse or abuse.</p>
+            <h2 data-i18n-key="terms_section5_title">5. Disclaimer of Liability</h2>
+            <p data-i18n-key="terms_section5_text">We are not liable for any loss of data or quality degradation that may occur. We reserve the right to block any user from the Service for misuse or abuse.</p>
         </div>
     </main>
 
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank">realfavicongenerator.net</a></span>
-            </div>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+                </div>
         </div>
     </footer>
 

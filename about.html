@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Learn about the mission of Image Guy to create a faster, more efficient, and greener web with a free and smart image optimization tool.">
-    <title>About Us | Image Guy</title>
+    <title data-i18n-key="nav_about">About Us | Image Guy</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,40 +32,45 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html">Blog</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="de">DE</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
             </nav>
         </div>
     </header>
 
     <main>
         <div class="container content-page">
-            <h1>About Image Guy</h1>
-            <p>Our mission is to provide a fast, free, and easy-to-use tool for everyone to optimize their images for the web. We believe in a faster, more efficient, and greener internet.</p>
+            <h1 data-i18n-key="about_title">About Image Guy</h1>
+            <p data-i18n-key="about_mission">Our mission is to provide a fast, free, and easy-to-use tool for everyone to optimize their images for the web. We believe in a faster, more efficient, and greener internet.</p>
             
-            <h2>Why Optimize?</h2>
-            <p>Every image you optimize doesn't just improve your website's loading speed; it also reduces the energy required for data transfer and storage. This means a smaller digital footprint and a small but meaningful contribution to a more sustainable planet.</p>
+            <h2 data-i18n-key="about_why_header">Why Optimize?</h2>
+            <p data-i18n-key="about_why_text">Every image you optimize doesn't just improve your website's loading speed; it also reduces the energy required for data transfer and storage. This means a smaller digital footprint and a small but meaningful contribution to a more sustainable planet.</p>
             
-            <h2>Our Technology</h2>
-            <p>Image Guy is powered by the high-performance `sharp` library, running on a scalable serverless architecture. This allows us to offer top-tier optimization for various formats like JPEG, PNG, WebP, and AVIF without compromising on quality.</p>
+            <h2 data-i18n-key="about_tech_header">Our Technology</h2>
+            <p data-i18n-key="about_tech_text">Image Guy is powered by the high-performance `sharp` library, running on a scalable serverless architecture. This allows us to offer top-tier optimization for various formats like JPEG, PNG, WebP, and AVIF without compromising on quality.</p>
         </div>
     </main>
 
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
-                <a href="/blog.html">Blog</a>
-                <a href="/about.html">About</a>
-                <a href="/contact.html">Contact</a>
-                <a href="/privacy.html">Privacy Policy</a>
-                <a href="/terms.html">Terms of Service</a>
+                <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
+                <a href="/about.html" data-i18n-key="nav_about">About</a>
+                <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
+                <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
+                <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-                <span class="footer-attribution">Favicon by <a href="https://realfavicongenerator.net/" target="_blank">realfavicongenerator.net</a></span>
-            </div>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+                </div>
         </div>
     </footer>
 
