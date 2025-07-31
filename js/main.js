@@ -36,6 +36,18 @@ uploadArea.addEventListener('drop', (e) => {
 });
 
 document.body.addEventListener('click', async (e) => {
+    // --- DÜZELTME: Gelişmiş Ayarlar kontrolü en başa taşındı ---
+    // Bu, linkin bir <button> olmamasından kaynaklanan sorunu çözer.
+    if (e.target.id === 'toggle-advanced-options') {
+        e.preventDefault();
+        const slider = document.querySelector('.advanced-slider');
+        const isHidden = slider.style.display === 'none';
+        slider.style.display = isHidden ? 'flex' : 'none';
+        e.target.textContent = isHidden ? 'Hide Advanced Options' : 'Advanced Options';
+        return; // İşlem tamamlandı, fonksiyondan çık.
+    }
+    // --- DÜZELTME SONU ---
+
     const targetButton = e.target.closest('button');
 
     // Tıklanan bir buton değilse VEYA modal kapatma elemanları değilse, işlemi durdur
@@ -47,22 +59,13 @@ document.body.addEventListener('click', async (e) => {
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            // Eğer cropper aktifse, hafızadan temizle
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
             }
             modal.remove();
         }
-        return; // Diğer click olaylarının çalışmasını engelle
-    }
-
-        if (e.target.id === 'toggle-advanced-options') {
-        e.preventDefault();
-        const slider = document.querySelector('.advanced-slider');
-        const isHidden = slider.style.display === 'none';
-        slider.style.display = isHidden ? 'flex' : 'none';
-        e.target.textContent = isHidden ? 'Hide Advanced Options' : 'Advanced Options';
+        return;
     }
 
     // Ana ekrandaki "Choose File" butonu
@@ -83,19 +86,13 @@ document.body.addEventListener('click', async (e) => {
         resetUI();
     }
 
-// "Undo" butonuna basıldığında
+    // "Undo" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-undo-btn') {
         if (cropHistory.length > 0) {
-            // Geçmişten son durumu al ve kaldır
             const lastState = cropHistory.pop();
             const image = document.getElementById('image-to-crop');
             
-            // --- YENİ VE GÜVENİLİR MANTIK ---
-            // 1. Mevcut cropper'ı yok et.
             cropper.destroy();
-
-            // 2. Resmin "onload" olayını tanımla. Resim yüklendiğinde yeni cropper'ı oluştur.
-            // Bu, görsel hataları ve zamanlama sorunlarını engeller.
             image.onload = () => {
                 cropper = new Cropper(image, {
                     viewMode: 1,
@@ -103,15 +100,10 @@ document.body.addEventListener('click', async (e) => {
                     autoCropArea: 0.8,
                 });
             };
-
-            // 3. Resim kaynağını bir önceki durumdaki URL ile değiştirerek yüklemeyi başlat.
             image.src = lastState.optimized;
-            // --- YENİ MANTIK SONU ---
 
-            // Ana ekrandaki butonların durumunu bir önceki hale geri döndür
             const compareButton = currentCropTarget.querySelector('.btn-compare');
             const cropButton = currentCropTarget.querySelector('.btn-crop');
-
             if (compareButton) {
                 compareButton.dataset.optimizedUrl = lastState.optimized;
                 compareButton.dataset.originalUrl = lastState.original;
@@ -119,8 +111,6 @@ document.body.addEventListener('click', async (e) => {
             if (cropButton) {
                 cropButton.dataset.optimizedUrl = lastState.optimized;
             }
-
-            // Eğer geçmiş boşaldıysa, "Undo" butonunu tekrar pasif yap
             if (cropHistory.length === 0) {
                 targetButton.disabled = true;
             }
