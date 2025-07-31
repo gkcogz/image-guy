@@ -659,7 +659,8 @@ async function processSingleFile(file, listItem) {
                 <button class="icon-btn btn-base64" data-optimized-url="${data.downloadUrl}" title="Get Base64 Code">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                 </button>
-                <a href="${data.downloadUrl}" download="optimized-${file.name.substring(0, file.name.lastIndexOf('.'))}.${data.downloadUrl.split('.').pop()}" class="btn btn-download-item">Download</a>
+                
+                <a href="${data.downloadUrl}" download="${data.newFilename}" class="btn btn-download-item">Download</a>
             </div>
         `;
 

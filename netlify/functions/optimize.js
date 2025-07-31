@@ -96,7 +96,10 @@ exports.handler = async (event, context) => {
                     contentType = 'image/avif'; newExtension = 'avif';
                     break;
                 case 'heic':
-                    sharpInstance = sharpInstance.heif({ quality: finalQuality, compression: 'hevc' });
+                    // --- DEĞİŞİKLİK BURADA ---
+                    // 'hevc' sıkıştırması sunucu ortamında desteklenmiyor olabilir.
+                    // Daha uyumlu olan 'av1'i kullanabilir veya bu satırı tamamen silebiliriz.
+                    sharpInstance = sharpInstance.heif({ quality: finalQuality, compression: 'av1' });
                     contentType = 'image/heic'; newExtension = 'heic';
                     break;
                 case 'jpeg':
