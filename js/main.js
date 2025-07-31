@@ -584,8 +584,7 @@ function updateUIForFileList() {
         listItem.className = 'file-list-item';
 
         // --- EKSİK OLAN VE EKLENMESİ GEREKEN SATIR BURASI ---
-        // Orijinal dosya adını daha sonra kullanmak üzere data niteliğinde saklıyoruz.
-        // listItem.dataset.originalFilename = file.name;
+        listItem.dataset.originalFilename = file.name;
 
         listItem.innerHTML = `
             <div class="file-info">
