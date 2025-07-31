@@ -731,7 +731,6 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Dosya yüklenirken gerçek zamanlı ilerleme çubuğu göster
         const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = uploadProgressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
