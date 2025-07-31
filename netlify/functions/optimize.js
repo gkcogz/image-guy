@@ -1,11 +1,12 @@
-// Dosya Adı: netlify/functions/optimize.js (ICO ve PNG Favicon Desteği ile)
+// Dosya Adı: netlify/functions/optimize.js (HEIC Desteği Eklendi)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const stream = require('stream');
 const toIco = require('to-ico');
+const heicConvert = require('heic-convert'); // HEIC dönüşümü için yeni kütüphane
 
-const s3Client = new S3Client({ 
+const s3Client = new S3Client({
     region: process.env.IMAGEGUY_AWS_S3_REGION,
     credentials: {
         accessKeyId: process.env.IMAGEGUY_AWS_ACCESS_KEY_ID,
@@ -24,21 +25,36 @@ exports.handler = async (event, context) => {
     try {
         const { key, outputFormat } = JSON.parse(event.body);
         const originalFilename = key.replace(/original-\d+-/, '');
-        
+
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: key,
         });
         const response = await s3Client.send(getCommand);
         const fileDataBuffer = await streamToBuffer(response.Body);
-        
+
         console.log(`Processing file: ${originalFilename} to format: ${outputFormat}`);
+
+        // --- YENİ: HEIC GİRDİSİNİ KONTROL ETME ---
+        // Eğer yüklenen dosya .heic veya .heif ise, önce PNG'ye çeviriyoruz.
+        // Çünkü Sharp kütüphanesi HEIC'i doğrudan her ortamda okuyamayabilir.
+        let processingBuffer = fileDataBuffer;
+        if (originalFilename.toLowerCase().endsWith('.heic') || originalFilename.toLowerCase().endsWith('.heif')) {
+            console.log('HEIC input detected. Converting to PNG before optimization...');
+            const outputBuffer = await heicConvert({
+                buffer: fileDataBuffer, // The HEIC file buffer
+                format: 'PNG'           // Convert it to PNG
+            });
+            processingBuffer = outputBuffer;
+        }
+        // --- YENİ KISIM SONU ---
 
         let optimizedImageBuffer;
         let contentType, newExtension;
-        
+
         if (outputFormat === 'favicon-png') {
-            optimizedImageBuffer = await sharp(fileDataBuffer).resize({
+            // processingBuffer, orijinal HEIC ise PNG'ye dönüştürülmüş halini kullanır
+            optimizedImageBuffer = await sharp(processingBuffer).resize({
                 width: 32, height: 32, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }
             }).png().toBuffer();
             contentType = 'image/png';
@@ -47,8 +63,8 @@ exports.handler = async (event, context) => {
         } else if (outputFormat === 'favicon-ico') {
             const sizes = [16, 24, 32, 48, 64];
             const pngBuffers = await Promise.all(
-                sizes.map(size => 
-                    sharp(fileDataBuffer)
+                sizes.map(size =>
+                    sharp(processingBuffer) // Değiştirildi
                         .resize({ width: size, height: size, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
                         .png()
                         .toBuffer()
@@ -59,8 +75,10 @@ exports.handler = async (event, context) => {
             newExtension = 'ico';
 
         } else {
-            let sharpInstance = sharp(fileDataBuffer)
+            // sharp() içine `processingBuffer` koyuyoruz
+            let sharpInstance = sharp(processingBuffer)
                 .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
+
             switch (outputFormat) {
                 case 'png':
                     sharpInstance = sharpInstance.png({ quality: 90 });
@@ -74,6 +92,12 @@ exports.handler = async (event, context) => {
                     sharpInstance = sharpInstance.avif({ quality: 60 });
                     contentType = 'image/avif'; newExtension = 'avif';
                     break;
+                // --- YENİ: HEIC ÇIKTI FORMATI ---
+                case 'heic':
+                    sharpInstance = sharpInstance.heif({ quality: 80 }); // HEIF/HEIC için .heif() kullanılır
+                    contentType = 'image/heic'; newExtension = 'heic';
+                    break;
+                // --- YENİ KISIM SONU ---
                 case 'jpeg':
                 default:
                     sharpInstance = sharpInstance.jpeg({ quality: 85, progressive: true, mozjpeg: true });
@@ -82,7 +106,7 @@ exports.handler = async (event, context) => {
             }
             optimizedImageBuffer = await sharpInstance.toBuffer();
         }
-        
+
         const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
         const newFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
 

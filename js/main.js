@@ -457,6 +457,7 @@ function updateUIForFileList() {
         fileListElement.appendChild(listItem);
     });
     
+    // --- GÜNCELLEME BURADA ---
     const formatOptionsHTML = `
         <div class="format-options-header">
             <span class="format-label">Output Format:</span>
@@ -467,7 +468,7 @@ function updateUIForFileList() {
                     <h4>PNG</h4><p>Best for graphics with transparency.</p><hr>
                     <h4>WebP</h4><p>Modern format for web use.</p><hr>
                     <h4>AVIF</h4><p>Newest format with highest compression.</p><hr>
-                    <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p>
+                    <h4>HEIC</h4><p>Modern format by Apple, great for photos.</p><hr> <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p>
                 </div>
             </div>
         </div>
@@ -476,11 +477,11 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
             <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
             <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
-            <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
+            <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div> <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
             <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
         </div>
     `;
-
+    // --- GÜNCELLEME SONA ERDİ ---
     let smartTipHTML = '';
     if (containsPng) {
         smartTipHTML = `
