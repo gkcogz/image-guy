@@ -141,43 +141,54 @@ body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: var(--dark-g
     cursor: pointer;
     user-select: none;
 }
+
+/* --- DEĞİŞİKLİK BURADA BAŞLIYOR --- */
 .tooltip-content {
     visibility: hidden;
     opacity: 0;
-    width: 240px; /* Düzeltme: Genişlik azaltıldı (280px'den) */
+    width: 480px; /* Düzeltme: Genişlik artırıldı */
     background-color: var(--dark-gray);
     color: var(--white-color);
-    text-align: left;
-    border-radius: 6px;
-    padding: 0.8rem 1rem; /* Düzeltme: İç boşluk azaltıldı (1rem'den) */
+    border-radius: 8px;
+    padding: 1rem;
     position: absolute;
     z-index: 10;
     bottom: 125%;
     left: 50%;
-    margin-left: -120px; /* Düzeltme: Yeni genişliğe göre ortalandı (-140px'den) */
+    margin-left: -240px; /* Düzeltme: Yeni genişliğe göre ortalandı */
     transition: opacity 0.3s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     pointer-events: none;
+
+    /* YENİ: Izgara yapısı eklendi */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* İki eşit sütun */
+    gap: 0.8rem 1.5rem; /* Satır ve sütun aralığı */
 }
+
+.tooltip-grid-item {
+    text-align: left;
+}
+/* --- DEĞİŞİKLİK BURADA BİTİYOR --- */
+
 .tooltip-container:hover .tooltip-content {
     visibility: visible;
     opacity: 1;
 }
 .tooltip-content h4 {
-    font-size: 0.9rem; /* Düzeltme: Yazı boyutu küçültüldü */
+    font-size: 0.9rem;
     color: var(--primary-color);
     margin-top: 0;
     margin-bottom: 0.4rem;
 }
 .tooltip-content p {
-    font-size: 0.8rem; /* Düzeltme: Yazı boyutu küçültüldü */
-    line-height: 1.5; /* Düzeltme: Satır yüksekliği azaltıldı */
+    font-size: 0.8rem;
+    line-height: 1.5;
     margin-bottom: 0;
 }
-.tooltip-content hr {
-    border: none;
-    border-top: 1px solid #495057;
-    margin: 0.6rem 0; /* Düzeltme: Ayraç boşluğu azaltıldı */
+/* Artık kullanılmadığı için <hr> stilini kaldırabiliriz veya bırakabiliriz. */
+.tooltip-content hr { 
+   display: none;
 }
 .icon-btn .icon-tooltip {
     visibility: hidden;
