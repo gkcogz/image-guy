@@ -94,7 +94,7 @@ exports.handler = async (event, context) => {
                     break;
                 // --- YENİ: HEIC ÇIKTI FORMATI ---
                 case 'heic':
-                    sharpInstance = sharpInstance.heif({ quality: 80 }); // HEIF/HEIC için .heif() kullanılır
+                    sharpInstance = sharpInstance.heif({ quality: 80, compression: 'hevc' });
                     contentType = 'image/heic'; newExtension = 'heic';
                     break;
                 // --- YENİ KISIM SONU ---
