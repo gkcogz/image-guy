@@ -308,3 +308,100 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
 .footer .photo-credit a:hover {
     text-decoration: underline; /* Fare ile üzerine gelince altını çizer */
 }
+
+/* =================================
+   12. Gelişmiş Kalite Ayarları (Yeni)
+   ================================= */
+
+.advanced-options-container {
+    text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#toggle-advanced-options {
+    color: var(--dark-gray);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 1px dashed #6c757d;
+    transition: color 0.2s;
+}
+
+#toggle-advanced-options:hover {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.advanced-slider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    visibility: visible; /* Varsayılan olarak görünür, JS ile gizlenecek */
+    transition: opacity 0.3s ease;
+}
+
+.advanced-slider label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Kalite Değeri Çıktısı */
+#quality-output {
+    font-weight: 600;
+    font-size: 1rem;
+    background-color: var(--light-gray);
+    padding: 2px 8px;
+    border-radius: 5px;
+    min-width: 30px;
+    text-align: center;
+}
+
+/* Slider (Kaydırıcı) Stilleri */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 200px;
+    height: 8px;
+    background: var(--light-gray);
+    border-radius: 5px;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Slider Başlığı (Thumb) - Chrome/Safari */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid var(--white-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+}
+
+/* Slider Başlığı (Thumb) - Firefox */
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid var(--white-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+    transform: scale(1.1);
+}

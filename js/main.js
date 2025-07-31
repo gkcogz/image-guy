@@ -1,5 +1,13 @@
 
 let fileQueue = []; 
+// --- YENİ ---
+const DEFAULT_QUALITY_SETTINGS = {
+    jpeg: { default: 85, min: 50, max: 95 },
+    png: { default: 90, min: 60, max: 100 },
+    webp: { default: 80, min: 50, max: 95 },
+    avif: { default: 60, min: 30, max: 80 },
+    heic: { default: 80, min: 50, max: 95 }
+};
 let cropper = null;
 let currentCropTarget = null;
 let cropHistory = []; // Kırpma geçmişini tutacak dizi
@@ -47,6 +55,14 @@ document.body.addEventListener('click', async (e) => {
             modal.remove();
         }
         return; // Diğer click olaylarının çalışmasını engelle
+    }
+
+        if (e.target.id === 'toggle-advanced-options') {
+        e.preventDefault();
+        const slider = document.querySelector('.advanced-slider');
+        const isHidden = slider.style.display === 'none';
+        slider.style.display = isHidden ? 'flex' : 'none';
+        e.target.textContent = isHidden ? 'Hide Advanced Options' : 'Advanced Options';
     }
 
     // Ana ekrandaki "Choose File" butonu
@@ -366,6 +382,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// BU YENİ OLAY DİNLEYİCİSİNİ EKLEYİN
+// --- YENİ ---
+document.body.addEventListener('change', (e) => {
+    // Format radio butonları değiştiğinde
+    if (e.target.name === 'format') {
+        updateQualitySlider();
+    }
+    // Kalite slider'ı değiştiğinde
+    if (e.target.id === 'quality-slider') {
+        document.getElementById('quality-output').textContent = e.target.value;
+    }
+});
+// --- YENİ KISIM SONU ---
 // ===============================================
 // ARAYÜZ VE YARDIMCI FONKSİYONLAR
 // ===============================================
@@ -481,6 +510,18 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
         </div>
     `;
+
+        const advancedOptionsHTML = `
+        <div class="advanced-options-container">
+            <a href="#" id="toggle-advanced-options">Advanced Options</a>
+            <div class="advanced-slider" style="display: none;">
+                <label for="quality-slider">Quality:</label>
+                <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
+                <output for="quality-slider" id="quality-output">85</output>
+            </div>
+        </div>
+    `;
+
     // --- GÜNCELLEME SONA ERDİ ---
     let smartTipHTML = '';
     if (containsPng) {
@@ -489,6 +530,7 @@ function updateUIForFileList() {
                 💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.
             </div>
         `;
+    
     }
     
     const actionArea = document.createElement('div');
@@ -496,7 +538,7 @@ function updateUIForFileList() {
 
     // Butonları bir konteyner içine alarak "Start Over" butonunu ekliyoruz.
     // id="clear-all-btn" mevcut resetleme fonksiyonunu tetikleyecektir.
-    actionArea.innerHTML = formatOptionsHTML + `
+    actionArea.innerHTML = formatOptionsHTML + advancedOptionsHTML + `
         <div class="action-buttons-container initial-actions">
             <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
             <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>
@@ -506,15 +548,42 @@ function updateUIForFileList() {
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add("file-selected");
+    updateQualitySlider();
 }
 
-// main.js dosyanızdaki mevcut processSingleFile fonksiyonunu bununla değiştirin
+// BU YENİ FONKSİYONU EKLEYİN
+// --- YENİ ---
+function updateQualitySlider() {
+    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+    const advancedContainer = document.querySelector('.advanced-slider');
+    
+    if (DEFAULT_QUALITY_SETTINGS[selectedFormat]) {
+        const settings = DEFAULT_QUALITY_SETTINGS[selectedFormat];
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityOutput = document.getElementById('quality-output');
+        
+        qualitySlider.min = settings.min;
+        qualitySlider.max = settings.max;
+        qualitySlider.value = settings.default;
+        qualityOutput.textContent = settings.default;
+        
+        advancedContainer.style.visibility = 'visible';
+    } else {
+        // favicon gibi formatlar için slider alanını gizle
+        advancedContainer.style.visibility = 'hidden';
+    }
+}
+// --- YENİ KISIM SONU ---
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+    const qualitySlider = document.getElementById('quality-slider');
+    const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
+        // Adım 1: Yükleme için güvenli URL al
         statusElement.textContent = 'Getting link...';
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -524,6 +593,7 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
+        // Adım 2: Dosyayı ilerleme çubuğu ile yükle
         const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = progressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
@@ -536,20 +606,33 @@ async function processSingleFile(file, listItem) {
         });
         await new Promise(resolve => setTimeout(resolve, 400));
         
+        // Adım 3: Optimizasyon için backend'e istek gönder
         statusElement.innerHTML = `<div class="spinner-small"></div>`;
+
+        // Backend'e gönderilecek payload'ı hazırla
+        const optimizePayload = {
+            key: key,
+            outputFormat: selectedFormat,
+        };
+        // Eğer bir kalite değeri varsa, payload'a ekle
+        if (qualityValue) {
+            optimizePayload.quality = qualityValue;
+        }
+        
+        // Optimizasyon isteğini yap
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key, outputFormat: selectedFormat }),
+            body: JSON.stringify(optimizePayload),
         });
+
         if (!optimizeResponse.ok) {
              const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
 
-        // --- DEĞİŞİKLİK BURADA: Yeni İkonlu Buton Grubu Oluşturuluyor ---
-// main.js, processSingleFile fonksiyonu içindeki resultActions değişkenini güncelleyin
+        // Adım 4: Sonuçları arayüzde göster
         const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
@@ -569,7 +652,7 @@ async function processSingleFile(file, listItem) {
                 <button class="icon-btn btn-base64" data-optimized-url="${data.downloadUrl}" title="Get Base64 Code">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                 </button>
-                <a href="${data.downloadUrl}" download="optimized-${data.originalFilename}" class="btn btn-download-item">Download</a>
+                <a href="${data.downloadUrl}" download="optimized-${file.name.substring(0, file.name.lastIndexOf('.'))}.${data.downloadUrl.split('.').pop()}" class="btn btn-download-item">Download</a>
             </div>
         `;
 
