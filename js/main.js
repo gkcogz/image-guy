@@ -389,6 +389,24 @@ document.body.addEventListener('change', (e) => {
 // ===============================================
 
 // main.js dosyanızdaki handleFiles fonksiyonunu bununla değiştirin
+// main.js dosyanızın sonuna, diğer yardımcı fonksiyonların yanına ekleyin
+
+function sanitizeFilename(filename) {
+    const extension = filename.slice(filename.lastIndexOf('.'));
+    let baseName = filename.slice(0, filename.lastIndexOf('.'));
+
+    // Tüm karakterleri küçük harfe çevir
+    baseName = baseName.toLowerCase();
+    // Aksanlı karakterleri ve umlaut'ları ana harflerine dönüştür
+    baseName = baseName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Boşlukları ve tekrarlayan tireleri tek tireye dönüştür
+    baseName = baseName.replace(/\s+/g, '-').replace(/-+/g, '-');
+    // Güvenli olmayan karakterleri kaldır (sadece harf, rakam ve tireye izin ver)
+    baseName = baseName.replace(/[^a-z0-9-]/g, '');
+
+    return baseName + extension;
+}
+
 function handleFiles(files) {
     fileQueue = [];
     cropHistory = []; // Yeni dosya yüklendiğinde geçmişi sıfırla
@@ -589,14 +607,19 @@ async function processSingleFile(file, listItem) {
     const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
 
-    try {
-        // Adım 1: Yükleme için güvenli URL al
-        statusElement.textContent = 'Getting link...';
+   try {
+        statusElement.innerHTML = createProgressBarHTML('Preparing...');
+        
+        // --- DEĞİŞİKLİK 1: Dosya adını temizle ---
+        const safeFilename = sanitizeFilename(file.name);
+
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: file.name, fileType: file.type }),
+            // --- DEĞİŞİKLİK 2: Temizlenmiş adı sunucuya gönder ---
+            body: JSON.stringify({ filename: safeFilename, fileType: file.type }),
         });
+
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
