@@ -405,3 +405,64 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]:hover::-moz-range-thumb {
     transform: scale(1.1);
 }
+
+/* =================================
+   12. Gelişmiş Kalite Ayarları (Yeni Tasarım)
+   ================================= */
+
+/* Butonları dikeyde ortalamak için */
+.action-buttons-container.initial-actions {
+    align-items: center;
+}
+
+/* Kalite kaydırıcısının konumu */
+.advanced-slider {
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem; /* Butonlarla arasına boşluk koyar */
+    visibility: visible;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+    max-height: 100px; /* Animasyon için */
+    overflow: hidden;
+}
+
+.advanced-slider[style*="display: none"] {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    pointer-events: none; /* Gizliyken tıklanamaz */
+}
+
+.advanced-slider label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Ayar ikonu butonu */
+#advanced-options-btn {
+    padding: 8px; /* Diğer ikon butonlarıyla aynı boyutta olması için */
+    margin-left: 0.5rem; /* Optimize butonu ile arasına boşluk koyar */
+}
+
+#advanced-options-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Tooltip pozisyonu için */
+#advanced-options-btn .icon-tooltip {
+    bottom: 130%; /* Butonun biraz daha üstünde */
+    transform: translateX(-50%);
+}
+
+/* Eski link stilini kaldırabiliriz (Opsiyonel Temizlik) */
+/* #toggle-advanced-options {
+    display: none;
+}
+.advanced-options-container {
+    display: none;
+}
+*/

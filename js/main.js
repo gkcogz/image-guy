@@ -36,19 +36,18 @@ uploadArea.addEventListener('drop', (e) => {
 });
 
 document.body.addEventListener('click', async (e) => {
-    // --- DÜZELTME: Gelişmiş Ayarlar kontrolü en başa taşındı ---
-    // Bu, linkin bir <button> olmamasından kaynaklanan sorunu çözer.
-    if (e.target.id === 'toggle-advanced-options') {
+    // Tıklanan elementin en yakınındaki butonu buluyoruz. Bu, SVG'ye tıklandığında bile butonu hedef almamızı sağlar.
+    const targetButton = e.target.closest('button');
+
+    // --- DEĞİŞİKLİK: Olay dinleyici yeni butona göre güncellendi ---
+    // Artık ayrı bir if bloğuna gerek yok, targetButton kontrolü ile birleşti.
+    if (targetButton && targetButton.id === 'advanced-options-btn') {
         e.preventDefault();
         const slider = document.querySelector('.advanced-slider');
         const isHidden = slider.style.display === 'none';
         slider.style.display = isHidden ? 'flex' : 'none';
-        e.target.textContent = isHidden ? 'Hide Advanced Options' : 'Advanced Options';
-        return; // İşlem tamamlandı, fonksiyondan çık.
+        return; 
     }
-    // --- DÜZELTME SONU ---
-
-    const targetButton = e.target.closest('button');
 
     // Tıklanan bir buton değilse VEYA modal kapatma elemanları değilse, işlemi durdur
     if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
@@ -441,14 +440,15 @@ function uploadWithProgress(url, file, onProgress) {
 // ... (your existing updateUIForFileList function and other functions) ...
 // main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin
 
+// main.js - updateUIForFileList fonksiyonu
+
 function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
-    
+
     let containsPng = false;
 
-    // Her dosyayı index'i ile birlikte döngüye alıyoruz
     fileQueue.forEach((file, index) => {
         if (file.name.toLowerCase().endsWith('.png')) {
             containsPng = true;
@@ -457,8 +457,6 @@ function updateUIForFileList() {
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
         
-        // Her dosya satırına bir "sil" butonu ekliyoruz.
-        // data-file-index özelliği, hangi dosyanın silineceğini bilmemizi sağlar.
         listItem.innerHTML = `
             <div class="file-info">
                 <span class="file-icon">📄</span>
@@ -476,7 +474,6 @@ function updateUIForFileList() {
         fileListElement.appendChild(listItem);
     });
     
-    // --- GÜNCELLEME BURADA ---
     const formatOptionsHTML = `
         <div class="format-options-header">
             <span class="format-label">Output Format:</span>
@@ -487,7 +484,8 @@ function updateUIForFileList() {
                     <h4>PNG</h4><p>Best for graphics with transparency.</p><hr>
                     <h4>WebP</h4><p>Modern format for web use.</p><hr>
                     <h4>AVIF</h4><p>Newest format with highest compression.</p><hr>
-                    <h4>HEIC</h4><p>Modern format by Apple, great for photos.</p><hr> <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p>
+                    <h4>HEIC</h4><p>Modern format by Apple, great for photos.</p><hr>
+                    <h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p>
                 </div>
             </div>
         </div>
@@ -496,48 +494,46 @@ function updateUIForFileList() {
             <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
             <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
             <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
-            <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div> <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
+            <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div>
+            <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
             <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
         </div>
     `;
 
-        const advancedOptionsHTML = `
-        <div class="advanced-options-container">
-            <a href="#" id="toggle-advanced-options">Advanced Options</a>
-            <div class="advanced-slider" style="display: none;">
-                <label for="quality-slider">Quality:</label>
-                <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
-                <output for="quality-slider" id="quality-output">85</output>
-            </div>
+    // --- YENİ: Kalite kaydırıcısı, artık butonların üzerinde yer alacak ---
+    const advancedSliderHTML = `
+        <div class="advanced-slider" style="display: none;">
+            <label for="quality-slider">Quality:</label>
+            <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
+            <output for="quality-slider" id="quality-output">85</output>
         </div>
     `;
-
-    // --- GÜNCELLEME SONA ERDİ ---
+    
     let smartTipHTML = '';
     if (containsPng) {
-        smartTipHTML = `
-            <div class="smart-tip">
-                💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.
-            </div>
-        `;
-    
+        smartTipHTML = `<div class="smart-tip">💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.</div>`;
     }
     
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
 
-    // Butonları bir konteyner içine alarak "Start Over" butonunu ekliyoruz.
-    // id="clear-all-btn" mevcut resetleme fonksiyonunu tetikleyecektir.
-    actionArea.innerHTML = formatOptionsHTML + advancedOptionsHTML + `
+    // --- DEĞİŞİKLİK: HTML yapısı güncellendi ---
+    actionArea.innerHTML = formatOptionsHTML + advancedSliderHTML + `
         <div class="action-buttons-container initial-actions">
             <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
             <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>
+            
+            <button class="icon-btn" id="advanced-options-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="icon-tooltip">Advanced Settings</span>
+            </button>
         </div>
     ` + smartTipHTML;
     
     uploadArea.appendChild(fileListElement);
     uploadArea.appendChild(actionArea);
     uploadArea.classList.add("file-selected");
+
     updateQualitySlider();
 }
 
