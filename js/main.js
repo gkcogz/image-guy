@@ -720,7 +720,6 @@ async function processSingleFile(file, listItem) {
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
-        // Step 1: Show "Preparing..." while getting the upload link from the server
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
         
         const safeFilename = sanitizeFilename(file.name);
@@ -732,20 +731,19 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Step 2: Show the real-time progress bar while uploading the file
+        // Dosya yüklenirken gerçek zamanlı ilerleme çubuğu göster
         const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = uploadProgressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        await new Promise(resolve => setTimeout(resolve, 50)); // Brief delay for visual consistency
+        await new Promise(resolve => setTimeout(resolve, 50));
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        await new Promise(resolve => setTimeout(resolve, 400)); // Brief delay for visual consistency
+        await new Promise(resolve => setTimeout(resolve, 400));
         
-        // Step 3: Show "Optimizing..." while the backend processes the file
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
         
         const optimizePayload = { key: key, outputFormat: selectedFormat };
@@ -764,10 +762,14 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // Step 4: Display the final results and action buttons
+        // --- DÜZELTME BURADA: İndirme Adı Yeniden Oluşturuluyor ---
+        // 1. Sakladığımız orijinal tam adı al. (örn: "你好世界.jpg")
         const originalFullName = listItem.dataset.originalFilename;
+        // 2. Orijinal adın uzantısız kısmını al. (örn: "你好世界")
         const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+        // 3. Sunucudan gelen yeni dosyanın uzantısını al. (örn: ".webp")
         const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
+        // 4. Kullanıcıya gösterilecek son indirme adını oluştur. (örn: "你好世界.webp")
         const finalDownloadName = originalBaseName + newExtension;
 
         const resultActions = `
