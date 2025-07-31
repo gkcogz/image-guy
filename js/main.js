@@ -526,6 +526,14 @@ function formatFileSize(bytes, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
+
+const createProgressBarHTML = (text) => `
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill progress-bar-fill-indeterminate"></div>
+        <span class="progress-bar-text">${text}</span>
+    </div>
+`;
+
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -711,72 +719,57 @@ async function processSingleFile(file, listItem) {
     const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
 
-   try {
+    try {
+        // Step 1: Show "Preparing..." while getting the upload link from the server
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
         
-        // --- DEĞİŞİKLİK 1: Dosya adını temizle ---
         const safeFilename = sanitizeFilename(file.name);
-
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // --- DEĞİŞİKLİK 2: Temizlenmiş adı sunucuya gönder ---
             body: JSON.stringify({ filename: safeFilename, fileType: file.type }),
         });
-
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosyayı ilerleme çubuğu ile yükle
-        const progressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
-        statusElement.innerHTML = progressBarContainer;
+        // Step 2: Show the real-time progress bar while uploading the file
+        const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
+        statusElement.innerHTML = uploadProgressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
         const progressBarText = listItem.querySelector('.progress-bar-text');
         
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 50)); // Brief delay for visual consistency
         await uploadWithProgress(uploadUrl, file, (percent) => {
             progressBarFill.style.width = `${percent.toFixed(0)}%`;
             progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
         });
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise(resolve => setTimeout(resolve, 400)); // Brief delay for visual consistency
         
-        // Adım 3: Optimizasyon için backend'e istek gönder
-        statusElement.innerHTML = `<div class="spinner-small"></div>`;
-
-        // Backend'e gönderilecek payload'ı hazırla
-        const optimizePayload = {
-            key: key,
-            outputFormat: selectedFormat,
-        };
-        // Eğer bir kalite değeri varsa, payload'a ekle
+        // Step 3: Show "Optimizing..." while the backend processes the file
+        statusElement.innerHTML = createProgressBarHTML('Optimizing...');
+        
+        const optimizePayload = { key: key, outputFormat: selectedFormat };
         if (qualityValue) {
             optimizePayload.quality = qualityValue;
         }
-        
-        // Optimizasyon isteğini yap
+
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(optimizePayload),
         });
-
         if (!optimizeResponse.ok) {
              const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
-        // --- YENİ MANTIK BAŞLANGICI ---
-        // 1. Sakladığımız orijinal tam adı al. (örn: "schönes-bild.jpg")
-        const originalFullName = listItem.dataset.originalFilename;
-        // 2. Orijinal adın uzantısız kısmını al. (örn: "schönes-bild")
-        const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
-        // 3. Sunucudan gelen yeni dosyanın uzantısını al. (örn: ".webp")
-        const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
-        // 4. Kullanıcıya gösterilecek son indirme adını oluştur. (örn: "schönes-bild.webp")
-        const finalDownloadName = originalBaseName + newExtension;
-        // --- YENİ MANTIK SONU ---
 
-        // Adım 4: Sonuçları arayüzde göster
+        // Step 4: Display the final results and action buttons
+        const originalFullName = listItem.dataset.originalFilename;
+        const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+        const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
+        const finalDownloadName = originalBaseName + newExtension;
+
         const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
@@ -796,18 +789,16 @@ async function processSingleFile(file, listItem) {
                 <button class="icon-btn btn-base64" data-optimized-url="${data.downloadUrl}" title="Get Base64 Code">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                 </button>
-                
-                <a href="${data.downloadUrl}" download="${data.newFilename}" class="btn btn-download-item">Download</a>
+                <a href="${data.downloadUrl}" download="${finalDownloadName}" class="btn btn-download-item">Download</a>
             </div>
         `;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
 
         let successHTML;
-        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
-        if (savings >= 0) {
+        if (savings >= 1) {
             successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
         } else {
-            const increase = Math.abs(savings);
-            successHTML = `<span class="savings-increase">⚠️ +${increase.toFixed(0)}% Increased</span> ${resultActions}`;
+            successHTML = `<span class="savings-info">✓ Already Optimized</span> ${resultActions}`;
         }
         statusElement.innerHTML = successHTML;
 
