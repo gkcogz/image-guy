@@ -720,6 +720,7 @@ async function processSingleFile(file, listItem) {
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
+        // Adım 1: Sunucudan yükleme linki alınırken "Preparing..." göster
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
         
         const safeFilename = sanitizeFilename(file.name);
@@ -731,6 +732,7 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
+        // Adım 2: Dosya yüklenirken gerçek zamanlı ilerleme çubuğu göster
         const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = uploadProgressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
@@ -743,6 +745,7 @@ async function processSingleFile(file, listItem) {
         });
         await new Promise(resolve => setTimeout(resolve, 400));
         
+        // Adım 3: Optimizasyon işlemi sırasında "Optimizing..." göster
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
         
         const optimizePayload = { key: key, outputFormat: selectedFormat };
@@ -761,20 +764,15 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // --- YENİ VE DAHA GÜVENİLİR MANTIK ---
-        // 1. Orijinal tam adı, listItem yerine doğrudan 'file' objesinden al. (örn: "你好世界.jpg")
+        // Adım 4: İndirme adını orijinaline sadık kalarak oluştur
         const originalFullName = file.name;
-        // 2. Orijinal adın uzantısız kısmını al. (örn: "你好世界")
         const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
-        // 3. Sunucudan gelen yeni dosyanın uzantısını al. (örn: ".webp")
         const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
-        // 4. Kullanıcıya gösterilecek son indirme adını oluştur. (örn: "你好世界.webp")
         const finalDownloadName = originalBaseName + newExtension;
 
+        // Adım 5: Sonuçları ve butonları arayüzde göster
         const resultActions = `
-                <div class="action-icon-group">
-                    <a href="${data.downloadUrl}" download="${finalDownloadName}" class="btn btn-download-item">Download</a>
-                </div>
+            <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                 </button>
