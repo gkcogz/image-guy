@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
     try {
         const { key, outputFormat, quality } = JSON.parse(event.body);
         const originalFilename = key.replace(/original-\d+-/, '');
-        
+
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
             Key: key,
@@ -43,7 +43,7 @@ exports.handler = async (event, context) => {
         const response = await s3Client.send(getCommand);
         const fileDataBuffer = await streamToBuffer(response.Body);
         const originalSize = fileDataBuffer.length;
-        
+
         console.log(`Processing file: ${originalFilename} to format: ${outputFormat} with quality: ${quality || 'default'}`);
 
         let processingBuffer = fileDataBuffer;
@@ -58,11 +58,26 @@ exports.handler = async (event, context) => {
 
         let optimizedImageBuffer;
         let contentType, newExtension;
-        
+
         if (outputFormat === 'favicon-png' || outputFormat === 'favicon-ico') {
-            // ... (favicon logic remains the same)
+            if (outputFormat === 'favicon-png') {
+                optimizedImageBuffer = await sharp(processingBuffer).resize({
+                    width: 32, height: 32, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }
+                }).png().toBuffer();
+                contentType = 'image/png';
+                newExtension = 'png';
+            } else { // favicon-ico
+                const sizes = [16, 24, 32, 48, 64];
+                const pngBuffers = await Promise.all(
+                    sizes.map(size => sharp(processingBuffer).resize({ width: size, height: size, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer())
+                );
+                optimizedImageBuffer = await toIco(pngBuffers);
+                contentType = 'image/x-icon';
+                newExtension = 'ico';
+            }
         } else {
             const finalQuality = parseInt(quality, 10) || DEFAULT_QUALITY[outputFormat];
+            
             let sharpInstance = sharp(processingBuffer)
                 .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
 
@@ -91,25 +106,27 @@ exports.handler = async (event, context) => {
             }
             optimizedImageBuffer = await sharpInstance.toBuffer();
         }
-        
+
         const optimizedSize = optimizedImageBuffer.length;
         let finalBuffer, finalKey, finalContentType, finalFilename;
 
+        // Eğer yeni dosya eskisinden büyükse, orijinali kullan.
         if (optimizedSize >= originalSize) {
             console.log(`Optimization skipped for ${originalFilename}, original is better.`);
             finalBuffer = fileDataBuffer;
-            finalKey = key;
-            finalContentType = response.ContentType;
-            finalFilename = originalFilename; // Use the original filename
+            finalKey = key; // Orijinal dosyanın S3'teki anahtarını kullan
+            finalContentType = response.ContentType; // Orijinal dosyanın tipini kullan
+            finalFilename = originalFilename; // Orijinal dosya adını kullan
         } else {
             console.log(`Optimization successful for ${originalFilename}.`);
             const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
             finalFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
             
             finalBuffer = optimizedImageBuffer;
-            finalKey = finalFilename;
+            finalKey = finalFilename; // Yeni dosya adını anahtar olarak kullan
             finalContentType = contentType;
 
+            // Yeni dosyayı S3'e sadece gerçekten daha küçükse yükle
             const putCommand = new PutObjectCommand({
                 Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
                 Key: finalKey,
@@ -128,9 +145,9 @@ exports.handler = async (event, context) => {
                 message: "Process complete!",
                 downloadUrl: downloadUrl,
                 originalFilename: originalFilename,
-                newFilename: finalFilename, // --- FIX --- This key is now always included
+                newFilename: finalFilename, // Her zaman en iyi versiyonun adını gönder
                 originalSize: originalSize,
-                optimizedSize: finalBuffer.length,
+                optimizedSize: finalBuffer.length, // Her zaman en iyi versiyonun boyutunu gönder
             }),
         };
 
