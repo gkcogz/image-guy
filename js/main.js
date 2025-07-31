@@ -746,8 +746,14 @@ async function processSingleFile(file, listItem) {
         
         // Adım 3: Optimizasyon işlemi sırasında "Optimizing..." göster
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
-        
-        const optimizePayload = { key: key, outputFormat: selectedFormat };
+
+        // Orijinal dosya adını payload'a ekleyin
+        const optimizePayload = { 
+            key: key, 
+            outputFormat: selectedFormat,
+            originalFilename: file.name // <-- BU SATIRI EKLEYİN
+        };
+
         if (qualityValue) {
             optimizePayload.quality = qualityValue;
         }
@@ -755,7 +761,7 @@ async function processSingleFile(file, listItem) {
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(optimizePayload),
+            body: JSON.stringify(optimizePayload), // Güncellenmiş payload gönderiliyor
         });
         if (!optimizeResponse.ok) {
              const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));

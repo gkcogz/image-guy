@@ -1,4 +1,4 @@
-// Dosya Adı: netlify/functions/optimize.js (Dinamik Kalite Desteği Eklendi)
+// Dosya Adı: netlify/functions/optimize.js (Tam ve Güncellenmiş Hali)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
@@ -14,7 +14,6 @@ const s3Client = new S3Client({
     }
 });
 
-// --- YENİ: Varsayılan Kalite Ayarları ---
 const DEFAULT_QUALITY = {
     jpeg: 85,
     png: 90,
@@ -22,7 +21,6 @@ const DEFAULT_QUALITY = {
     avif: 60,
     heic: 80
 };
-// --- YENİ KISIM SONU ---
 
 const streamToBuffer = (stream) => new Promise((resolve, reject) => {
     const chunks = [];
@@ -33,8 +31,10 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        const { key, outputFormat, quality } = JSON.parse(event.body);
-        const originalFilename = key.replace(/original-\d+-/, '');
+        // GÜNCELLEME 1: Gelen veriden 'originalFilename' değişkenini alıyoruz.
+        const { key, outputFormat, quality, originalFilename } = JSON.parse(event.body);
+
+        // GÜNCELLEME 2: Artık S3 anahtarından (key) dosya adı türetmeye çalışmıyoruz. Bu satır silindi.
 
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
@@ -110,23 +110,22 @@ exports.handler = async (event, context) => {
         const optimizedSize = optimizedImageBuffer.length;
         let finalBuffer, finalKey, finalContentType, finalFilename;
 
-        // Eğer yeni dosya eskisinden büyükse, orijinali kullan.
         if (optimizedSize >= originalSize) {
             console.log(`Optimization skipped for ${originalFilename}, original is better.`);
             finalBuffer = fileDataBuffer;
-            finalKey = key; // Orijinal dosyanın S3'teki anahtarını kullan
-            finalContentType = response.ContentType; // Orijinal dosyanın tipini kullan
-            finalFilename = originalFilename; // Orijinal dosya adını kullan
+            finalKey = key;
+            finalContentType = response.ContentType;
+            finalFilename = originalFilename;
         } else {
             console.log(`Optimization successful for ${originalFilename}.`);
+            // GÜNCELLEME 3: Dosya adının kökünü, istemciden gelen doğru 'originalFilename' üzerinden alıyoruz.
             const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
             finalFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
             
             finalBuffer = optimizedImageBuffer;
-            finalKey = finalFilename; // Yeni dosya adını anahtar olarak kullan
+            finalKey = finalFilename;
             finalContentType = contentType;
 
-            // Yeni dosyayı S3'e sadece gerçekten daha küçükse yükle
             const putCommand = new PutObjectCommand({
                 Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
                 Key: finalKey,
@@ -144,10 +143,10 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({
                 message: "Process complete!",
                 downloadUrl: downloadUrl,
-                originalFilename: originalFilename,
-                newFilename: finalFilename, // Her zaman en iyi versiyonun adını gönder
+                originalFilename: originalFilename, // Bu alanı istemci tarafında kullanmak için geri gönderebiliriz.
+                newFilename: finalFilename,
                 originalSize: originalSize,
-                optimizedSize: finalBuffer.length, // Her zaman en iyi versiyonun boyutunu gönder
+                optimizedSize: finalBuffer.length,
             }),
         };
 
