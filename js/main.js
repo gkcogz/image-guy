@@ -761,9 +761,9 @@ async function processSingleFile(file, listItem) {
         }
         const data = await optimizeResponse.json();
 
-        // --- DÜZELTME BURADA: İndirme Adı Yeniden Oluşturuluyor ---
-        // 1. Sakladığımız orijinal tam adı al. (örn: "你好世界.jpg")
-        const originalFullName = listItem.dataset.originalFilename;
+        // --- YENİ VE DAHA GÜVENİLİR MANTIK ---
+        // 1. Orijinal tam adı, listItem yerine doğrudan 'file' objesinden al. (örn: "你好世界.jpg")
+        const originalFullName = file.name;
         // 2. Orijinal adın uzantısız kısmını al. (örn: "你好世界")
         const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
         // 3. Sunucudan gelen yeni dosyanın uzantısını al. (örn: ".webp")
@@ -772,7 +772,9 @@ async function processSingleFile(file, listItem) {
         const finalDownloadName = originalBaseName + newExtension;
 
         const resultActions = `
-            <div class="action-icon-group">
+                <div class="action-icon-group">
+                    <a href="${data.downloadUrl}" download="${finalDownloadName}" class="btn btn-download-item">Download</a>
+                </div>
                 <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                 </button>
