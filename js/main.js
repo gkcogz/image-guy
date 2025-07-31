@@ -583,7 +583,7 @@ function updateUIForFileList() {
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
 
-        // --- YENİ EKLENEN SATIR ---
+        // --- EKSİK OLAN VE EKLENMESİ GEREKEN SATIR BURASI ---
         // Orijinal dosya adını daha sonra kullanmak üzere data niteliğinde saklıyoruz.
         listItem.dataset.originalFilename = file.name;
 
