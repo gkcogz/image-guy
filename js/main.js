@@ -617,25 +617,47 @@ function updateMainButtonAfterCompletion() {
     }
 }
 
+// main.js dosyanızdaki mevcut handleZipDownload fonksiyonunu bununla değiştirin
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn) return;
     console.log('Starting ZIP download process...');
     downloadAllBtn.textContent = 'Zipping...';
     downloadAllBtn.disabled = true;
+
     try {
         const zip = new JSZip();
-        const downloadLinks = document.querySelectorAll('a.btn-download-item');
-        const fetchPromises = Array.from(downloadLinks).map(link => 
-            fetch(link.href)
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+        
+        // Tüm dosya satırlarını (list items) alıyoruz.
+        const listItems = document.querySelectorAll('.file-list-item');
+
+        const fetchPromises = Array.from(listItems).map(item => {
+            // Her satırdaki indirme linkini ve copy butonunu buluyoruz.
+            const link = item.querySelector('a.btn-download-item');
+            const copyButton = item.querySelector('.btn-copy');
+
+            // En güncel URL için copy butonunun data niteliğini,
+            // Dosya adı için ise indirme linkinin download niteliğini kullanıyoruz.
+            const fileUrl = copyButton.dataset.optimizedUrl;
+            const fileName = link.getAttribute('download');
+
+            return fetch(fileUrl)
                 .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch ${link.href}`);
+                    if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
                     return response.blob();
                 })
-                .then(blob => ({ name: link.getAttribute('download'), blob: blob }))
-        );
+                .then(blob => ({
+                    name: fileName,
+                    blob: blob
+                }));
+        });
+        
+        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+
         const files = await Promise.all(fetchPromises);
         files.forEach(file => { zip.file(file.name, file.blob); });
+        
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const tempUrl = URL.createObjectURL(zipBlob);
         const tempLink = document.createElement('a');
@@ -645,8 +667,10 @@ async function handleZipDownload() {
         tempLink.click();
         document.body.removeChild(tempLink);
         URL.revokeObjectURL(tempUrl);
+
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
+
     } catch (error) {
         console.error('Failed to create ZIP file:', error);
         alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
