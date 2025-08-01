@@ -1046,25 +1046,26 @@ function showBase64Modal(base64String) {
         <div class="modal-overlay">
             <div class="modal-content base64-modal-content">
                 <button class="modal-close-btn">&times;</button>
-                <h2>Base64 Code</h2>
-                <p>You can use this code directly in your CSS or HTML.</p>
+                <h2 data-i18n-key="base64_title">Base64 Code</h2>
+                <p data-i18n-key="base64_subtitle">You can use this code directly in your CSS or HTML.</p>
                 <div class="base64-container">
                     <textarea class="base64-textarea" readonly>${base64String}</textarea>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" id="check-base64-btn">
+                    <button class="btn btn-secondary" id="check-base64-btn" data-i18n-key="base64_check_button">
                         <span>Check Code</span>
                     </button>
                     <button class="btn btn-primary" id="copy-base64-btn">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>Copy to Clipboard</span>
+                        <span data-i18n-key="base64_copy_button">Copy to Clipboard</span>
                     </button>
-                    <span class="copy-success-msg">Copied!</span>
+                    <span class="copy-success-msg" data-i18n-key="base64_copied_message">Copied!</span>
                 </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    translatePage(); // Modal içindeki metinleri çevir
 
     const textarea = document.querySelector('.base64-textarea');
     textarea.select();
@@ -1082,7 +1083,22 @@ function showBase64Modal(base64String) {
         });
     });
 
+    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
     checkBtn.addEventListener('click', () => {
-        window.open(base64String, '_blank');
+        const newWindow = window.open();
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>Base64 Image Preview</title></head>
+                    <body style="margin:0; display:flex; justify-content:center; align-items:center; background-color:#2e2e2e;">
+                        <img src="${base64String}" alt="Base64 Preview">
+                    </body>
+                </html>
+            `);
+            newWindow.document.close();
+        } else {
+            alert("Please allow popups to preview the image.");
+        }
     });
+    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 }
