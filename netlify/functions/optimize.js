@@ -29,12 +29,12 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
     stream.on('end', () => resolve(Buffer.concat(chunks)));
 });
 
+// netlify/functions/optimize.js
+
 exports.handler = async (event, context) => {
     try {
-        // GÜNCELLEME 1: Gelen veriden 'originalFilename' değişkenini alıyoruz.
-        const { key, outputFormat, quality, originalFilename } = JSON.parse(event.body);
-
-        // GÜNCELLEME 2: Artık S3 anahtarından (key) dosya adı türetmeye çalışmıyoruz. Bu satır silindi.
+        // GÜNCELLEME 1: Gelen body'den 'safeFilename' değişkenini de alıyoruz.
+        const { key, outputFormat, quality, originalFilename, safeFilename } = JSON.parse(event.body);
 
         const getCommand = new GetObjectCommand({
             Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
@@ -49,60 +49,33 @@ exports.handler = async (event, context) => {
         let processingBuffer = fileDataBuffer;
         if (originalFilename.toLowerCase().endsWith('.heic') || originalFilename.toLowerCase().endsWith('.heif')) {
             console.log('HEIC input detected. Converting to PNG before optimization...');
-            const outputBuffer = await heicConvert({
-                buffer: fileDataBuffer,
-                format: 'PNG'
-            });
+            const outputBuffer = await heicConvert({ buffer: fileDataBuffer, format: 'PNG' });
             processingBuffer = outputBuffer;
         }
 
         let optimizedImageBuffer;
         let contentType, newExtension;
 
+        // ... (Diğer format case'leri aynı kalacak, buraya eklemiyorum)
         if (outputFormat === 'favicon-png' || outputFormat === 'favicon-ico') {
             if (outputFormat === 'favicon-png') {
-                optimizedImageBuffer = await sharp(processingBuffer).resize({
-                    width: 32, height: 32, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }
-                }).png().toBuffer();
-                contentType = 'image/png';
-                newExtension = 'png';
+                optimizedImageBuffer = await sharp(processingBuffer).resize({ width: 32, height: 32, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+                contentType = 'image/png'; newExtension = 'png';
             } else { // favicon-ico
                 const sizes = [16, 24, 32, 48, 64];
-                const pngBuffers = await Promise.all(
-                    sizes.map(size => sharp(processingBuffer).resize({ width: size, height: size, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer())
-                );
+                const pngBuffers = await Promise.all(sizes.map(size => sharp(processingBuffer).resize({ width: size, height: size, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer()));
                 optimizedImageBuffer = await toIco(pngBuffers);
-                contentType = 'image/x-icon';
-                newExtension = 'ico';
+                contentType = 'image/x-icon'; newExtension = 'ico';
             }
         } else {
             const finalQuality = parseInt(quality, 10) || DEFAULT_QUALITY[outputFormat];
-            
-            let sharpInstance = sharp(processingBuffer)
-                .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
-
-            switch (outputFormat) {
-                case 'png':
-                    sharpInstance = sharpInstance.png({ quality: finalQuality });
-                    contentType = 'image/png'; newExtension = 'png';
-                    break;
-                case 'webp':
-                    sharpInstance = sharpInstance.webp({ quality: finalQuality });
-                    contentType = 'image/webp'; newExtension = 'webp';
-                    break;
-                case 'avif':
-                    sharpInstance = sharpInstance.avif({ quality: finalQuality });
-                    contentType = 'image/avif'; newExtension = 'avif';
-                    break;
-                case 'heic':
-                    sharpInstance = sharpInstance.heif({ quality: finalQuality, compression: 'av1' });
-                    contentType = 'image/heic'; newExtension = 'heic';
-                    break;
-                case 'jpeg':
-                default:
-                    sharpInstance = sharpInstance.jpeg({ quality: finalQuality, progressive: true, mozjpeg: true });
-                    contentType = 'image/jpeg'; newExtension = 'jpg';
-                    break;
+            let sharpInstance = sharp(processingBuffer).resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
+            switch (outputFormat) { /* ... case'ler aynı ... */ 
+                case 'png': sharpInstance = sharpInstance.png({ quality: finalQuality }); contentType = 'image/png'; newExtension = 'png'; break;
+                case 'webp': sharpInstance = sharpInstance.webp({ quality: finalQuality }); contentType = 'image/webp'; newExtension = 'webp'; break;
+                case 'avif': sharpInstance = sharpInstance.avif({ quality: finalQuality }); contentType = 'image/avif'; newExtension = 'avif'; break;
+                case 'heic': sharpInstance = sharpInstance.heif({ quality: finalQuality, compression: 'av1' }); contentType = 'image/heic'; newExtension = 'heic'; break;
+                case 'jpeg': default: sharpInstance = sharpInstance.jpeg({ quality: finalQuality, progressive: true, mozjpeg: true }); contentType = 'image/jpeg'; newExtension = 'jpg'; break;
             }
             optimizedImageBuffer = await sharpInstance.toBuffer();
         }
@@ -118,32 +91,37 @@ exports.handler = async (event, context) => {
             finalFilename = originalFilename;
         } else {
             console.log(`Optimization successful for ${originalFilename}.`);
-            // GÜNCELLEME 3: Dosya adının kökünü, istemciden gelen doğru 'originalFilename' üzerinden alıyoruz.
+            
             const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
             finalFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
             
             finalBuffer = optimizedImageBuffer;
-            finalKey = finalFilename;
+            finalKey = finalFilename; // Dosya adını S3'e orijinal karakterlerle kaydedebiliriz.
             finalContentType = contentType;
+
+            // GÜNCELLEME 2: Standartlara uygun Content-Disposition başlığı oluşturuyoruz.
+            const fallbackBase = safeFilename.substring(0, safeFilename.lastIndexOf('.'));
+            const fallbackFilename = `${fallbackBase}.${newExtension}`;
+            const encodedFinalFilename = encodeURIComponent(finalFilename);
+            const contentDispositionHeader = `attachment; filename="${fallbackFilename}"; filename*=UTF-8''${encodedFinalFilename}`;
 
             const putCommand = new PutObjectCommand({
                 Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
                 Key: finalKey,
                 Body: finalBuffer,
                 ContentType: finalContentType,
-                ContentDisposition: `attachment; filename="${finalFilename}"`
+                ContentDisposition: contentDispositionHeader // <-- GÜNCELLENMİŞ BAŞLIK
             });
             await s3Client.send(putCommand);
         }
         
-        const downloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${finalKey}`;
+        const downloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${encodeURIComponent(finalKey)}`;
 
         return {
             statusCode: 200,
             body: JSON.stringify({
                 message: "Process complete!",
                 downloadUrl: downloadUrl,
-                originalFilename: originalFilename, // Bu alanı istemci tarafında kullanmak için geri gönderebiliriz.
                 newFilename: finalFilename,
                 originalSize: originalSize,
                 optimizedSize: finalBuffer.length,

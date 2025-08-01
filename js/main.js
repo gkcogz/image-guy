@@ -711,6 +711,8 @@ function updateQualitySlider() {
 }
 // --- YENİ KISIM SONU ---
 
+// main.js
+
 async function processSingleFile(file, listItem) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
@@ -722,7 +724,7 @@ async function processSingleFile(file, listItem) {
         // Adım 1: Sunucudan yükleme linki alınırken "Preparing..." göster
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
         
-        const safeFilename = sanitizeFilename(file.name);
+        const safeFilename = sanitizeFilename(file.name); // Bu değişkeni sunucuya göndereceğiz
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -747,11 +749,12 @@ async function processSingleFile(file, listItem) {
         // Adım 3: Optimizasyon işlemi sırasında "Optimizing..." göster
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
 
-        // Orijinal dosya adını payload'a ekleyin
+        // GÜNCELLEME: `safeFilename` bilgisini payload'a ekliyoruz.
         const optimizePayload = { 
             key: key, 
             outputFormat: selectedFormat,
-            originalFilename: file.name // <-- BU SATIRI EKLEYİN
+            originalFilename: file.name,
+            safeFilename: safeFilename // <-- BU SATIR EKLENDİ
         };
 
         if (qualityValue) {
@@ -761,7 +764,7 @@ async function processSingleFile(file, listItem) {
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(optimizePayload), // Güncellenmiş payload gönderiliyor
+            body: JSON.stringify(optimizePayload),
         });
         if (!optimizeResponse.ok) {
              const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
@@ -814,7 +817,6 @@ async function processSingleFile(file, listItem) {
         URL.revokeObjectURL(originalObjectUrl);
     }
 }
-
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
