@@ -197,23 +197,16 @@ document.body.addEventListener('click', async (e) => {
 
 // main.js dosyasındaki 'crop-undo-btn' if bloğunu bununla değiştirin.
 
-// "Undo" butonuna basıldığında
 if (targetButton && targetButton.id === 'crop-undo-btn') {
-    // Eğer cropper aktif değilse veya geçmiş boşsa hiçbir şey yapma.
-    if (!cropper || cropHistory.length === 0) {
-        return; 
-    }
+    if (!cropper || cropHistory.length === 0) return;
 
-    // 1. Geri alınacak son durumu geçmişten al.
     const lastState = cropHistory.pop();
 
-    // 2. Güncellenecek elementlere referansları al.
-    const imageInModal = document.getElementById('image-to-crop');
+    // Güncel URL'leri geri yükle
     const compareButton = currentCropTarget.querySelector('.btn-compare');
     const cropButton = currentCropTarget.querySelector('.btn-crop');
-    
-    // 3. ÖNCE ana sayfadaki butonların veri setlerini güncelle.
-    // Bu, genel durumu resim değişmeden önce bir önceki adıma döndürür.
+    const imageInModal = document.getElementById('image-to-crop');
+
     if (compareButton) {
         compareButton.dataset.optimizedUrl = lastState.optimized;
         compareButton.dataset.originalUrl = lastState.original;
@@ -222,18 +215,34 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
         cropButton.dataset.optimizedUrl = lastState.optimized;
     }
 
-    // 4. SONRA cropper'a resmi değiştirme komutunu gönder.
-    // Bu, en güvenilir yöntemdir ve diğer her şey güncellendikten sonra çağrılmalıdır.
-    cropper.replace(lastState.optimized);
+    // Cropper'ı tamamen yok et
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
 
-    // 5. (Ekstra Güvence) Modal içindeki asıl <img> etiketinin src'sini de güncelle.
+    // Resmi yeni duruma göre değiştir
     imageInModal.src = lastState.optimized;
 
-    // 6. Geçmişte başka adım kalmadıysa Undo butonunu pasif hale getir.
+    // Yeni görsel yüklendiğinde Cropper'ı yeniden başlat
+    imageInModal.onload = () => {
+        cropper = new Cropper(imageInModal, {
+            viewMode: 1,
+            background: false,
+            autoCropArea: 0.8,
+            ready: function () {
+                document.querySelector('.crop-modal-content').classList.add('ready');
+                document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+            }
+        });
+    };
+
+    // Eğer geçmiş tamamen boşaldıysa butonu pasifleştir
     if (cropHistory.length === 0) {
         targetButton.disabled = true;
     }
 }
+
 
     // Silme butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-delete-item')) {
