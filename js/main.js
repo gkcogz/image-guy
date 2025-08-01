@@ -177,6 +177,7 @@ document.body.addEventListener('click', async (e) => {
         resetUI();
     }
 // "Retry" butonuna basıldığında
+// "Retry" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-retry')) {
         const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
         // Butondan format bilgisini de oku
@@ -735,7 +736,6 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
     const selectedFormat = retryFormat !== null ? retryFormat : document.querySelector('input[name="format"]:checked').value;
     
     const qualitySlider = document.getElementById('quality-slider');
-    //...
     const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
 
@@ -828,9 +828,8 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
 
         // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
         
-        // Yeni ikonlu "Retry" butonu ve tooltip'i içeren HTML
         const retryButtonHTML = `
-            <button class="icon-btn btn-retry" data-file-index="${index}">
+            <button class="icon-btn btn-retry" data-file-index="${index}" data-format="${selectedFormat}">
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="23 4 23 10 17 10"></polyline>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
