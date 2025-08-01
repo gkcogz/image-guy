@@ -176,16 +176,19 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'clear-all-btn') {
         resetUI();
     }
-    // "Retry" butonuna basıldığında
+// "Retry" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-retry')) {
         const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
+        // Butondan format bilgisini de oku
+        const formatToRetry = targetButton.dataset.format; 
+
         const fileToRetry = fileQueue[indexToRetry];
         const listItemToRetry = document.querySelectorAll('.file-list-item')[indexToRetry];
 
         if (fileToRetry && listItemToRetry) {
-            console.log(`Retrying file: ${fileToRetry.name}`);
-            // Sadece o dosya için işlemi yeniden başlat
-            processSingleFile(fileToRetry, listItemToRetry, indexToRetry);
+            console.log(`Retrying file: ${fileToRetry.name} with format ${formatToRetry}`);
+            // Yeniden deneme işlemi için formatı da gönder
+            processSingleFile(fileToRetry, listItemToRetry, indexToRetry, formatToRetry);
         }
     }
 
@@ -726,8 +729,12 @@ function updateQualitySlider() {
 // main.js
 
 async function processSingleFile(file, listItem, index) {
+    //                                                     ^-- Yeni parametre
     const statusElement = listItem.querySelector('.file-item-status');
-    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+    
+    // Eğer bir yeniden deneme formatı gönderildiyse onu kullan, yoksa DOM'dan oku.
+    const selectedFormat = retryFormat || document.querySelector('input[name="format"]:checked').value;
+    
     const qualitySlider = document.getElementById('quality-slider');
     const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
