@@ -960,9 +960,13 @@ async function handleZipDownload() {
 function resetUI() {
     console.log('Resetting UI to initial state.');
     fileQueue = [];
-    cropHistory = []; // Arayüz sıfırlandığında geçmişi sıfırla
+    cropHistory = []; 
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
+
+    // --- YENİ EKLENEN SATIR ---
+    // Sayfayı yavaşça (smooth) upload alanına kaydır.
+    uploadArea.scrollIntoView({ behavior: 'smooth' });
 }
 
 function showComparisonModal(originalUrl, optimizedUrl) {
