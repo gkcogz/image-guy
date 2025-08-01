@@ -195,35 +195,43 @@ document.body.addEventListener('click', async (e) => {
 
 // main.js dosyasındaki mevcut 'crop-undo-btn' if bloğunu silip yerine bunu yapıştırın.
 
+// main.js dosyasındaki 'crop-undo-btn' if bloğunu bununla değiştirin.
+
 // "Undo" butonuna basıldığında
 if (targetButton && targetButton.id === 'crop-undo-btn') {
-    if (cropHistory.length > 0) {
-        const lastState = cropHistory.pop();
-        const imageInModal = document.getElementById('image-to-crop');
+    // Eğer cropper aktif değilse veya geçmiş boşsa hiçbir şey yapma.
+    if (!cropper || cropHistory.length === 0) {
+        return; 
+    }
 
-        // DAHA GÜVENİLİR YÖNTEM:
-        // Cropper'ı yok edip yeniden oluşturmak yerine, kütüphanenin kendi
-        // 'replace' metodunu kullanarak resmi doğrudan değiştiriyoruz.
-        // Bu, tarayıcının cache sorunlarını ortadan kaldırır.
-        if (cropper) {
-            cropper.replace(lastState.optimized);
-        }
+    // 1. Geri alınacak son durumu geçmişten al.
+    const lastState = cropHistory.pop();
 
-        // Ana sayfadaki butonların referanslarını (dataset) da geri alınan durumla güncelliyoruz.
-        const compareButton = currentCropTarget.querySelector('.btn-compare');
-        const cropButton = currentCropTarget.querySelector('.btn-crop');
-        if (compareButton) {
-            compareButton.dataset.optimizedUrl = lastState.optimized;
-            compareButton.dataset.originalUrl = lastState.original;
-        }
-        if (cropButton) {
-            cropButton.dataset.optimizedUrl = lastState.optimized;
-        }
-        
-        // Geçmişte başka adım kalmadıysa butonu tekrar pasif yap.
-        if (cropHistory.length === 0) {
-            targetButton.disabled = true;
-        }
+    // 2. Güncellenecek elementlere referansları al.
+    const imageInModal = document.getElementById('image-to-crop');
+    const compareButton = currentCropTarget.querySelector('.btn-compare');
+    const cropButton = currentCropTarget.querySelector('.btn-crop');
+    
+    // 3. ÖNCE ana sayfadaki butonların veri setlerini güncelle.
+    // Bu, genel durumu resim değişmeden önce bir önceki adıma döndürür.
+    if (compareButton) {
+        compareButton.dataset.optimizedUrl = lastState.optimized;
+        compareButton.dataset.originalUrl = lastState.original;
+    }
+    if (cropButton) {
+        cropButton.dataset.optimizedUrl = lastState.optimized;
+    }
+
+    // 4. SONRA cropper'a resmi değiştirme komutunu gönder.
+    // Bu, en güvenilir yöntemdir ve diğer her şey güncellendikten sonra çağrılmalıdır.
+    cropper.replace(lastState.optimized);
+
+    // 5. (Ekstra Güvence) Modal içindeki asıl <img> etiketinin src'sini de güncelle.
+    imageInModal.src = lastState.optimized;
+
+    // 6. Geçmişte başka adım kalmadıysa Undo butonunu pasif hale getir.
+    if (cropHistory.length === 0) {
+        targetButton.disabled = true;
     }
 }
 
