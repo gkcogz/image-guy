@@ -956,17 +956,16 @@ async function handleZipDownload() {
     }
 }
 
-// main.js dosyanızdaki resetUI fonksiyonunu bununla değiştirin
 function resetUI() {
     console.log('Resetting UI to initial state.');
     fileQueue = [];
-    cropHistory = []; 
+    cropHistory = [];
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
 
-    // --- YENİ EKLENEN SATIR ---
-    // Sayfayı yavaşça (smooth) upload alanına kaydır.
-    uploadArea.scrollIntoView({ behavior: 'smooth' });
+    // --- DEĞİŞTİRİLEN SATIR ---
+    // Sayfayı yavaşça en üste kaydır.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showComparisonModal(originalUrl, optimizedUrl) {
