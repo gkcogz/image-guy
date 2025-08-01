@@ -728,14 +728,14 @@ function updateQualitySlider() {
 
 // main.js
 
-async function processSingleFile(file, listItem, index) {
-    //                                                     ^-- Yeni parametre
+async function processSingleFile(file, listItem, index, retryFormat = null) {
     const statusElement = listItem.querySelector('.file-item-status');
     
-    // Eğer bir yeniden deneme formatı gönderildiyse onu kullan, yoksa DOM'dan oku.
-    const selectedFormat = retryFormat || document.querySelector('input[name="format"]:checked').value;
+    // Değişiklik burada: retryFormat varsa onu, yoksa DOM'dan seçileni al.
+    const selectedFormat = retryFormat !== null ? retryFormat : document.querySelector('input[name="format"]:checked').value;
     
     const qualitySlider = document.getElementById('quality-slider');
+    //...
     const qualityValue = qualitySlider ? qualitySlider.value : null;
     const originalObjectUrl = URL.createObjectURL(file);
 
