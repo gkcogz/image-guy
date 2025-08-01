@@ -1292,3 +1292,21 @@ body.mobile-menu-active::before {
     font-weight: 500;
     margin-left: 1rem;
 }
+
+/* style.css dosyasının sonuna ekleyin */
+
+/* Hata mesajı için stil */
+.status-failed {
+    color: #dc3545; /* Canlı bir kırmızı tonu */
+    font-weight: 500;
+}
+
+/* Retry butonu için ek stiller */
+.btn-retry {
+    margin-left: 0.75rem; /* Hata mesajından biraz boşluk bırakır */
+}
+
+/* Retry butonu üzerine gelince, ikonun rengini değiştirelim */
+.btn-retry:hover svg {
+    stroke: var(--primary-color);
+}

@@ -735,7 +735,7 @@ async function processSingleFile(file, listItem, index) {
     try {
         // Adım 1: "Preparing..." ilerleme çubuğunu göster
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
-        
+    
         const safeFilename = sanitizeFilename(file.name);
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
@@ -818,15 +818,24 @@ async function processSingleFile(file, listItem, index) {
 
     } catch (error) {
         console.error('Processing failed for', file.name, ':', error);
-        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
-        URL.revokeObjectURL(originalObjectUrl);
 
-                // --- DEĞİŞİKLİK BURADA: Hata durumunda "Retry" butonu ekleniyor ---
-        const retryButtonHTML = `<button class="btn btn-secondary btn-retry" data-file-index="${index}">Retry</button>`;
-        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span> ${retryButtonHTML}`;
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
         
-        // URL'yi iptal etmiyoruz ki yeniden deneme yapılabilsin.
-        // URL.revokeObjectURL(originalObjectUrl); // <-- BU SATIR SİLİNDİ VEYA YORUM SATIRI YAPILDI
+        // Yeni ikonlu "Retry" butonu ve tooltip'i içeren HTML
+        const retryButtonHTML = `
+            <button class="icon-btn btn-retry" data-file-index="${index}">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span class="icon-tooltip">Retry</span>
+            </button>
+        `;
+
+        // Hata mesajını ve butonu arayüze yerleştir
+        statusElement.innerHTML = `<span class="status-failed">Failed! ${error.message}</span> ${retryButtonHTML}`;
+
+        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
     }
 }
 
