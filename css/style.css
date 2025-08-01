@@ -1284,3 +1284,11 @@ body.mobile-menu-active::before {
         bottom: 100%;
     }
 }
+
+/* style.css dosyasının sonuna ekleyin */
+.btn-retry {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 1rem;
+}

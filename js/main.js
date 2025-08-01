@@ -176,6 +176,18 @@ document.body.addEventListener('click', async (e) => {
     if (targetButton && targetButton.id === 'clear-all-btn') {
         resetUI();
     }
+    // "Retry" butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-retry')) {
+        const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
+        const fileToRetry = fileQueue[indexToRetry];
+        const listItemToRetry = document.querySelectorAll('.file-list-item')[indexToRetry];
+
+        if (fileToRetry && listItemToRetry) {
+            console.log(`Retrying file: ${fileToRetry.name}`);
+            // Sadece o dosya için işlemi yeniden başlat
+            processSingleFile(fileToRetry, listItemToRetry, indexToRetry);
+        }
+    }
 
     // "Undo" butonuna basıldığında
     if (targetButton && targetButton.id === 'crop-undo-btn') {
@@ -815,21 +827,50 @@ async function processSingleFile(file, listItem) {
         console.error('Processing failed for', file.name, ':', error);
         statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span>`;
         URL.revokeObjectURL(originalObjectUrl);
+
+                // --- DEĞİŞİKLİK BURADA: Hata durumunda "Retry" butonu ekleniyor ---
+        const retryButtonHTML = `<button class="btn btn-secondary btn-retry" data-file-index="${index}">Retry</button>`;
+        statusElement.innerHTML = `<span style="color: red;">Failed! ${error.message}</span> ${retryButtonHTML}`;
+        
+        // URL'yi iptal etmiyoruz ki yeniden deneme yapılabilsin.
+        // URL.revokeObjectURL(originalObjectUrl); // <-- BU SATIR SİLİNDİ VEYA YORUM SATIRI YAPILDI
     }
 }
+
 async function startBatchOptimization() {
     console.log(`Starting optimization for ${fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
+    const clearBtn = document.getElementById('clear-all-btn');
+
     if (optimizeBtn) {
         optimizeBtn.textContent = 'Processing...';
         optimizeBtn.disabled = true;
     }
+    if (clearBtn) {
+        clearBtn.disabled = true;
+    }
+
     const listItems = document.querySelectorAll('.file-list-item');
-    const optimizationPromises = fileQueue.map((file, index) => {
-        const listItem = listItems[index];
-        return processSingleFile(file, listItem);
-    });
-    await Promise.all(optimizationPromises);
+    const batchSize = 5;
+    let processedCount = 0;
+
+    for (let i = 0; i < fileQueue.length; i += batchSize) {
+        const batch = fileQueue.slice(i, i + batchSize);
+        const batchListItems = Array.from(listItems).slice(i, i + batchSize);
+        
+        const optimizationPromises = batch.map((file, index) => {
+            const globalIndex = i + index; // Dosyanın global kuyruktaki index'i
+            const listItem = batchListItems[index];
+            // --- DEĞİŞİKLİK BURADA: processSingleFile'a index'i de gönderiyoruz ---
+            return processSingleFile(file, listItem, globalIndex);
+        });
+
+        await Promise.all(optimizationPromises);
+
+        processedCount += batch.length;
+        console.log(`${processedCount} of ${fileQueue.length} files processed.`);
+    }
+    
     updateMainButtonAfterCompletion();
 }
 
