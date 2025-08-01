@@ -983,9 +983,14 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
+// main.js dosyasındaki showCropModal fonksiyonunu bu şekilde güncelleyin:
+
 function showCropModal(originalUrl, optimizedUrl) {
-    // Geçmişi temizle ve en baştaki orijinali sakla
-    // cropHistory = []; SILINDI
+    // --- ÇÖZÜM: KIRPMA GEÇMİŞİNİ BURADA SIFIRLA ---
+    // Her kırpma penceresi açıldığında, o oturuma özel temiz bir geçmiş başlatıyoruz.
+    cropHistory = [];
+    // ------------------------------------------------
+
     ultimateOriginalUrl = originalUrl; 
 
     const modalHTML = `
@@ -1016,7 +1021,7 @@ function showCropModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const image = document.getElementById('image-to-crop');
-    const modalContent = document.querySelector('.crop-modal-content'); // Referans burada alınıyor
+    const modalContent = document.querySelector('.crop-modal-content');
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
@@ -1028,8 +1033,6 @@ function showCropModal(originalUrl, optimizedUrl) {
             background: false,
             autoCropArea: 0.8,
             ready: function () {
-                // --- DÜZELTME BURADA ---
-                // Elementi tekrar aramak yerine, zaten var olan referansı kullan.
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
