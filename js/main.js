@@ -193,16 +193,11 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-// main.js dosyasındaki mevcut 'crop-undo-btn' if bloğunu silip yerine bunu yapıştırın.
-
-// main.js dosyasındaki 'crop-undo-btn' if bloğunu bununla değiştirin.
-
 if (targetButton && targetButton.id === 'crop-undo-btn') {
     if (!cropper || cropHistory.length === 0) return;
 
     const lastState = cropHistory.pop();
 
-    // Güncel URL'leri geri yükle
     const compareButton = currentCropTarget.querySelector('.btn-compare');
     const cropButton = currentCropTarget.querySelector('.btn-crop');
     const imageInModal = document.getElementById('image-to-crop');
@@ -215,29 +210,32 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
         cropButton.dataset.optimizedUrl = lastState.optimized;
     }
 
-    // Cropper'ı tamamen yok et
+    // Cropper'ı kapat
     if (cropper) {
         cropper.destroy();
         cropper = null;
     }
 
-    // Resmi yeni duruma göre değiştir
-    imageInModal.src = lastState.optimized;
+    // ÖNCE src boşalt (tarayıcı onload'ı yeniden tetiklesin diye)
+    imageInModal.src = '';
+    
+    // Sonra yeni src'yi ata (önceki adıma ait)
+    setTimeout(() => {
+        imageInModal.onload = () => {
+            cropper = new Cropper(imageInModal, {
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+                ready: function () {
+                    document.querySelector('.crop-modal-content').classList.add('ready');
+                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                }
+            });
+        };
+        imageInModal.src = lastState.optimized;
+    }, 10);
 
-    // Yeni görsel yüklendiğinde Cropper'ı yeniden başlat
-    imageInModal.onload = () => {
-        cropper = new Cropper(imageInModal, {
-            viewMode: 1,
-            background: false,
-            autoCropArea: 0.8,
-            ready: function () {
-                document.querySelector('.crop-modal-content').classList.add('ready');
-                document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
-            }
-        });
-    };
-
-    // Eğer geçmiş tamamen boşaldıysa butonu pasifleştir
+    // Butonu devre dışı bırak
     if (cropHistory.length === 0) {
         targetButton.disabled = true;
     }
