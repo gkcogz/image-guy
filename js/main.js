@@ -193,36 +193,39 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-    // "Undo" butonuna basıldığında
-    if (targetButton && targetButton.id === 'crop-undo-btn') {
-        if (cropHistory.length > 0) {
-            const lastState = cropHistory.pop();
-            const image = document.getElementById('image-to-crop');
-            
-            cropper.destroy();
-            image.onload = () => {
-                cropper = new Cropper(image, {
-                    viewMode: 1,
-                    background: false,
-                    autoCropArea: 0.8,
-                });
-            };
-            image.src = lastState.optimized;
+// main.js dosyasındaki mevcut 'crop-undo-btn' if bloğunu silip yerine bunu yapıştırın.
 
-            const compareButton = currentCropTarget.querySelector('.btn-compare');
-            const cropButton = currentCropTarget.querySelector('.btn-crop');
-            if (compareButton) {
-                compareButton.dataset.optimizedUrl = lastState.optimized;
-                compareButton.dataset.originalUrl = lastState.original;
-            }
-            if (cropButton) {
-                cropButton.dataset.optimizedUrl = lastState.optimized;
-            }
-            if (cropHistory.length === 0) {
-                targetButton.disabled = true;
-            }
+// "Undo" butonuna basıldığında
+if (targetButton && targetButton.id === 'crop-undo-btn') {
+    if (cropHistory.length > 0) {
+        const lastState = cropHistory.pop();
+        const imageInModal = document.getElementById('image-to-crop');
+
+        // DAHA GÜVENİLİR YÖNTEM:
+        // Cropper'ı yok edip yeniden oluşturmak yerine, kütüphanenin kendi
+        // 'replace' metodunu kullanarak resmi doğrudan değiştiriyoruz.
+        // Bu, tarayıcının cache sorunlarını ortadan kaldırır.
+        if (cropper) {
+            cropper.replace(lastState.optimized);
+        }
+
+        // Ana sayfadaki butonların referanslarını (dataset) da geri alınan durumla güncelliyoruz.
+        const compareButton = currentCropTarget.querySelector('.btn-compare');
+        const cropButton = currentCropTarget.querySelector('.btn-crop');
+        if (compareButton) {
+            compareButton.dataset.optimizedUrl = lastState.optimized;
+            compareButton.dataset.originalUrl = lastState.original;
+        }
+        if (cropButton) {
+            cropButton.dataset.optimizedUrl = lastState.optimized;
+        }
+        
+        // Geçmişte başka adım kalmadıysa butonu tekrar pasif yap.
+        if (cropHistory.length === 0) {
+            targetButton.disabled = true;
         }
     }
+}
 
     // Silme butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-delete-item')) {
