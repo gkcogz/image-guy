@@ -725,7 +725,7 @@ function updateQualitySlider() {
 
 // main.js
 
-async function processSingleFile(file, listItem) {
+async function processSingleFile(file, listItem, index) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const qualitySlider = document.getElementById('quality-slider');
@@ -733,10 +733,10 @@ async function processSingleFile(file, listItem) {
     const originalObjectUrl = URL.createObjectURL(file);
 
     try {
-        // Adım 1: Sunucudan yükleme linki alınırken "Preparing..." göster
+        // Adım 1: "Preparing..." ilerleme çubuğunu göster
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
         
-        const safeFilename = sanitizeFilename(file.name); // Bu değişkeni sunucuya göndereceğiz
+        const safeFilename = sanitizeFilename(file.name);
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -745,7 +745,7 @@ async function processSingleFile(file, listItem) {
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
 
-        // Adım 2: Dosya yüklenirken gerçek zamanlı ilerleme çubuğu göster
+        // Adım 2: Gerçek zamanlı yükleme çubuğunu göster
         const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = uploadProgressBarContainer;
         const progressBarFill = listItem.querySelector('.progress-bar-fill');
@@ -758,21 +758,14 @@ async function processSingleFile(file, listItem) {
         });
         await new Promise(resolve => setTimeout(resolve, 400));
         
-        // Adım 3: Optimizasyon işlemi sırasında "Optimizing..." göster
+        // Adım 3: "Optimizing..." ilerleme çubuğunu göster
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
-
-        // GÜNCELLEME: `safeFilename` bilgisini payload'a ekliyoruz.
-        const optimizePayload = { 
-            key: key, 
-            outputFormat: selectedFormat,
-            originalFilename: file.name,
-            safeFilename: safeFilename // <-- BU SATIR EKLENDİ
-        };
-
+        
+        const optimizePayload = { key: key, outputFormat: selectedFormat };
         if (qualityValue) {
             optimizePayload.quality = qualityValue;
         }
-
+        
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
