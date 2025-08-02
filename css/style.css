@@ -32,6 +32,14 @@ body {
     padding: 0 20px;
 }
 
+/* Çeviri yüklenirken içeriğin anlık parlamasını (FOUC) engelle */
+body.untranslated {
+    /* İçeriği gizle ama sayfa düzenini koru */
+    visibility: hidden; 
+    /* Yumuşak bir geçiş için opaklığı da kullanabiliriz */
+    opacity: 0;
+}
+
 /* =================================
    2. Ana Bölümler (Header, Footer)
    ================================= */
