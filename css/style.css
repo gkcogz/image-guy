@@ -175,11 +175,11 @@ body.untranslated {
     padding: 6rem 0;
     overflow: hidden;
     color: var(--white-color);
-    /* ARTIK BU SATIR YOK: background-image: url('../assets/videos/optimized-poster.jpg'); */
+    background-image: url('../assets/videos/optimized-poster.webp');
     background-size: cover;
     background-position: center center;
     /* Geçici bir arka plan rengi ekleyebiliriz */
-    background-color: #2a2a2a; 
+    /*background-color: #2a2a2a;  */
 }
 
 /* BU YENİ SINIFI EKLEYİN */
