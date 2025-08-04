@@ -1329,41 +1329,68 @@ body.mobile-menu-active::before {
     stroke: var(--primary-color);
 }
 
-/* Footer CO2 Bilgi Rozeti Stilleri */
+/* Misyon Bölümü İçin Veri Kutucuğu */
+.mission-co2-data {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.2); /* Siyah arka plana uygun yarı saydam kutu */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+.mission-co2-data strong {
+    font-weight: 700;
+    color: #fff;
+}
+
+.mission-co2-data a {
+    display: inline-block;
+    margin-left: 10px;
+    color: #a7c5ff; /* Açık mavi link rengi */
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+/* Footer CO2 Bilgi Rozeti Stilleri (Daha Belirgin Versiyon) */
 .footer-co2-badge {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px; /* İkon ve metin arası boşluk */
-    padding: 15px 0 5px 0;
-    margin-top: 15px;
-    border-top: 1px solid #e9ecef; /* İnce bir ayırıcı çizgi */
-    width: 100%;
-    flex-wrap: wrap; /* Küçük ekranlarda metnin aşağı kaymasını sağlar */
+    gap: 12px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    border: none;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap; 
 }
 
 .footer-co2-badge .feather-leaf {
-    color: #28a745; /* Yeşil yaprak ikonu */
-    flex-shrink: 0; /* İkonun küçülmesini engelle */
+    color: #28a745; 
+    flex-shrink: 0;
 }
 
 .footer-co2-badge p {
     margin: 0;
-    font-size: 0.9em;
-    color: #6c757d; /* Soluk metin rengi */
+    font-size: 0.95em;
+    color: #495057; 
     text-align: center;
 }
 
 .footer-co2-badge p strong {
-    color: #343a40; /* Vurgulanacak rakamların rengi */
-    font-weight: 600;
+    color: #212529; 
+    font-weight: 700;
 }
 
 .footer-co2-badge a {
-    color: #007bff; /* Link rengi */
+    color: #007bff; 
     text-decoration: underline;
     text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
+    text-underline-offset: 3px;
+    font-weight: 500;
 }
-
-
