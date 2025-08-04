@@ -192,17 +192,6 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-    if (targetButton && targetButton.classList.contains('btn-pre-edit')) {
-        const index = parseInt(targetButton.dataset.fileIndex, 10);
-        const file = fileQueue[index];
-        const listItem = targetButton.closest('.file-list-item');
-
-        if (file && listItem) {
-            // DÜZELTME: Gelişmiş editörü çağırır
-            showEditorModal(file, listItem, index);
-        }
-    }
-
     // Optimizasyon sonrası "Edit & Crop" butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-crop')) {
         currentCropTarget = targetButton.closest('.action-icon-group');
@@ -632,17 +621,11 @@ function updateUIForFileList() {
                     <span class="file-size">${formattedSize}</span>
                 </div>
             </div>
+            
             <div class="file-item-status">
                 <span>Ready</span>
                 
-                <button class="icon-btn btn-pre-edit" data-file-index="${index}" title="Edit Image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                    <span class="icon-tooltip">Edit</span>
-                </button>
-
+            </div>
                 <button class="icon-btn btn-delete-item" data-file-index="${index}" title="Remove file">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
