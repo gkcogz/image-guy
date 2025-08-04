@@ -1329,4 +1329,41 @@ body.mobile-menu-active::before {
     stroke: var(--primary-color);
 }
 
+/* Footer CO2 Bilgi Rozeti Stilleri */
+.footer-co2-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* İkon ve metin arası boşluk */
+    padding: 15px 0 5px 0;
+    margin-top: 15px;
+    border-top: 1px solid #e9ecef; /* İnce bir ayırıcı çizgi */
+    width: 100%;
+    flex-wrap: wrap; /* Küçük ekranlarda metnin aşağı kaymasını sağlar */
+}
+
+.footer-co2-badge .feather-leaf {
+    color: #28a745; /* Yeşil yaprak ikonu */
+    flex-shrink: 0; /* İkonun küçülmesini engelle */
+}
+
+.footer-co2-badge p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #6c757d; /* Soluk metin rengi */
+    text-align: center;
+}
+
+.footer-co2-badge p strong {
+    color: #343a40; /* Vurgulanacak rakamların rengi */
+    font-weight: 600;
+}
+
+.footer-co2-badge a {
+    color: #007bff; /* Link rengi */
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
 
