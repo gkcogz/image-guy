@@ -192,15 +192,6 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-    // Optimizasyon sonrası "Edit & Crop" butonuna basıldığında
-    if (targetButton && targetButton.classList.contains('btn-crop')) {
-        currentCropTarget = targetButton.closest('.action-icon-group');
-        const originalUrl = targetButton.dataset.originalUrl;
-        const optimizedUrl = targetButton.dataset.optimizedUrl;
-        // DÜZELTME: Kırpma aracını çağırır
-        showCropModal(originalUrl, optimizedUrl);
-    }
-
 if (targetButton && targetButton.id === 'crop-undo-btn') {
     if (!cropper || cropHistory.length === 0) return;
 
@@ -601,6 +592,7 @@ function updateUIForFileList() {
     uploadArea.innerHTML = '';
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
+
     let containsPng = false;
 
     fileQueue.forEach((file, index) => {
@@ -610,9 +602,10 @@ function updateUIForFileList() {
         const formattedSize = formatFileSize(file.size);
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
+
+        // --- EKSİK OLAN VE EKLENMESİ GEREKEN SATIR BURASI ---
         listItem.dataset.originalFilename = file.name;
 
-        // "Ready" durumundaki HTML'i güncelliyoruz
         listItem.innerHTML = `
             <div class="file-info">
                 <span class="file-icon">📄</span>
@@ -621,11 +614,8 @@ function updateUIForFileList() {
                     <span class="file-size">${formattedSize}</span>
                 </div>
             </div>
-
             <div class="file-item-status">
                 <span>Ready</span>
-                
-            </div>
                 <button class="icon-btn btn-delete-item" data-file-index="${index}" title="Remove file">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -909,43 +899,29 @@ function updateMainButtonAfterCompletion() {
 }
 
 // main.js dosyanızdaki mevcut handleZipDownload fonksiyonunu bununla değiştirin
-
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
-    // Buton yoksa veya zaten işlem yapılıyorsa fonksiyonu durdur
-    if (!downloadAllBtn || downloadAllBtn.disabled) return;
-
-    // Gerekli script'i dinamik olarak yüklemek için bir yardımcı fonksiyon
-    const loadScript = (src) => new Promise((resolve, reject) => {
-        // Script zaten yüklenmişse tekrar yükleme
-        if (document.querySelector(`script[src="${src}"]`)) {
-            return resolve();
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Script load error for ${src}`));
-        document.head.appendChild(script);
-    });
+    if (!downloadAllBtn) return;
+    console.log('Starting ZIP download process...');
+    downloadAllBtn.textContent = 'Zipping...';
+    downloadAllBtn.disabled = true;
 
     try {
-        downloadAllBtn.textContent = 'Loading Assets...';
-        downloadAllBtn.disabled = true;
-
-        // JSZip kütüphanesini sadece şimdi, butona basıldığında yüklüyoruz
-        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
-
-        console.log('Starting ZIP download process...');
-        downloadAllBtn.textContent = 'Zipping...';
-
         const zip = new JSZip();
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+        
+        // Tüm dosya satırlarını (list items) alıyoruz.
         const listItems = document.querySelectorAll('.file-list-item');
 
         const fetchPromises = Array.from(listItems).map(item => {
+            // Her satırdaki indirme linkini ve copy butonunu buluyoruz.
             const link = item.querySelector('a.btn-download-item');
             const copyButton = item.querySelector('.btn-copy');
-            const fileUrl = copyButton.dataset.optimizedUrl; // En güncel URL'yi al
-            const fileName = link.getAttribute('download'); // En güncel dosya adını al
+
+            // En güncel URL için copy butonunun data niteliğini,
+            // Dosya adı için ise indirme linkinin download niteliğini kullanıyoruz.
+            const fileUrl = copyButton.dataset.optimizedUrl;
+            const fileName = link.getAttribute('download');
 
             return fetch(fileUrl)
                 .then(response => {
@@ -957,15 +933,13 @@ async function handleZipDownload() {
                     blob: blob
                 }));
         });
+        
+        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 
         const files = await Promise.all(fetchPromises);
-        files.forEach(file => {
-            zip.file(file.name, file.blob);
-        });
-
-        const zipBlob = await zip.generateAsync({
-            type: 'blob'
-        });
+        files.forEach(file => { zip.file(file.name, file.blob); });
+        
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
         const tempUrl = URL.createObjectURL(zipBlob);
         const tempLink = document.createElement('a');
         tempLink.href = tempUrl;
@@ -979,8 +953,8 @@ async function handleZipDownload() {
         downloadAllBtn.disabled = false;
 
     } catch (error) {
-        console.error('Failed to create ZIP file or load assets:', error);
-        alert('An error occurred while creating the ZIP file. Please try again.');
+        console.error('Failed to create ZIP file:', error);
+        alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
     }
@@ -1015,34 +989,40 @@ function showComparisonModal(originalUrl, optimizedUrl) {
 
 // main.js dosyasındaki showCropModal fonksiyonunu bu şekilde güncelleyin:
 
-// main.js
-
 function showCropModal(originalUrl, optimizedUrl) {
-    ultimateOriginalUrl = originalUrl;
+    // --- ÇÖZÜM: KIRPMA GEÇMİŞİNİ BURADA SIFIRLA ---
+    // Her kırpma penceresi açıldığında, o oturuma özel temiz bir geçmiş başlatıyoruz.
+    cropHistory = [];
+    // ------------------------------------------------
 
-    // ÇÖZÜM: Karartma katmanı ve pencere içeriği ayrı ayrı oluşturuluyor.
-    const overlayHTML = `<div class="modal-overlay"></div>`;
-    
-    const contentHTML = `
-        <div class="crop-modal-content">
-            <button class="modal-close-btn">&times;</button>
-            <h2>Edit & Crop Image</h2>
-            <div class="crop-image-container">
-                <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
-            </div>
-            <div class="crop-actions">
-                <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
-                <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
-                <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
-                <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+    ultimateOriginalUrl = originalUrl; 
+
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="crop-modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <h2>Edit & Crop Image</h2>
+                <div class="crop-image-container">
+                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
+                </div>
+                <div class="crop-actions">
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
+                    
+                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
+
+                    <button class="btn btn-secondary" id="crop-reset-btn">
+                        Reset All
+                        <span class="tooltip-text">
+                            Warning: All changes will be reset. You will revert to the initial optimized image.
+                        </span>
+                    </button>
+                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+                </div>
             </div>
         </div>
     `;
-
-    // İki elementi de body'nin sonuna kardeş olarak ekle
-    document.body.insertAdjacentHTML('beforeend', overlayHTML);
-    document.body.insertAdjacentHTML('beforeend', contentHTML);
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     const image = document.getElementById('image-to-crop');
     const modalContent = document.querySelector('.crop-modal-content');
@@ -1053,10 +1033,9 @@ function showCropModal(originalUrl, optimizedUrl) {
             cropper.destroy();
          }
          cropper = new Cropper(image, {
-            autoCrop: true,
-            autoCropArea: 1,
             viewMode: 1,
             background: false,
+            autoCropArea: 0.8,
             ready: function () {
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
@@ -1130,22 +1109,3 @@ function showBase64Modal(base64String) {
     });
     // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 }
-
-// main.js dosyasının en sonuna ekleyin
-
-document.addEventListener("DOMContentLoaded", () => {
-    const lazyBackgroundSection = document.querySelector('.sustainability-mission');
-
-    if (lazyBackgroundSection) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('lazy-background');
-                    observer.unobserve(entry.target); // Gözlemciyi durdur
-                }
-            });
-        }, { rootMargin: "100px" }); // Ekrana 100px kala yükle
-
-        observer.observe(lazyBackgroundSection);
-    }
-});
