@@ -621,7 +621,7 @@ function updateUIForFileList() {
                     <span class="file-size">${formattedSize}</span>
                 </div>
             </div>
-            
+
             <div class="file-item-status">
                 <span>Ready</span>
                 
@@ -1015,28 +1015,34 @@ function showComparisonModal(originalUrl, optimizedUrl) {
 
 // main.js dosyasındaki showCropModal fonksiyonunu bu şekilde güncelleyin:
 
-function showCropModal(originalUrl, optimizedUrl) {
-    ultimateOriginalUrl = originalUrl; 
+// main.js
 
-    const modalHTML = `
-        <div class="modal-overlay">
-            <div class="crop-modal-content">
-                <button class="modal-close-btn">&times;</button>
-                <h2>Edit & Crop Image</h2>
-                <div class="crop-image-container">
-                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
-                </div>
-                <div class="crop-actions">
-                    <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
-                    <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
-                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
-                </div>
+function showCropModal(originalUrl, optimizedUrl) {
+    ultimateOriginalUrl = originalUrl;
+
+    // ÇÖZÜM: Karartma katmanı ve pencere içeriği ayrı ayrı oluşturuluyor.
+    const overlayHTML = `<div class="modal-overlay"></div>`;
+    
+    const contentHTML = `
+        <div class="crop-modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>Edit & Crop Image</h2>
+            <div class="crop-image-container">
+                <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
+            </div>
+            <div class="crop-actions">
+                <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
+                <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
+                <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
+                <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
             </div>
         </div>
     `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // İki elementi de body'nin sonuna kardeş olarak ekle
+    document.body.insertAdjacentHTML('beforeend', overlayHTML);
+    document.body.insertAdjacentHTML('beforeend', contentHTML);
 
     const image = document.getElementById('image-to-crop');
     const modalContent = document.querySelector('.crop-modal-content');
