@@ -1329,8 +1329,4 @@ body.mobile-menu-active::before {
     stroke: var(--primary-color);
 }
 
-/* style.css dosyasının sonuna ekleyin */
-.btn-pre-edit:hover svg {
-    stroke: var(--primary-color);
-}
 
