@@ -172,7 +172,7 @@ body.untranslated {
     padding: 6rem 0;
     overflow: hidden;
     color: var(--white-color);
-    background-image: url('../assets/videos/optimized-poster.jpg');
+    background-image: url('../assets/videos/optimized-poster.webp');
     background-size: cover;
     background-position: center center;
 }
