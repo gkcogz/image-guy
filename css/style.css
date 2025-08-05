@@ -247,12 +247,39 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .how-it-works h2, .sustainability-mission h3 { font-size: 1.8rem; }
     .sustainability-mission p { font-size: 1rem; }
     .file-list-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
-    .file-item-status { width: 100%; justify-content: space-between; flex-direction: row; align-items: center; gap: 0; }
-    .action-icon-group { width: auto; justify-content: flex-end; gap: 6px; }
-    .btn-download-item { padding: 6px 10px; font-size: 0.8rem; }
-    .file-info { gap: 10px; }
+    .file-item-status {
+        width: 100%;
+        display: flex;
+        justify-content: space-between; /* "Saved %" ve butonları iki uca yaslar */
+        align-items: center;
+    }
+    .action-icon-group {
+        /* Genişlik veya pozisyon belirtmeye gerek yok, flex-end yeterli */
+        justify-content: flex-end;
+    }
+    .btn-download-item {
+        padding: 6px S10px;
+        font-size: 0.8rem;
+        /* flex-grow: 1; <-- Bu satırı silin veya yorum yapın */
+    }
+/* style.css, @media (max-width: 768px) bloğunun içine ekleyin */
+
+    /* Dosya Bilgisi Alanının Esnekliğini Sağlama */
+    .file-info {
+        /* Bu, flexbox içindeki bir elementin içeriği ne kadar uzun olursa olsun,
+           kapsayıcısının küçülmesine izin veren kritik bir kuraldır. */
+        min-width: 0;
+    }
+
+
     .file-details { min-width: 0; }
-    .file-name { font-size: 0.9rem; }
+    /* Dosya Adının Kısaltılmasını Garanti Altına Alma */
+    .file-name {
+        /* Bu üç kural birlikte çalışarak uzun metinleri "..." ile kısaltır. */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     .action-buttons-container { flex-direction: column; align-items: stretch; }
     .steps { flex-direction: column; }
     .language-switcher { margin-left: 0; padding-left: 0; margin-top: 1.5rem; }
