@@ -108,8 +108,23 @@ body.untranslated { visibility: hidden; opacity: 0; }
    6. Format Seçenekleri ve Tooltip
    ================================= */
 .format-options-header { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-.format-options { display: flex; justify-content: center; align-items: center; gap: 1.5rem; }
-/* ... (Diğer tooltip stilleri aynı) ... */
+.format-options { display: flex; justify-content: center; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.format-label { font-weight: 500; }
+.radio-group { display: flex; align-items: center; gap: 0.5rem; }
+.tooltip-container { position: relative; display: flex; }
+.info-icon { display: flex; justify-content: center; align-items: center; width: 20px; height: 20px; border-radius: 50%; background-color: #e9ecef; color: #6c757d; font-weight: 700; font-size: 0.8rem; cursor: pointer; user-select: none; }
+.tooltip-content { visibility: hidden; opacity: 0; width: 480px; background-color: var(--dark-gray); color: var(--white-color); border-radius: 8px; padding: 1rem; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -240px; transition: opacity 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem 1.5rem; }
+.tooltip-grid-item { text-align: left; }
+.tooltip-container:hover .tooltip-content { visibility: visible; opacity: 1; }
+.tooltip-content h4 { font-size: 0.9rem; color: var(--primary-color); margin-top: 0; margin-bottom: 0.4rem; }
+.tooltip-content p { font-size: 0.8rem; line-height: 1.5; margin-bottom: 0; }
+.tooltip-content hr { display: none; }
+.icon-btn .icon-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background-color: var(--dark-gray); color: var(--white-color); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; white-space: nowrap; transition: opacity 0.2s; pointer-events: none; }
+.icon-btn:hover .icon-tooltip { visibility: visible; opacity: 1; }
+#crop-reset-btn { position: relative; }
+#crop-reset-btn .tooltip-text { visibility: hidden; opacity: 0; width: 260px; background-color: var(--dark-gray); color: var(--white-color); text-align: center; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%); transition: opacity 0.3s; font-size: 0.85rem; font-weight: 400; line-height: 1.4; pointer-events: none; white-space: normal; }
+#crop-reset-btn .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: var(--dark-gray) transparent transparent transparent; }
+#crop-reset-btn:hover .tooltip-text { visibility: visible; opacity: 1; }
 
 /* =================================
    7. Modallar (Compare, Crop, Base64)
@@ -125,19 +140,50 @@ img-comparison-slider img { object-fit: contain; max-width: 85vw; max-height: 85
 .crop-image-container img { max-width: 100%; display: block; }
 .crop-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; width: 100%; }
 .crop-shape-btn.active { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
-/* ... (Base64 modal stilleri aynı) ... */
+.base64-modal-content { width: 100%; max-width: 600px; }
+.base64-modal-content h2 { margin-bottom: 0.5rem; }
+.base64-modal-content p { margin-bottom: 1.5rem; color: #6c757d; }
+.base64-container { width: 100%; margin-bottom: 1.5rem; border: 1px solid var(--light-gray); border-radius: 8px; padding: 0.5rem; background-color: #f8f9fa; }
+.base64-textarea { width: 100%; min-height: 150px; border: none; resize: vertical; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; color: var(--dark-gray); background-color: transparent; word-break: break-all; }
+.base64-textarea:focus { outline: none; }
+.modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; width: 100%; }
+#copy-base64-btn { display: flex; align-items: center; gap: 8px; }
+.copy-success-msg { visibility: hidden; opacity: 0; color: var(--success-color); font-weight: 500; transition: all 0.3s ease; }
+.copy-success-msg.visible { visibility: visible; opacity: 1; }
 
 /* =================================
    8. Statik Sayfalar (About, Blog)
    ================================= */
-/* ... (Content page stilleri aynı) ... */
+.content-page { padding-top: 4rem; padding-bottom: 4rem; max-width: 800px; }
+.content-page h1 { font-size: 2.8rem; margin-bottom: 1rem; border-bottom: 2px solid var(--light-gray); padding-bottom: 1rem; }
+.content-page h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+.content-page p { font-size: 1.1rem; line-height: 1.8; color: #495057; }
+.blog-post-list { margin-top: 3rem; }
+.blog-post-item { border-bottom: 1px solid var(--light-gray); padding-bottom: 2rem; margin-bottom: 2rem; }
+.blog-post-item h2 a { text-decoration: none; color: var(--dark-gray); }
+.blog-post-item h2 a:hover { color: var(--primary-color); }
+.post-excerpt { margin-top: 0.5rem; }
+.btn-read-more { display: inline-block; margin-top: 1rem; text-decoration: none; font-weight: 500; color: var(--primary-color); }
+.post-meta { font-size: 0.9rem; color: #6c757d; margin-bottom: 2rem; }
+.post-content { margin-top: 1.5rem; }
+.post-content h2 { font-size: 1.6rem; }
+.post-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1.5rem 0; }
 
 /* =================================
    9. Gelişmiş Kalite Ayarları
    ================================= */
 .advanced-slider { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; margin-bottom: 1.5rem; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 100px; overflow: hidden; visibility: visible; }
 .advanced-slider.hidden { max-height: 0; opacity: 0; margin-top: 0; margin-bottom: 0; pointer-events: none; visibility: hidden; }
-/* ... (Diğer kalite ayarı stilleri aynı) ... */
+.advanced-slider label { font-weight: 500; font-size: 0.9rem; }
+#quality-output { font-weight: 600; font-size: 1rem; background-color: var(--light-gray); padding: 2px 8px; border-radius: 5px; min-width: 30px; text-align: center; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 200px; height: 8px; background: var(--light-gray); border-radius: 5px; outline: none; padding: 0; margin: 0; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: var(--primary-color); border-radius: 50%; border: 2px solid var(--white-color); box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.2s ease; }
+input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.1); }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; background: var(--primary-color); border-radius: 50%; border: 2px solid var(--white-color); box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s ease; }
+input[type="range"]:hover::-moz-range-thumb { transform: scale(1.1); }
+#advanced-options-btn { padding: 8px; margin-left: 0.5rem; }
+#advanced-options-btn svg { width: 22px; height: 22px; }
+#advanced-options-btn .icon-tooltip { bottom: 130%; transform: translateX(-50%); }
 
 /* =================================
    10. Dil Değiştirici (Dropdown)
@@ -207,7 +253,6 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .file-info { gap: 10px; }
     .file-details { min-width: 0; }
     .file-name { font-size: 0.9rem; }
-    .format-options { flex-wrap: wrap; justify-content: center; gap: 1rem; }
     .action-buttons-container { flex-direction: column; align-items: stretch; }
     .steps { flex-direction: column; }
     .language-switcher { margin-left: 0; padding-left: 0; margin-top: 1.5rem; }
