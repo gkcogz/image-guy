@@ -133,14 +133,12 @@ exports.handler = async (event, context) => {
         }
         
         const downloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${encodeURIComponent(finalKey)}`;
-        const originalDownloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${encodeURIComponent(key)}`;
 
         return {
             statusCode: 200,
             body: JSON.stringify({
                 message: "Process complete!",
                 downloadUrl: downloadUrl,
-                originalS3Url: originalDownloadUrl,
                 originalFilename: originalFilename,
                 newFilename: finalFilename,
                 originalSize: originalSize,
