@@ -247,7 +247,6 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
         return; 
     }
     
-// "Copy" butonuna basıldığında (Eski ve daha uyumlu versiyon)
     if (targetButton && targetButton.classList.contains('btn-copy')) {
         const copyBtn = targetButton;
         const imageUrl = copyBtn.dataset.optimizedUrl;
@@ -260,34 +259,22 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
-            
             canvas.toBlob(async (pngBlob) => {
-                try {
-                    await navigator.clipboard.write([ 
-                        new ClipboardItem({ 'image/png': pngBlob }) 
-                    ]);
-                    
-                    // Başarı durumunda kullanıcıyı bilgilendir
-                    const originalHTML = copyBtn.innerHTML;
-                    copyBtn.innerHTML = `✓`;
-                    copyBtn.classList.add('copied');
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalHTML;
-                        copyBtn.classList.remove('copied');
-                    }, 2000);
-
-                } catch (copyError) {
-                    console.error('Failed to copy image to clipboard:', copyError);
-                    alert('Image could not be copied. Your browser might not fully support this feature.');
-                }
+                await navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = `✓`;
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
             }, 'image/png');
-        } catch (fetchError) {
-            console.error('Failed to fetch or process image for copying:', fetchError);
-            alert('An error occurred while preparing the image for copying.');
+        } catch (error) {
+            console.error('Failed to copy image:', error);
+            alert('Failed to copy image. Your browser might not fully support this action.');
         }
     }
 
-    // Compare butonuna basıldığında
     if (targetButton && targetButton.classList.contains('btn-compare')) {
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
@@ -808,15 +795,14 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         const finalDownloadName = originalBaseName + newExtension;
 
         // Adım 5: Sonuçları ve butonları arayüzde göster
-const resultActions = `
+        const resultActions = `
             <div class="action-icon-group">
-                <button class="icon-btn btn-compare" data-original-url="${data.originalS3Url}" data-optimized-url="${data.downloadUrl}" title="Compare">
+                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                 </button>
-
                 <button 
                     class="icon-btn btn-crop" 
-                    data-original-url="${data.originalS3Url}" 
+                    data-original-url="${originalObjectUrl}" 
                     data-optimized-url="${data.downloadUrl}" 
                     data-initial-optimized-url="${data.downloadUrl}"
                     title="Edit & Crop">
@@ -1039,7 +1025,14 @@ function showCropModal(originalUrl, optimizedUrl) {
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                     
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
+
+                    <button class="btn btn-secondary" id="crop-reset-btn">
+                        Reset All
+                        <span class="tooltip-text">
+                            Warning: All changes will be reset. You will revert to the initial optimized image.
+                        </span>
+                    </button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
@@ -1056,13 +1049,9 @@ function showCropModal(originalUrl, optimizedUrl) {
             cropper.destroy();
          }
          cropper = new Cropper(image, {
-            // --- YENİ EKLENEN SATIR ---
-            checkOrientation: false, // Otomatik döndürmeyi devre dışı bırak
-            
-            autoCrop: true,
-            autoCropArea: 1,
             viewMode: 1,
             background: false,
+            autoCropArea: 0.8,
             ready: function () {
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
@@ -1074,6 +1063,7 @@ function showCropModal(originalUrl, optimizedUrl) {
     }
 }
 
+// main.js dosyanızdaki mevcut showBase64Modal fonksiyonunu bununla değiştirin
 function showBase64Modal(base64String) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -1116,7 +1106,7 @@ function showBase64Modal(base64String) {
         });
     });
 
-    // "Check Code" butonu için güvenilir yöntem
+    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
     checkBtn.addEventListener('click', () => {
         const newWindow = window.open();
         if (newWindow) {
@@ -1133,7 +1123,5 @@ function showBase64Modal(base64String) {
             alert("Please allow popups to preview the image.");
         }
     });
-
-    // Not: "x" butonu için özel bir listener'a gerek yoktur.
-    // `document.body.addEventListener` içindeki ana modal kapatma mantığı bu işi daha verimli bir şekilde yapacaktır.
+    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 }
