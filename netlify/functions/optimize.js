@@ -132,17 +132,15 @@ exports.handler = async (event, context) => {
             await s3Client.send(putCommand);
         }
         
-v// optimize.js dosyasının sonundaki return bloğunu güncelleyin
-
-        const originalDownloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${key}`;
+        const downloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${encodeURIComponent(finalKey)}`;
+        const originalDownloadUrl = `https://${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}.s3.${process.env.IMAGEGUY_AWS_S3_REGION}.amazonaws.com/${encodeURIComponent(key)}`;
 
         return {
             statusCode: 200,
             body: JSON.stringify({
                 message: "Process complete!",
                 downloadUrl: downloadUrl,
-                // --- YENİ EKLENEN SATIR ---
-                originalS3Url: originalDownloadUrl, // Orijinal dosyanın S3 linkini de gönder
+                originalS3Url: originalDownloadUrl,
                 originalFilename: originalFilename,
                 newFilename: finalFilename,
                 originalSize: originalSize,
