@@ -65,6 +65,8 @@ body.untranslated { visibility: hidden; opacity: 0; }
 .file-list-item { display: flex; align-items: center; justify-content: space-between; background-color: var(--secondary-color); padding: 0.8rem 1.2rem; border-radius: 5px; margin-bottom: 0.5rem; gap: 1rem; }
 .file-info { display: flex; align-items: center; gap: 15px; flex-grow: 1; min-width: 0; }
 .file-icon { font-size: 2.5rem; color: #6c757d; }
+.file-details { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.file-name { font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-size { font-size: 0.85rem; line-height: 1.2; color: #6c757d; }
 .file-item-status { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; flex-shrink: 0; white-space: nowrap; }
 .savings { color: var(--success-color); font-weight: 700; }
@@ -86,12 +88,14 @@ body.untranslated { visibility: hidden; opacity: 0; }
 .btn-primary { background-color: var(--primary-color); color: var(--white-color); font-size: 1.1rem; padding: 12px 28px; }
 .btn-secondary { background-color: var(--white-color); border-color: var(--light-gray); color: var(--dark-gray); }
 .btn-secondary:hover { background-color: var(--secondary-color); border-color: #dbe1e8; }
+.action-icon-group { display: flex; align-items: center; gap: 8px; }
 .icon-btn { background-color: #f8f9fa; color: var(--dark-gray); border: 1px solid #ced4da; border-radius: 6px; padding: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; box-shadow: none; position: relative; }
 .icon-btn svg { width: 20px; height: 20px; stroke-width: 2; pointer-events: none; }
 .icon-btn:hover { background-color: #e9ecef; transform: translateY(-1px); }
 .icon-btn.copied { background-color: var(--success-color); color: var(--white-color); border-color: var(--success-color); }
 .icon-btn.copied svg { display: none; }
 .btn-delete-item { border: none; background-color: transparent; padding: 4px; }
+.btn-download-item { background-color: var(--dark-gray); color: var(--white-color); border-color: var(--dark-gray); font-size: 0.85rem; padding: 6px 12px; font-weight: 500; box-shadow: none; }
 .btn-download-item:hover { background-color: #555; transform: translateY(-1px); }
 .btn-retry { margin-left: 0.75rem; }
 .btn-retry:hover svg, .btn-pre-edit:hover svg { stroke: var(--primary-color); }
@@ -243,79 +247,21 @@ body.mobile-menu-active::before { content: ''; position: fixed; top: 0; left: 0;
     .how-it-works h2, .sustainability-mission h3 { font-size: 1.8rem; }
     .sustainability-mission p { font-size: 1rem; }
     .file-list-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
-    .file-item-status {
-        width: 100%;
-        display: flex;
-        justify-content: space-between; /* "Saved %" ve butonları iki uca yaslar */
-        align-items: center;
-    }
-    .action-icon-group {
-        /* Genişlik veya pozisyon belirtmeye gerek yok, flex-end yeterli */
-        justify-content: flex-end;
-    }
-    .btn-download-item {
-        padding: 6px S10px;
-        font-size: 0.8rem;
-        /* flex-grow: 1; <-- Bu satırı silin veya yorum yapın */
-    }
-/* style.css, @media (max-width: 768px) bloğunun içine ekleyin */
-
-    /* Dosya Bilgisi Alanının Esnekliğini Sağlama */
-    .file-info {
-        /* Bu, flexbox içindeki bir elementin içeriği ne kadar uzun olursa olsun,
-           kapsayıcısının küçülmesine izin veren kritik bir kuraldır. */
-        min-width: 0;
-    }
-
-
-    .file-details { min-width: 0; }
-    /* Dosya Adının Kısaltılmasını Garanti Altına Alma */
-    .file-name {
-        /* Bu üç kural birlikte çalışarak uzun metinleri "..." ile kısaltır. */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    .file-item-status { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    .action-icon-group { justify-content: flex-end; }
+    .btn-download-item { padding: 6px 10px; font-size: 0.8rem; }
+    .file-info { min-width: 0; }
+    .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .action-buttons-container { flex-direction: column; align-items: stretch; }
     .steps { flex-direction: column; }
     .language-switcher { margin-left: 0; padding-left: 0; margin-top: 1.5rem; }
     .language-dropdown { top: auto; bottom: 100%; }
     .base64-modal-content { max-width: 95vw; padding: 1.2rem; }
     .base64-modal-content .modal-actions { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-/* style.css, @media (max-width: 768px) bloğunun içine ekleyin veya güncelleyin */
-
-    .crop-modal-content {
-        /* Pencerenin dikeyde tam esnek olmasını sağla */
-        display: flex;
-        flex-direction: column;
-        height: 85vh; /* Ekran yüksekliğinin %85'ini kaplasın */
-        padding: 1rem;
-    }
-
-    .crop-modal-content h2 {
-        flex-shrink: 0; /* Başlığın küçülmesini engelle */
-        margin-bottom: 1rem;
-    }
-
-    .crop-image-container {
-        /* Resim alanının mevcut alanı doldurmasını ve gerekirse küçülmesini sağla */
-        flex-grow: 1;
-        display: flex; /* İçindeki resmi ortalamak için */
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-        min-height: 0; /* Flexbox'ın doğru küçülme yapabilmesi için kritik */
-        overflow: hidden; /* Scroll'u engelle, cropper zaten sığdıracak */
-    }
-
-    .crop-actions {
-        flex-shrink: 0; /* Butonların küçülmesini engelle */
-        width: 100%;
-        gap: 0.5rem;
-        /* Bu kural zaten vardı, flex-direction: column olduğundan emin olun */
-        flex-direction: column;
-        align-items: stretch;
-    }
+    .crop-modal-content { display: flex; flex-direction: column; height: 85vh; padding: 1rem; }
+    .crop-modal-content h2 { flex-shrink: 0; margin-bottom: 1rem; }
+    .crop-image-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; min-height: 0; overflow: hidden; }
+    .crop-actions { flex-shrink: 0; width: 100%; gap: 0.5rem; flex-direction: column; align-items: stretch; }
     .advanced-slider { flex-wrap: wrap; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem; }
     .advanced-slider label { width: 100%; text-align: center; margin-bottom: 0.5rem; }
     input[type="range"] { width: calc(100% - 60px); order: 1; }
