@@ -247,45 +247,44 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
         return; 
     }
     
-// "Copy" butonuna basıldığında
+// "Copy" butonuna basıldığında (Eski ve daha uyumlu versiyon)
     if (targetButton && targetButton.classList.contains('btn-copy')) {
         const copyBtn = targetButton;
         const imageUrl = copyBtn.dataset.optimizedUrl;
-        
-        // --- YENİ VE DAHA UYUMLU KOPYALAMA MANTIĞI ---
         try {
-            // Resmi bir 'blob' olarak al
             const response = await fetch(imageUrl);
             const blob = await response.blob();
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await createImageBitmap(blob);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            canvas.toBlob(async (pngBlob) => {
+                try {
+                    await navigator.clipboard.write([ 
+                        new ClipboardItem({ 'image/png': pngBlob }) 
+                    ]);
+                    
+                    // Başarı durumunda kullanıcıyı bilgilendir
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `✓`;
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
 
-            // Panoya yazma işlemini başlat
-            await navigator.clipboard.write([
-                new ClipboardItem({
-                    [blob.type]: blob
-                })
-            ]);
-
-            // Başarı durumunda kullanıcıyı bilgilendir
-            const originalHTML = copyBtn.innerHTML;
-            copyBtn.innerHTML = `✓`; // Başarı ikonu
-            copyBtn.classList.add('copied');
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
-                copyBtn.classList.remove('copied');
-            }, 2000);
-
-        } catch (error) {
-            console.error('Failed to copy image:', error);
-            // Hata durumunda kullanıcıyı bilgilendir
-            alert('Image could not be copied. Your browser might not fully support this feature.');
+                } catch (copyError) {
+                    console.error('Failed to copy image to clipboard:', copyError);
+                    alert('Image could not be copied. Your browser might not fully support this feature.');
+                }
+            }, 'image/png');
+        } catch (fetchError) {
+            console.error('Failed to fetch or process image for copying:', fetchError);
+            alert('An error occurred while preparing the image for copying.');
         }
-        // --- YENİ MANTIK SONU ---
-    }
-
-    if (targetButton && targetButton.classList.contains('btn-compare')) {
-        const originalUrl = targetButton.dataset.originalUrl;
-        const optimizedUrl = targetButton.dataset.optimizedUrl;
-        showComparisonModal(originalUrl, optimizedUrl);
     }
 
     if (targetButton && targetButton.classList.contains('btn-crop')) {
@@ -1050,9 +1049,13 @@ function showCropModal(originalUrl, optimizedUrl) {
             cropper.destroy();
          }
          cropper = new Cropper(image, {
+            // --- YENİ EKLENEN SATIR ---
+            checkOrientation: false, // Otomatik döndürmeyi devre dışı bırak
+            
+            autoCrop: true,
+            autoCropArea: 1,
             viewMode: 1,
             background: false,
-            autoCropArea: 0.8,
             ready: function () {
                 modalContent.classList.add('ready');
                 document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
