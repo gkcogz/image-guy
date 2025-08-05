@@ -287,6 +287,13 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
         }
     }
 
+    // Compare butonuna basıldığında
+    if (targetButton && targetButton.classList.contains('btn-compare')) {
+        const originalUrl = targetButton.dataset.originalUrl;
+        const optimizedUrl = targetButton.dataset.optimizedUrl;
+        showComparisonModal(originalUrl, optimizedUrl);
+    }
+
     if (targetButton && targetButton.classList.contains('btn-crop')) {
         currentCropTarget = targetButton.closest('.action-icon-group');
         const originalUrl = targetButton.dataset.originalUrl;
