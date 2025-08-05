@@ -802,7 +802,7 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         const finalDownloadName = originalBaseName + newExtension;
 
         // Adım 5: Sonuçları ve butonları arayüzde göster
-const resultActions = `
+        const resultActions = `
             <div class="action-icon-group">
                 <button class="icon-btn btn-compare" data-original-url="${data.originalS3Url}" data-optimized-url="${data.downloadUrl}" title="Compare">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
@@ -814,7 +814,7 @@ const resultActions = `
                     data-optimized-url="${data.downloadUrl}" 
                     data-initial-optimized-url="${data.downloadUrl}"
                     title="Edit & Crop">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">...</svg>
                 </button>
                 <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -1033,14 +1033,7 @@ function showCropModal(originalUrl, optimizedUrl) {
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                     
-                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
-
-                    <button class="btn btn-secondary" id="crop-reset-btn">
-                        Reset All
-                        <span class="tooltip-text">
-                            Warning: All changes will be reset. You will revert to the initial optimized image.
-                        </span>
-                    </button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
@@ -1071,7 +1064,6 @@ function showCropModal(originalUrl, optimizedUrl) {
     }
 }
 
-// main.js dosyanızdaki mevcut showBase64Modal fonksiyonunu bununla değiştirin
 function showBase64Modal(base64String) {
     const modalHTML = `
         <div class="modal-overlay">
@@ -1105,17 +1097,6 @@ function showBase64Modal(base64String) {
     const checkBtn = document.getElementById('check-base64-btn');
     const successMsg = document.querySelector('.copy-success-msg');
 
-    const modal = document.querySelector('.base64-modal-content').closest('.modal-overlay');
-    const closeBtn = modal.querySelector('.modal-close-btn');
-
-    const closeModal = () => {
-        if (modal) {
-            modal.remove();
-        }
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-
     copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(base64String).then(() => {
             successMsg.classList.add('visible');
@@ -1125,7 +1106,7 @@ function showBase64Modal(base64String) {
         });
     });
 
-    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+    // "Check Code" butonu için güvenilir yöntem
     checkBtn.addEventListener('click', () => {
         const newWindow = window.open();
         if (newWindow) {
@@ -1142,5 +1123,7 @@ function showBase64Modal(base64String) {
             alert("Please allow popups to preview the image.");
         }
     });
-    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+
+    // Not: "x" butonu için özel bir listener'a gerek yoktur.
+    // `document.body.addEventListener` içindeki ana modal kapatma mantığı bu işi daha verimli bir şekilde yapacaktır.
 }
