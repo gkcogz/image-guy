@@ -168,6 +168,9 @@ body.untranslated {
     margin-bottom: 2.5rem;
 }
 
+/* style.css */
+
+/* BU KURALI GÜNCELLEYİN */
 .sustainability-mission {
     position: relative;
     text-align: center;
@@ -177,6 +180,13 @@ body.untranslated {
     background-image: url('../assets/videos/optimized-poster.webp');
     background-size: cover;
     background-position: center center;
+    /* Geçici bir arka plan rengi ekleyebiliriz */
+    background-color: #2a2a2a; 
+}
+
+/* BU YENİ SINIFI EKLEYİN */
+.lazy-background {
+    background-image: url('../assets/videos/optimized-poster.webp');
 }
 
 .section-overlay {
@@ -1331,4 +1341,70 @@ body.mobile-menu-active::before {
 /* Retry butonu üzerine gelince, ikonun rengini değiştirelim */
 .btn-retry:hover svg {
     stroke: var(--primary-color);
+}
+
+/* Misyon Bölümü İçin Veri Kutucuğu */
+.mission-co2-data {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.2); /* Siyah arka plana uygun yarı saydam kutu */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+.mission-co2-data strong {
+    font-weight: 700;
+    color: #fff;
+}
+
+.mission-co2-data a {
+    display: inline-block;
+    margin-left: 10px;
+    color: #a7c5ff; /* Açık mavi link rengi */
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+/* Footer CO2 Bilgi Rozeti Stilleri (Daha Belirgin Versiyon) */
+.footer-co2-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    border: none;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap; 
+}
+
+.footer-co2-badge .feather-leaf {
+    color: #28a745; 
+    flex-shrink: 0;
+}
+
+.footer-co2-badge p {
+    margin: 0;
+    font-size: 0.95em;
+    color: #495057; 
+    text-align: center;
+}
+
+.footer-co2-badge p strong {
+    color: #212529; 
+    font-weight: 700;
+}
+
+.footer-co2-badge a {
+    color: #007bff; 
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    font-weight: 500;
 }

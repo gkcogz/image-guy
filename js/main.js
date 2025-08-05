@@ -906,29 +906,43 @@ function updateMainButtonAfterCompletion() {
 }
 
 // main.js dosyanızdaki mevcut handleZipDownload fonksiyonunu bununla değiştirin
+
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
-    if (!downloadAllBtn) return;
-    console.log('Starting ZIP download process...');
-    downloadAllBtn.textContent = 'Zipping...';
-    downloadAllBtn.disabled = true;
+    // Buton yoksa veya zaten işlem yapılıyorsa fonksiyonu durdur
+    if (!downloadAllBtn || downloadAllBtn.disabled) return;
+
+    // Gerekli script'i dinamik olarak yüklemek için bir yardımcı fonksiyon
+    const loadScript = (src) => new Promise((resolve, reject) => {
+        // Script zaten yüklenmişse tekrar yükleme
+        if (document.querySelector(`script[src="${src}"]`)) {
+            return resolve();
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Script load error for ${src}`));
+        document.head.appendChild(script);
+    });
 
     try {
-        const zip = new JSZip();
-        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
-        
-        // Tüm dosya satırlarını (list items) alıyoruz.
+        downloadAllBtn.textContent = 'Loading Assets...';
+        downloadAllBtn.disabled = true;
+
+        // JSZip kütüphanesini sadece şimdi, butona basıldığında yüklüyoruz
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+
+        console.log('Starting ZIP download process...');
+        downloadAllBtn.textContent = 'Zipping...';
+
+        const zip = new JSZip(); // Bu satır artık hata vermeyecek
         const listItems = document.querySelectorAll('.file-list-item');
 
         const fetchPromises = Array.from(listItems).map(item => {
-            // Her satırdaki indirme linkini ve copy butonunu buluyoruz.
-            const link = item.querySelector('a.btn-download-item');
-            const copyButton = item.querySelector('.btn-copy');
-
-            // En güncel URL için copy butonunun data niteliğini,
-            // Dosya adı için ise indirme linkinin download niteliğini kullanıyoruz.
-            const fileUrl = copyButton.dataset.optimizedUrl;
-            const fileName = link.getAttribute('download');
+            // DÜZELTME: Doğru butonu hedeflemek için daha spesifik bir seçici kullanalım.
+            const downloadLink = item.querySelector('a.btn-download-item');
+            const fileUrl = downloadLink.href;
+            const fileName = downloadLink.getAttribute('download');
 
             return fetch(fileUrl)
                 .then(response => {
@@ -940,13 +954,15 @@ async function handleZipDownload() {
                     blob: blob
                 }));
         });
-        
-        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 
         const files = await Promise.all(fetchPromises);
-        files.forEach(file => { zip.file(file.name, file.blob); });
-        
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        files.forEach(file => {
+            zip.file(file.name, file.blob);
+        });
+
+        const zipBlob = await zip.generateAsync({
+            type: 'blob'
+        });
         const tempUrl = URL.createObjectURL(zipBlob);
         const tempLink = document.createElement('a');
         tempLink.href = tempUrl;
@@ -960,8 +976,8 @@ async function handleZipDownload() {
         downloadAllBtn.disabled = false;
 
     } catch (error) {
-        console.error('Failed to create ZIP file:', error);
-        alert('An error occurred while creating the ZIP file. Please try downloading files individually.');
+        console.error('Failed to create ZIP file or load assets:', error);
+        alert('An error occurred while creating the ZIP file. Please try again.');
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
     }
