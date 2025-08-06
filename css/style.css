@@ -601,7 +601,7 @@ body.untranslated {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.5rem; /* Yazı ve ikon arasına boşluk koyar */
     margin-top: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -611,6 +611,7 @@ body.untranslated {
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
+    flex-wrap: wrap; /* Mobil için önemli */
 }
 
 .format-label {
@@ -625,7 +626,8 @@ body.untranslated {
 
 .tooltip-container {
     position: relative;
-    display: flex;
+    display: flex; /* İkonun dikeyde ortalanması için */
+    align-items: center;
 }
 
 .info-icon {
@@ -653,9 +655,9 @@ body.untranslated {
     padding: 1rem;
     position: absolute;
     z-index: 10;
-    bottom: 125%;
+    bottom: 125%; /* İkonun üstünde belirir */
     left: 50%;
-    margin-left: -240px;
+    transform: translateX(-50%); /* Tam olarak ortalar */
     transition: opacity 0.3s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     pointer-events: none;
@@ -668,7 +670,9 @@ body.untranslated {
     text-align: left;
 }
 
-.tooltip-container:hover .tooltip-content {
+/* :hover durumunu info-icon'a taşıyoruz, bu daha güvenilirdir */
+.tooltip-container .info-icon:hover + .tooltip-content,
+.tooltip-content:hover {
     visibility: visible;
     opacity: 1;
 }
@@ -685,6 +689,8 @@ body.untranslated {
     line-height: 1.5;
     margin-bottom: 0;
 }
+
+/* ... (Diğer tooltip stilleri aynı kalabilir) ... */
 
 .tooltip-content hr {
    display: none;
@@ -1300,6 +1306,16 @@ body.mobile-menu-active::before {
     .language-dropdown {
         top: auto;
         bottom: 100%;
+    }
+    /* style.css, @media (max-width: 768px) bloğunun içine ekleyin */
+
+    .tooltip-content {
+        width: 90vw; /* Mobil ekranda genişliği ayarla */
+        max-width: 320px; /* Çok geniş olmasını engelle */
+        grid-template-columns: 1fr; /* Tek sütuna düşür */
+        left: 50%;
+        transform: translateX(-50%);
+        margin-left: 0; /* Eski margin'i sıfırla */
     }
 }
 
