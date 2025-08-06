@@ -6,6 +6,7 @@ let translations = {};
 const supportedLanguages = ['en', 'de', 'zh', 'tr'];
 let currentLanguage = 'en';
 
+// ... (loadTranslations, translatePage, setLanguage, initializeI18n fonksiyonları aynı kalacak) ...
 async function loadTranslations() {
     try {
         const response = await fetch('/languages.json');
@@ -13,12 +14,9 @@ async function loadTranslations() {
             throw new Error('Failed to load language file.');
         }
         const data = await response.json();
-
-        // SAĞLAMLAŞTIRMA: Gelen verinin geçerli bir nesne olduğunu doğrula.
         if (typeof data !== 'object' || data === null) {
             throw new Error('Language file format is invalid.');
         }
-
         translations = data;
         console.log("Translations loaded successfully.");
     } catch (error) {
@@ -29,14 +27,12 @@ async function loadTranslations() {
 function translatePage() {
     if (!translations[currentLanguage]) {
         console.warn(`No translations found for language: ${currentLanguage}`);
-        // Make content visible even if there's no translation, so the page isn't blank.
         document.body.classList.remove('untranslated');
         return;
     }
     document.querySelectorAll('[data-i18n-key]').forEach(element => {
         const key = element.getAttribute('data-i18n-key');
         if (translations[currentLanguage][key]) {
-            // GÜVENLİK İYİLEŞTİRMESİ: XSS saldırılarını önlemek için innerHTML yerine textContent kullanıldı.
             element.textContent = translations[currentLanguage][key];
         }
     });
@@ -44,8 +40,6 @@ function translatePage() {
     document.querySelectorAll('.lang-link').forEach(link => {
         link.classList.toggle('active', link.dataset.lang === currentLanguage);
     });
-
-    // Translation finished, now make the body visible.
     document.body.classList.remove('untranslated');
 }
 
@@ -61,25 +55,20 @@ async function initializeI18n() {
     await loadTranslations();
     const savedLang = localStorage.getItem('selectedLanguage');
     const browserLang = navigator.language.split('-')[0];
-
     let initialLang = 'en';
     if (savedLang && supportedLanguages.includes(savedLang)) {
         initialLang = savedLang;
     } else if (supportedLanguages.includes(browserLang)) {
         initialLang = browserLang;
     }
-    
     setLanguage(initialLang);
-
     const switcherBtn = document.getElementById('lang-switcher-btn');
     const dropdown = document.getElementById('language-dropdown');
-
     if (switcherBtn && dropdown) {
         switcherBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
         });
-
         document.querySelectorAll('.lang-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -87,7 +76,6 @@ async function initializeI18n() {
                 dropdown.style.display = 'none';
             });
         });
-
         document.addEventListener('click', () => {
             if (dropdown.style.display === 'block') {
                 dropdown.style.display = 'none';
@@ -96,15 +84,35 @@ async function initializeI18n() {
     }
 }
 
+// ===============================================
+// YENİ FONKSİYON: Performans için Fontları Asenkron Yükleme
+// ===============================================
+function loadGoogleFonts() {
+  const fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap';
+  // Stil dosyasını render-bloklayıcı olmayacak şekilde yükle
+  fontLink.media = 'print';
+  // Yükleme tamamlandığında tüm medya türleri için geçerli kıl
+  fontLink.onload = () => {
+    fontLink.media = 'all';
+  };
+  // Oluşturulan link etiketini head'e ekle
+  document.head.appendChild(fontLink);
+}
+
 
 // ===============================================
-// GENERAL CODE TO RUN ON PAGE LOAD
+// SAYFA YÜKLENDİĞİNDE ÇALIŞACAK GENEL KODLAR
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize language functions
+    // Dil fonksiyonlarını başlat
     initializeI18n();
 
-    // Initialize mobile menu function
+    // YENİ: Fontları güvenli ve asenkron bir şekilde yükle
+    loadGoogleFonts();
+
+    // Mobil menü fonksiyonunu başlat
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const mainNav = document.querySelector('.main-nav');
     if (menuToggle && mainNav) {
