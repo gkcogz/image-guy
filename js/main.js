@@ -230,33 +230,37 @@ document.body.addEventListener('click', async (e) => {
         return; 
     }
     
-    if (targetButton && targetButton.classList.contains('btn-copy')) {
-        const copyBtn = targetButton;
-        const imageUrl = copyBtn.dataset.optimizedUrl;
-        try {
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = await createImageBitmap(blob);
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(async (pngBlob) => {
-                await navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
-                const originalText = 'Copy Image';
-                copyBtn.textContent = `✓`;
-                copyBtn.classList.add('copied');
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            }, 'image/png');
-        } catch (error) {
-            console.error('Could not copy image:', error);
-            alert('Could not copy image. Your browser may not fully support this action.');
-        }
+if (targetButton && targetButton.classList.contains('btn-copy')) {
+    const copyBtn = targetButton;
+    const imageUrl = copyBtn.dataset.optimizedUrl;
+    try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = await createImageBitmap(blob);
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(async (pngBlob) => {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+
+            const originalHTML = copyBtn.innerHTML;
+
+            copyBtn.innerHTML = '✓';
+            copyBtn.classList.add('copied');
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+            
+        }, 'image/png');
+    } catch (error) {
+        console.error('Could not copy image:', error);
+        alert('Could not copy image. Your browser may not fully support this action.');
     }
+}
 
     if (targetButton && targetButton.classList.contains('btn-compare')) {
         const originalUrl = targetButton.dataset.originalUrl;
