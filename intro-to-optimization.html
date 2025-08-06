@@ -3,106 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self'; 
+      script-src 'self'; 
+      style-src 'self' https://fonts.googleapis.com; 
+      font-src https://fonts.gstatic.com; 
+      img-src 'self' data:; 
+      connect-src 'self';
+      frame-src 'none'; 
+      object-src 'none';">
+
   <meta name="description" content="A single blog post from the Image Guy blog." />
   <title data-i18n-key="blog_post1_title">Why Image Optimization Matters | Image Guy</title>
 
-  <link rel="shortcut icon" href="/favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-logo-2.png" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'" />
+  
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="manifest" href="/site.webmanifest">
   
   <style>
-    .post-content p {
-      margin-bottom: 1.25em;
-      line-height: 1.6;
-    }
-    .post-content ul {
-      margin-bottom: 1.25em;
-      padding-left: 1.5em;
-    }
-    figure {
-      margin: 1.5em 0;
-      text-align: center;
-    }
-    figcaption {
-      font-size: 0.9em;
-      color: #555;
-      margin-top: 0.5em;
-    }
-
-    .image-comparison {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      align-items: flex-start;
-      margin: 2rem 0;
-    }
-
-    .image-comparison figure {
-      flex: 1 1 300px;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .image-comparison img {
-      width: 100%;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .image-comparison figcaption {
-      margin-top: 0.5rem;
-      font-size: 0.95rem;
-      color: #555;
-    }
+    .post-content p { margin-bottom: 1.25em; line-height: 1.6; }
+    .post-content ul { margin-bottom: 1.25em; padding-left: 1.5em; }
+    .image-comparison { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-start; margin: 2rem 0; }
+    .image-comparison figure { flex: 1 1 300px; max-width: 400px; text-align: center; }
+    .image-comparison img { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+    .image-comparison figcaption { margin-top: 0.5rem; font-size: 0.95rem; color: #555; }
   </style>
 </head>
 <body class="untranslated">
 
-  <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle menu">
-    <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
-      <line x1="3" y1="6" x2="21" y2="6"></line>
-      <line x1="3" y1="12" x2="21" y2="12"></line>
-      <line x1="3" y1="18" x2="21" y2="18"></line>
-    </svg>
-    <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;">
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-      <line x1="6" y1="18" x2="18" y2="6"></line>
-    </svg>
+  <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle Menu">
+    <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
   </button>
 
   <header class="header">
     <div class="container">
       <div class="logo">
         <a href="/" class="logo-link">
-          <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image" />
-          <span class="logo-text">Image Guy</span>
+          <img src="assets/logo/logo-2.webp" alt="Image Guy Logo" class="logo-image" width="36" height="36" />
         </a>
       </div>
       <nav class="main-nav">
         <ul>
-          <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+          <li><a href="/blog.html" data-i18n-key="nav_blog" aria-current="page">Blog</a></li>
           <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
           <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
         </ul>
         <div class="language-switcher">
-          <button id="lang-switcher-btn" class="icon-btn" title="Change Language">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
+          <button id="lang-switcher-btn" class="icon-btn" title="Change Language" aria-label="Change Language">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           </button>
-          <div id="language-dropdown" class="language-dropdown">
-            <a href="#" class="lang-link" data-lang="en">English</a>
-            <a href="#" class="lang-link" data-lang="de">Deutsch</a>
-            <a href="#" class="lang-link" data-lang="zh">中文</a>
-            <a href="#" class="lang-link" data-lang="tr">Türkçe</a>
-          </div>
+          <div id="language-dropdown" class="language-dropdown"></div>
         </div>
       </nav>
     </div>
@@ -112,37 +68,23 @@
     <div class="container content-page">
       <article class="blog-post-full" aria-labelledby="blog_post1_title">
         <h1 id="blog_post1_title" data-i18n-key="blog_post1_title">Why is Image Optimization Important for Your Website?</h1>
-        
-        <div class="post-meta">
-          <span data-i18n-key="blog_post1_date">Posted on July 28, 2025</span>
-        </div>
-
+        <div class="post-meta"><span data-i18n-key="blog_post1_date">Posted on July 28, 2025</span></div>
         <div class="post-content">
           <p><strong data-i18n-key="blog_post1_p1_strong">First of all, what is an image?</strong></p>
-
           <p data-i18n-key="blog_post1_p2">In today’s digital world, an image represents a captured moment and serves as a powerful way to convey visual information. It is made up of thousands of pixels.</p>
-
           <p data-i18n-key="blog_post1_p3">Each is a tiny area on the screen whose brightness and color are defined by mathematical values. The more variation there is in color, contrast, and texture, the more data is needed to store and transfer that image.</p>
-
           <p data-i18n-key="blog_post1_p4">The additional data increases internet traffic, consumes more bandwidth, and requires more processing power and storage, while leading to an inefficient use of technological resources. On a broader scale, this means greater energy consumption and increased demand for hardware infrastructure, making web usage less sustainable.</p>
-
           <p data-i18n-key="blog_post1_p5">From a personal perspective, large image files can significantly reduce your website’s performance. Pages load more slowly, and search engines like Google may lower your ranking due to poor user experience, making your website less favorable.</p>
-
           <p data-i18n-key="blog_post1_p6">However, optimizing your images by compressing and resizing can reduce the loading time significantly.</p>
 
           <div class="image-comparison">
             <figure>
-              <img src="assets/blog/DSC08582_final.jpg" alt="Unoptimized High-Quality Image" />
-              <figcaption data-i18n-key="blog_post1_figcaption1">
-                Original image: 15.91 MB (JPG format)
-              </figcaption>
+              <img src="assets/blog/DSC08582_final.jpg" alt="Unoptimized High-Quality Image" width="400" height="267" loading="lazy" />
+              <figcaption data-i18n-key="blog_post1_figcaption1">Original image: 15.91 MB (JPG format)</figcaption>
             </figure>
-
             <figure>
-              <img src="assets/blog/dsc08582final.webp" alt="Optimized High-Quality Image" />
-              <figcaption data-i18n-key="blog_post1_figcaption2">
-                Optimized image: 477 KB (WebP format) — over 97% smaller, no visible quality loss.
-              </figcaption>
+              <img src="assets/blog/dsc08582final.webp" alt="Optimized High-Quality Image" width="400" height="267" loading="lazy" />
+              <figcaption data-i18n-key="blog_post1_figcaption2">Optimized image: 477 KB (WebP format) — over 97% smaller, no visible quality loss.</figcaption>
             </figure>
           </div>
 
@@ -153,9 +95,7 @@
             <li data-i18n-key="blog_post1_summary_li3">Reduced storage and bandwidth usage</li>
             <li data-i18n-key="blog_post1_summary_li4">Lower energy consumption and improved sustainability</li>
           </ul>
-
           <p data-i18n-key="blog_post1_p7">We will talk more about the concept of <em>“green web”</em>, which shouldn’t be limited to the use of renewable energy sources, but should also include more efficient data traffic and web optimization practices.</p>
-
           <p><em data-i18n-key="blog_post1_p8_em">Thanks for reading.</em></p>
         </div>
       </article>
@@ -163,20 +103,7 @@
   </main>
 
   <footer class="footer">
-    <div class="container footer-container">
-      <div class="footer-links">
-        <a href="/blog.html" data-i18n-key="nav_blog">Blog</a>
-        <a href="/about.html" data-i18n-key="nav_about">About</a>
-        <a href="/contact.html" data-i18n-key="nav_contact">Contact</a>
-        <a href="/privacy.html" data-i18n-key="footer_privacy">Privacy Policy</a>
-        <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
-      </div>
-      <div class="footer-copyright">
-        <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
-        <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
-      </div>
-    </div>
-  </footer>
+      </footer>
 
   <script src="js/global.js" defer></script>
 </body>

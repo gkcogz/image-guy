@@ -1,43 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
   <url>
     <loc>https://image-guy.com/</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/" />
+    <lastmod>2025-08-06</lastmod>
     <priority>1.00</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/about.html</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/about.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/about.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/about.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/about.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/about.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.80</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/blog.html</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/blog.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/blog.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/blog.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/blog.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/blog.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.80</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/contact.html</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/contact.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/contact.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/contact.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/contact.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/contact.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.80</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/privacy.html</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/privacy.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/privacy.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/privacy.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/privacy.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/privacy.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.50</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/terms.html</loc>
-    <lastmod>2025-07-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/terms.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/terms.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/terms.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/terms.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/terms.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.50</priority>
   </url>
+  
   <url>
     <loc>https://image-guy.com/intro-to-optimization.html</loc>
-    <lastmod>2025-08-04</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/intro-to-optimization.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/intro-to-optimization.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/intro-to-optimization.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/intro-to-optimization.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/intro-to-optimization.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.70</priority>
   </url>
-    <url>
+  
+  <url>
     <loc>https://image-guy.com/favicon-guide.html</loc>
-    <lastmod>2025-08-04</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://image-guy.com/favicon-guide.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://image-guy.com/favicon-guide.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://image-guy.com/favicon-guide.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="https://image-guy.com/favicon-guide.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://image-guy.com/favicon-guide.html" />
+    <lastmod>2025-08-06</lastmod>
     <priority>0.70</priority>
   </url>
+
 </urlset>

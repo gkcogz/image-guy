@@ -259,6 +259,11 @@ body.untranslated {
     padding-right: 50px;
 }
 
+/* Fare ile üzerine gelindiğinde animasyonu durdurmak için (isteğe bağlı) */
+.announcement-bar:hover .announcement-text {
+  animation-play-state: paused;
+}
+
 @keyframes scroll {
     0% { transform: translateX(0%); }
     100% { transform: translateX(-50%); }
@@ -1394,3 +1399,60 @@ body.mobile-menu-active::before {
     text-underline-offset: 3px;
     font-weight: 500;
 }
+
+    .post-content p { margin-bottom: 1.25em; line-height: 1.6; }
+    .post-content h2 { font-size: 1.8em; margin-top: 2em; margin-bottom: 1em; border-bottom: 1px solid #eee; padding-bottom: 0.5em;}
+    figure { margin: 2em 0; text-align: center; }
+    figcaption { font-size: 0.9em; color: #555; margin-top: 0.5em; }
+    pre { background-color: #f4f4f4; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-break: break-all; margin-bottom: 1em;}
+    code { font-family: 'Courier New', Courier, monospace; }
+    details { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 1em; }
+    summary { font-weight: 600; cursor: pointer; padding: 0.8em 1.2em; outline: none; }
+    details[open] > summary { border-bottom: 1px solid #e0e0e0; }
+    .details-content { padding: 0.5em 1.2em 1.2em 1.2em; }
+
+        .post-content p {
+      margin-bottom: 1.25em;
+      line-height: 1.6;
+    }
+    .post-content ul {
+      margin-bottom: 1.25em;
+      padding-left: 1.5em;
+    }
+    figure {
+      margin: 1.5em 0;
+      text-align: center;
+    }
+    figcaption {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 0.5em;
+    }
+
+    .image-comparison {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      margin: 2rem 0;
+    }
+
+    .image-comparison figure {
+      flex: 1 1 300px;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .image-comparison img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-comparison figcaption {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      color: #555;
+    }

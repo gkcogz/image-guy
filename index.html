@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com; 
+        style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; 
+        font-src https://fonts.gstatic.com; 
+        img-src 'self' data: blob: https://*.s3.amazonaws.com; 
+        connect-src 'self' https://*.s3.amazonaws.com;
+        frame-src 'none'; 
+        object-src 'none';">
+
     <meta name="description" content="A free and smart online tool to optimize, compress, convert, crop, and edit your images. Reduce file size for JPG, PNG, WebP, AVIF, create favicons, or get Base64 code.">
     <title>Image Guy | Free Image Compressor, Converter & Editor (Crop, Base64)</title>
     
@@ -13,20 +23,22 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" defer></script>
-    <link rel="stylesheet" href="https://unpkg.com/img-comparison-slider@8/dist/styles.css" />
-    <script type="module" src="https://unpkg.com/img-comparison-slider@8/dist/index.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/img-comparison-slider@8/dist/styles.css" 
+          integrity="sha384-ePzNuCckQnI02s2p2sjs9g3a0s2Nl3i4SCnb3C2AFbVr02PckK9sT8k2wKj/oizJ" 
+          crossorigin="anonymous" />
+    <script type="module" src="https://unpkg.com/img-comparison-slider@8/dist/index.js" 
+            integrity="sha384-sQIW8i2p773YDE/5DB29eD11d/1J22xQ9g+k4T3vH3E4N2XQ3jW2LwLgqjLz4vH6" 
+            crossorigin="anonymous"></script>
     
-
-    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#ffffff">
 </head>
 
 <body>
-    <button id="mobile-menu-toggle" class="mobile-menu-button">
+    <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle Menu">
         <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
@@ -35,20 +47,20 @@
         <div class="container">
             <div class="logo">
                 <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
-                    <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image">
+                    <img src="assets/logo/logo-2.webp" alt="Image Guy Logo" class="logo-image" width="36" height="36">
                     <span class="logo-text">Image Guy</span>
                 </a>
             </div>
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
-                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
-                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
+                    <li><a href="/blog.html" data-i_18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i_18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i_18n-key="nav_contact">Contact</a></li>
                 </ul>
 
                 <div class="language-switcher">
-                    <button id="lang-switcher-btn" class="icon-btn" title="Change Language">
+                    <button id="lang-switcher-btn" class="icon-btn" title="Change Language" aria-label="Change Language">
                         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                     </button>
                     <div id="language-dropdown" class="language-dropdown">
@@ -62,12 +74,12 @@
         </div>
     </header>
 
-    <div class="announcement-bar">
-        <div class="announcement-text">
-            <span data-i18n-key="home_announcement">Welcome!</span>
-            <span data-i18n-key="home_announcement">Welcome!</span>
+        <div class="announcement-bar">
+            <div class="announcement-text">
+                <span data-i18n-key="home_announcement">Welcome!</span>
+                <span data-i18n-key="home_announcement">Welcome!</span>
+            </div>
         </div>
-    </div>
 
     <main>
         <section class="hero">
@@ -133,7 +145,6 @@
                 </div>
             </div>
         </section>  
-
     </main>
 
     <footer class="footer">
@@ -146,7 +157,7 @@
                 <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span data-i18n-key="footer_copyright">2025 Image-Guy.com | All Rights Reserved.</span>
                 <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
             </div>
             <div class="footer-co2-badge">
@@ -155,7 +166,6 @@
             </div>
         </div>
     </footer>
-
 
     <script src="js/main.js" defer></script>
     

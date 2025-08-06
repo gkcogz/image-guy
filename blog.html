@@ -2,21 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self'; 
+        style-src 'self' https://fonts.googleapis.com; 
+        font-src https://fonts.gstatic.com; 
+        img-src 'self' data:; 
+        connect-src 'self';
+        frame-src 'none'; 
+        object-src 'none';">
+
     <meta name="description" content="The official blog of Image Guy. Learn the best tips and tricks for image optimization, web performance, and modern image formats like AVIF and WebP." />
     <title data-i18n-key="nav_blog">Blog - Optimization Tips & Tricks | Image Guy</title>
+    
     <link rel="stylesheet" href="css/style.css" />
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="manifest" href="/site.webmanifest" />
 </head>
-<body class="untranslated"></body>
-    <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle menu">
+<body class="untranslated">
+    <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle Menu">
         <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -32,8 +44,7 @@
         <div class="container">
             <div class="logo">
                 <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
-                    <img src="assets/logo/logo-2.png" alt="Image Guy Logo" class="logo-image" />
-                    <span class="logo-text">Image Guy</span>
+                    <img src="assets/logo/logo-2.webp" alt="Image Guy Logo" class="logo-image" width="36" height="36" />
                 </a>
             </div>
 
@@ -44,7 +55,7 @@
                     <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
                 <div class="language-switcher">
-                    <button id="lang-switcher-btn" class="icon-btn" title="Change Language">
+                    <button id="lang-switcher-btn" class="icon-btn" title="Change Language" aria-label="Change Language">
                         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                     </button>
                     <div id="language-dropdown" class="language-dropdown">
@@ -67,13 +78,13 @@
                 <article class="blog-post-item">
                     <h2><a href="/intro-to-optimization.html" data-i18n-key="blog_post1_title">Why is Image Optimization Important for Your Website?</a></h2>
                     <p class="post-excerpt" data-i18n-key="blog_post1_excerpt">Learn why optimizing images is critical for site speed, sustainability, and SEO, with practical tips for better web performance.</p>
-                    <a href="/intro-to-optimization.html" class="btn-read-more" data-i18n-key="blog_read_more">Read More &rarr;</a>
+                    <a href="/intro-to-optimization.html" class="btn-read-more" data-i18n-key="blog_read_more">Read More →</a>
                 </article>
 
                 <article class="blog-post-item">
                     <h2><a href="/favicon-guide.html" data-i18n-key="favicon_post_title">Favicon: What is This Cute Things and How to Create One in Seconds?</a></h2>
                     <p class="post-excerpt" data-i18n-key="favicon_post_excerpt">Learn how to create an optimized favicon in few simple steps, perfect for your website.</p>
-                    <a href="/favicon-guide.html" class="btn-read-more" data-i18n-key="blog_read_more">Read More &rarr;</a>
+                    <a href="/favicon-guide.html" class="btn-read-more" data-i18n-key="blog_read_more">Read More →</a>
                 </article>
             </div>
         </div>
