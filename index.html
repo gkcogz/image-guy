@@ -9,7 +9,7 @@
         script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com 'sha256-j2gSYqtk4nRW08uaDUHV5K3bKY4rFf0lwsCgsOXN+Pk='; 
         style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline'; 
         font-src https://fonts.gstatic.com; 
-        img-src 'self' data: blob: https://*.s3.amazonaws.com; 
+        img-src 'self' data: blob: https://*.s3.amazonaws.com https://*.s3.eu-north-1.amazonaws.com; 
         connect-src 'self' https://*.s3.amazonaws.com https://*.s3.eu-north-1.amazonaws.com;
         frame-src 'none'; 
         object-src 'none';">
@@ -42,7 +42,6 @@
         <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
-
     <header class="header">
         <div class="container">
             <div class="logo">
@@ -51,14 +50,12 @@
                     <span class="logo-text">Image Guy</span>
                 </a>
             </div>
-            
             <nav class="main-nav">
                 <ul>
                     <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
                     <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
                     <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
-
                 <div class="language-switcher">
                     <button id="lang-switcher-btn" class="icon-btn" title="Change Language" aria-label="Change Language">
                         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
@@ -73,20 +70,17 @@
             </nav>
         </div>
     </header>
-
     <div class="announcement-bar">
         <div class="announcement-text">
             <span data-i18n-key="home_announcement">Welcome!</span>
             <span data-i18n-key="home_announcement">Welcome!</span>
         </div>
     </div>
-
     <main>
         <section class="hero">
             <div class="container">
                 <h1 data-i18n-key="home_title">Smart Image Compressor</h1>
                 <p class="subtitle" data-i18n-key="home_subtitle">Instantly resize, compress, convert, and crop your images in seconds. Free and secure.</p>
-                
                 <div class="upload-area">
                     <h2 data-i18n-key="home_upload_title">Drag & Drop Your File Here</h2>
                     <p data-i18n-key="home_upload_or">or</p>
@@ -95,7 +89,6 @@
                 </div>
             </div>
         </section>
-
         <section class="sustainability-mission">
             <div class="section-overlay"></div>
             <div class="container">
@@ -103,21 +96,19 @@
                 <p data-i18n-key="home_mission_text">Every image you optimize doesn't just save space—it saves energy. Less data transfer and storage mean a smaller digital footprint for a healthier planet. Join us in making the web faster and greener.</p>
             </div>
         </section>
-
         <section class="photo-strip">
             <div class="photo-strip-container">
-                <img src="../assets/images/compressed/optimized-DSC00524_final_auto.WebP" alt="Buddha-Statue in Golden Tones" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC08666_final.WebP" alt="Singapore Finance Center at Night" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC08582_final.WebP" alt="Gardens by the Bay at Night" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC08678_final.WebP" alt="Singapore Marina Bay at Night" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC09555_final.WebP" alt="Merdeka Tower at Kuala Lumpur" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC09116_final.WebP" alt="An Old Red VW Beetle at Night" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC01115_final.WebP" alt="Woman Standing in Front of An Abandoned CH-47 Chinook Helicopter at the War Remnants Museum" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC09144_final.WebP" alt="A Look at Istanbul at Night" loading="lazy" width="270" height="180">
-                <img src="../assets/images/compressed/optimized-DSC00566_final.WebP" alt="Buddha-Statue in Red Tones" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC00524_final_auto.WebP" alt="Buddha-Statue in Golden Tones" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC08666_final.WebP" alt="Singapore Finance Center at Night" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC08582_final.WebP" alt="Gardens by the Bay at Night" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC08678_final.WebP" alt="Singapore Marina Bay at Night" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC09555_final.WebP" alt="Merdeka Tower at Kuala Lumpur" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC09116_final.WebP" alt="An Old Red VW Beetle at Night" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC01115_final.WebP" alt="Woman Standing in Front of An Abandoned CH-47 Chinook Helicopter at the War Remnants Museum" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC09144_final.WebP" alt="A Look at Istanbul at Night" loading="lazy" width="270" height="180">
+                <img src="/assets/images/compressed/optimized-DSC00566_final.WebP" alt="Buddha-Statue in Red Tones" loading="lazy" width="270" height="180">
             </div>
         </section>
-        
         <section class="how-it-works">
             <div class="container">
                 <h2 data-i18n-key="home_howitworks_title">How It Works in 5 Simple Steps</h2>
@@ -145,9 +136,7 @@
                 </div>
             </div>
         </section>  
-
     </main>
-
     <footer class="footer">
         <div class="container footer-container">
             <div class="footer-links">
