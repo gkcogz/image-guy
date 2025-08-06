@@ -244,15 +244,15 @@ document.body.addEventListener('click', async (e) => {
         showCropModal(originalUrl, optimizedUrl);
     }
 
-    if (targetButton && targetButton.id === 'apply-crop-btn') {
+if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
 
+        // --- Bu kısımlar sizdeki kod ile aynı ve doğru ---
         const currentState = {
             optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
             original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
         };
         cropHistory.push(currentState);
-
         
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
         let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
@@ -318,30 +318,37 @@ document.body.addEventListener('click', async (e) => {
         const base64Button = currentCropTarget.querySelector('.btn-base64');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
-
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
             compareButton.dataset.originalUrl = newOriginalUrl; 
         }
-
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
-        
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
         }
-        
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
 
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            cropper.destroy();
-            cropper = null;
-            modal.remove();
+        // --- YENİ EKLENEN ONAY MESAJI VE GECİKMELİ KAPATMA MANTIĞI ---
+        const confirmationMessage = document.getElementById('crop-confirmation-message');
+        if (confirmationMessage) {
+            confirmationMessage.style.display = 'block';
         }
+
+        // 1.5 saniye sonra pencereyi kapat
+        setTimeout(() => {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+                modal.remove();
+            }
+        }, 1000); 
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
@@ -620,9 +627,21 @@ const formatOptionsHTML = `
 `;
 
     // --- YENİ: Kalite kaydırıcısı, artık butonların üzerinde yer alacak ---
+// main.js - updateUIForFileList fonksiyonu içindeki advancedSliderHTML değişkeni
+
     const advancedSliderHTML = `
         <div class="advanced-slider" style="display: none;">
-            <label for="quality-slider">Quality:</label>
+            <div class="quality-label-container">
+                <label for="quality-slider" data-i18n-key="quality_label">Quality:</label>
+                <div class="tooltip-container">
+                    <span class="info-icon">?</span>
+                    <div class="tooltip-content quality-tooltip">
+                        <p data-i18n-key="quality_tooltip_text">
+                            Adjusts the compression level. Lower values result in smaller file sizes but lower quality. Higher values provide better quality at the cost of a larger file size. The default value is optimized for a good balance.
+                        </p>
+                    </div>
+                </div>
+            </div>
             <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
             <output for="quality-slider" id="quality-output">85</output>
         </div>
@@ -967,19 +986,14 @@ function showCropModal(originalUrl, optimizedUrl) {
             <div class="crop-modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <h2>Edit & Crop Image</h2>
+                <div id="crop-confirmation-message" style="display: none; color: var(--success-color); font-weight: bold; margin-bottom: 1rem; text-align: center;">Crop Completed!</div>
                 <div class="crop-image-container">
-                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
+                    <img id="crop-image" src="${optimizedUrl}" alt="Original Image">
                 </div>
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-
-                    <button class="btn btn-secondary" id="crop-reset-btn">
-                        Reset All
-                        <span class="tooltip-text">
-                            Warning: All changes will be reset. You will revert to the initial optimized image.
-                        </span>
-                    </button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
