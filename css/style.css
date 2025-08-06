@@ -597,13 +597,22 @@ body.untranslated {
 /* =================================
    6. Format Seçenekleri ve Tooltip
    ================================= */
-.format-options-header {
+/* =================================
+   6. Format Seçenekleri ve Tooltip
+   ================================= */
+
+/* "Output Format" ve "Quality" başlıklarını ve ikonlarını tutan ana konteynerler */
+.format-options-header,
+.quality-label-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem; /* Yazı ve ikon arasına boşluk koyar */
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+.quality-label-container {
+    margin-bottom: 0.5rem;
 }
 
 .format-options {
@@ -611,7 +620,7 @@ body.untranslated {
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
-    flex-wrap: wrap; /* Mobil için önemli */
+    flex-wrap: wrap;
 }
 
 .format-label {
@@ -624,9 +633,10 @@ body.untranslated {
     gap: 0.5rem;
 }
 
+/* Tooltip'in genel yapısı */
 .tooltip-container {
     position: relative;
-    display: flex; /* İkonun dikeyde ortalanması için */
+    display: flex;
     align-items: center;
 }
 
@@ -648,19 +658,31 @@ body.untranslated {
 .tooltip-content {
     visibility: hidden;
     opacity: 0;
-    width: 480px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%; /* İkonun üstünde */
+    left: 50%;
+    transform: translateX(-50%); /* Tam ortala */
     background-color: var(--dark-gray);
     color: var(--white-color);
     border-radius: 8px;
     padding: 1rem;
-    position: absolute;
-    z-index: 10;
-    bottom: 125%; /* İkonun üstünde belirir */
-    left: 50%;
-    transform: translateX(-50%); /* Tam olarak ortalar */
-    transition: opacity 0.3s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    pointer-events: none;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none; /* Üzerine gelmeyi engelle, böylece titremez */
+}
+
+/* Sadece ikonun üzerine gelindiğinde tooltip'i göster */
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto; /* Görünür olduğunda üzerine gelinebilir */
+}
+
+/* Ana Tooltip (Formatlar için) */
+.format-tooltip {
+    width: 480px;
+    margin-left: 0; /* Ortalamak için transform yeterli */
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.8rem 1.5rem;
@@ -670,27 +692,30 @@ body.untranslated {
     text-align: left;
 }
 
-/* :hover durumunu info-icon'a taşıyoruz, bu daha güvenilirdir */
-.tooltip-container .info-icon:hover + .tooltip-content,
-.tooltip-content:hover {
-    visibility: visible;
-    opacity: 1;
-}
-
-.tooltip-content h4 {
+.tooltip-grid-item h4 {
     font-size: 0.9rem;
     color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 0.4rem;
+    margin: 0 0 0.4rem 0;
 }
 
-.tooltip-content p {
+.tooltip-grid-item p {
     font-size: 0.8rem;
     line-height: 1.5;
-    margin-bottom: 0;
+    margin: 0;
 }
 
-/* ... (Diğer tooltip stilleri aynı kalabilir) ... */
+/* Kalite Ayarı Tooltip'i */
+.quality-tooltip {
+    width: 300px;
+    padding: 0.8rem 1rem;
+    text-align: left;
+}
+
+.quality-tooltip p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0;
+}
 
 .tooltip-content hr {
    display: none;
@@ -1307,16 +1332,6 @@ body.mobile-menu-active::before {
         top: auto;
         bottom: 100%;
     }
-    /* style.css, @media (max-width: 768px) bloğunun içine ekleyin */
-
-    .tooltip-content {
-        width: 90vw; /* Mobil ekranda genişliği ayarla */
-        max-width: 320px; /* Çok geniş olmasını engelle */
-        grid-template-columns: 1fr; /* Tek sütuna düşür */
-        left: 50%;
-        transform: translateX(-50%);
-        margin-left: 0; /* Eski margin'i sıfırla */
-    }
 }
 
 /* style.css dosyasının sonuna ekleyin */
@@ -1411,31 +1426,3 @@ body.mobile-menu-active::before {
     font-weight: 500;
 }
 
-/* style.css dosyasının sonuna ekleyin */
-
-.quality-label-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-}
-
-.quality-tooltip {
-    /* Tooltip'i daha dar ve okunabilir yapalım */
-    width: 300px;
-    margin-left: -150px; /* Genişliğin yarısı kadar kaydır */
-    grid-template-columns: 1fr; /* Tek sütunlu yapı */
-    text-align: left;
-}
-
-/* Mobil için ek düzenleme */
-@media (max-width: 768px) {
-    .advanced-slider label {
-        width: auto; /* Otomatik genişlik */
-    }
-    .quality-label-container {
-        margin-bottom: 0; /* Boşluğu kaldır */
-    }
-}
