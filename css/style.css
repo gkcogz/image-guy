@@ -1394,3 +1394,32 @@ body.mobile-menu-active::before {
     text-underline-offset: 3px;
     font-weight: 500;
 }
+
+/* style.css dosyasının sonuna ekleyin */
+
+.quality-label-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.quality-tooltip {
+    /* Tooltip'i daha dar ve okunabilir yapalım */
+    width: 300px;
+    margin-left: -150px; /* Genişliğin yarısı kadar kaydır */
+    grid-template-columns: 1fr; /* Tek sütunlu yapı */
+    text-align: left;
+}
+
+/* Mobil için ek düzenleme */
+@media (max-width: 768px) {
+    .advanced-slider label {
+        width: auto; /* Otomatik genişlik */
+    }
+    .quality-label-container {
+        margin-bottom: 0; /* Boşluğu kaldır */
+    }
+}

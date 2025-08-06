@@ -158,7 +158,10 @@
     "privacy_section2_title": "Informationen, die wir sammeln",
     "privacy_section2_text": "Wir sammeln keine persönlichen Informationen. Sie müssen kein Konto erstellen oder persönliche Daten angeben, um Image Guy zu nutzen. Wir können datenschutzfreundliche Analysen verwenden, um den Website-Traffic zu überwachen, aber diese Daten sind anonymisiert und verfolgen keine einzelnen Benutzer.",
     "privacy_section3_title": "Drittanbieterdienste",
-    "privacy_section3_text": "Unser Dienst basiert auf einer professionellen Cloud-Infrastruktur von Netlify und Amazon Web Services (AWS). Diese Dienste haben ihre eigenen robusten Datenschutz- und Sicherheitsrichtlinien."
+    "privacy_section3_text": "Unser Dienst basiert auf einer professionellen Cloud-Infrastruktur von Netlify und Amazon Web Services (AWS). Diese Dienste haben ihre eigenen robusten Datenschutz- und Sicherheitsrichtlinien.",
+    
+    "quality_label": "Quality:",
+    "quality_tooltip_text": "Adjusts the compression level. Lower values result in smaller file sizes but lower quality. Higher values provide better quality at the cost of a larger file size. The default value is optimized for a good balance."
   },
   "zh": {
     "nav_blog": "博客",
