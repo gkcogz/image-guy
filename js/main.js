@@ -192,50 +192,6 @@ document.body.addEventListener('click', async (e) => {
         }
     }
 
-if (targetButton && targetButton.id === 'crop-undo-btn') {
-    if (!cropper || cropHistory.length === 0) return;
-
-    const lastState = cropHistory.pop();
-
-    const compareButton = currentCropTarget.querySelector('.btn-compare');
-    const cropButton = currentCropTarget.querySelector('.btn-crop');
-    const imageInModal = document.getElementById('image-to-crop');
-
-    if (compareButton) {
-        compareButton.dataset.optimizedUrl = lastState.optimized;
-        compareButton.dataset.originalUrl = lastState.original;
-    }
-    if (cropButton) {
-        cropButton.dataset.optimizedUrl = lastState.optimized;
-    }
-
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
-
-    imageInModal.src = '';
-    
-    setTimeout(() => {
-        imageInModal.onload = () => {
-            cropper = new Cropper(imageInModal, {
-                viewMode: 1,
-                background: false,
-                autoCropArea: 0.8,
-                ready: function () {
-                    document.querySelector('.crop-modal-content').classList.add('ready');
-                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
-                }
-            });
-        };
-        imageInModal.src = lastState.optimized;
-    }, 10);
-
-    if (cropHistory.length === 0) {
-        targetButton.disabled = true;
-    }
-}
-
     if (targetButton && targetButton.classList.contains('btn-delete-item')) {
         const indexToRemove = parseInt(targetButton.dataset.fileIndex, 10);
         fileQueue.splice(indexToRemove, 1);
@@ -296,9 +252,7 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
             original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
         };
         cropHistory.push(currentState);
-        
-        const undoBtn = document.getElementById('crop-undo-btn');
-        if (undoBtn) undoBtn.disabled = false;
+
         
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
         let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
@@ -451,11 +405,6 @@ if (targetButton && targetButton.id === 'crop-undo-btn') {
             if (downloadLink) downloadLink.href = initialOptimizedUrl;
         }
 
-        const undoBtn = document.getElementById('crop-undo-btn');
-        if (undoBtn) {
-            undoBtn.disabled = true;
-            cropHistory = [];
-        }
 
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
@@ -1024,8 +973,6 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    
-                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
 
                     <button class="btn btn-secondary" id="crop-reset-btn">
                         Reset All
