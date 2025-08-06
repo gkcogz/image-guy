@@ -244,15 +244,15 @@ document.body.addEventListener('click', async (e) => {
         showCropModal(originalUrl, optimizedUrl);
     }
 
-if (targetButton && targetButton.id === 'apply-crop-btn') {
+    if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!cropper) return;
 
-        // --- Bu kısımlar sizdeki kod ile aynı ve doğru ---
         const currentState = {
             optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
             original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
         };
         cropHistory.push(currentState);
+
         
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
         let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
@@ -318,37 +318,30 @@ if (targetButton && targetButton.id === 'apply-crop-btn') {
         const base64Button = currentCropTarget.querySelector('.btn-base64');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
+
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
             compareButton.dataset.originalUrl = newOriginalUrl; 
         }
+
         if(cropButton) {
             cropButton.dataset.optimizedUrl = newOptimizedUrl;
         }
+        
         if(copyButton) {
             copyButton.dataset.optimizedUrl = newOptimizedUrl;
         }
+        
         if (base64Button) {
             base64Button.dataset.optimizedUrl = newOptimizedUrl;
         }
 
-        // --- YENİ EKLENEN ONAY MESAJI VE GECİKMELİ KAPATMA MANTIĞI ---
-        const confirmationMessage = document.getElementById('crop-confirmation-message');
-        if (confirmationMessage) {
-            confirmationMessage.style.display = 'block';
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
         }
-
-        // 1.5 saniye sonra pencereyi kapat
-        setTimeout(() => {
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) {
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-                modal.remove();
-            }
-        }, 1000); 
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
@@ -986,14 +979,19 @@ function showCropModal(originalUrl, optimizedUrl) {
             <div class="crop-modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <h2>Edit & Crop Image</h2>
-                <div id="crop-confirmation-message" style="display: none; color: var(--success-color); font-weight: bold; margin-bottom: 1rem; text-align: center;">Crop Completed!</div>
                 <div class="crop-image-container">
-                    <img id="crop-image" src="${optimizedUrl}" alt="Original Image">
+                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
                 </div>
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+
+                    <button class="btn btn-secondary" id="crop-reset-btn">
+                        Reset All
+                        <span class="tooltip-text">
+                            Warning: All changes will be reset. You will revert to the initial optimized image.
+                        </span>
+                    </button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
