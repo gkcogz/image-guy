@@ -6,11 +6,11 @@
     
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
-        script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com; 
-        style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; 
+        script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com 'sha256-j2gSYqtk4nRW08uaDUHV5K3bKY4rFf0lwsCgsOXN+Pk='; 
+        style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline'; 
         font-src https://fonts.gstatic.com; 
         img-src 'self' data: blob: https://*.s3.amazonaws.com; 
-        connect-src 'self' https://*.s3.amazonaws.com;
+        connect-src 'self' https://*.s3.amazonaws.com https://*.s3.eu-north-1.amazonaws.com;
         frame-src 'none'; 
         object-src 'none';">
 
@@ -26,10 +26,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
 
     <link rel="stylesheet" href="https://unpkg.com/img-comparison-slider@8/dist/styles.css" 
-          integrity="sha384-ePzNuCckQnI02s2p2sjs9g3a0s2Nl3i4SCnb3C2AFbVr02PckK9sT8k2wKj/oizJ" 
+          integrity="sha384-TYCxyqTqCrHZ0yHG2B7VENYnxnIBGWt8GHLLkGegAYCw+1UkvUd0YpsVPrt+8//z" 
           crossorigin="anonymous" />
     <script type="module" src="https://unpkg.com/img-comparison-slider@8/dist/index.js" 
-            integrity="sha384-sQIW8i2p773YDE/5DB29eD11d/1J22xQ9g+k4T3vH3E4N2XQ3jW2LwLgqjLz4vH6" 
+            integrity="sha384-32eeHSd4JypnpaTys7FbCCQKgJJvU92/13it0iUj5KwvhZBmo9UgreMyS1WXaW9x" 
             crossorigin="anonymous"></script>
     
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -54,9 +54,9 @@
             
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/blog.html" data-i_18n-key="nav_blog">Blog</a></li>
-                    <li><a href="/about.html" data-i_18n-key="nav_about">About</a></li>
-                    <li><a href="/contact.html" data-i_18n-key="nav_contact">Contact</a></li>
+                    <li><a href="/blog.html" data-i18n-key="nav_blog">Blog</a></li>
+                    <li><a href="/about.html" data-i18n-key="nav_about">About</a></li>
+                    <li><a href="/contact.html" data-i18n-key="nav_contact">Contact</a></li>
                 </ul>
 
                 <div class="language-switcher">
@@ -74,12 +74,12 @@
         </div>
     </header>
 
-        <div class="announcement-bar">
-            <div class="announcement-text">
-                <span data-i18n-key="home_announcement">Welcome!</span>
-                <span data-i18n-key="home_announcement">Welcome!</span>
-            </div>
+    <div class="announcement-bar">
+        <div class="announcement-text">
+            <span data-i18n-key="home_announcement">Welcome!</span>
+            <span data-i18n-key="home_announcement">Welcome!</span>
         </div>
+    </div>
 
     <main>
         <section class="hero">
@@ -145,6 +145,7 @@
                 </div>
             </div>
         </section>  
+
     </main>
 
     <footer class="footer">
@@ -157,7 +158,7 @@
                 <a href="/terms.html" data-i18n-key="footer_terms">Terms of Service</a>
             </div>
             <div class="footer-copyright">
-                <span data-i18n-key="footer_copyright">2025 Image-Guy.com | All Rights Reserved.</span>
+                <span data-i18n-key="footer_copyright">&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
                 <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
             </div>
             <div class="footer-co2-badge">
@@ -166,7 +167,7 @@
             </div>
         </div>
     </footer>
-
+    
     <script src="js/main.js" defer></script>
     
 </body>

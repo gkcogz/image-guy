@@ -618,23 +618,46 @@ function updateUIForFileList() {
     translatePage(); 
 }
 
+// DÜZELTİLMİŞ VE DOĞRU ÇALIŞAN FONKSİYON
 function updateQualitySlider() {
     const selectedFormat = document.querySelector('input[name="format"]:checked').value;
     const advancedContainer = document.querySelector('.advanced-slider');
     
+    // Gerekli DOM elemanlarının var olup olmadığını kontrol et
+    if (!advancedContainer) return; 
+
+    const qualitySlider = document.getElementById('quality-slider');
+    const qualityOutput = document.getElementById('quality-output');
+
+    // Eğer seçilen format kalite ayarını destekliyorsa:
     if (DEFAULT_QUALITY_SETTINGS[selectedFormat]) {
         const settings = DEFAULT_QUALITY_SETTINGS[selectedFormat];
-        const qualitySlider = document.getElementById('quality-slider');
-        const qualityOutput = document.getElementById('quality-output');
         
-        qualitySlider.min = settings.min;
-        qualitySlider.max = settings.max;
-        qualitySlider.value = settings.default;
-        qualityOutput.textContent = settings.default;
-        
-        advancedContainer.style.visibility = 'visible';
+        // Sadece slider'ın değerlerini güncelle, görünürlüğüne dokunma.
+        // Görünürlük kontrolü tamamen dişli ikonuna ait olmalıdır.
+        if (qualitySlider && qualityOutput) {
+            qualitySlider.min = settings.min;
+            qualitySlider.max = settings.max;
+            qualitySlider.value = settings.default;
+            qualityOutput.textContent = settings.default;
+        }
+
+        // DİŞLİ İKONUNUN GÖRÜNÜRLÜĞÜNÜ YÖNET (Ek İyileştirme)
+        // Eğer format kaliteyi destekliyorsa ayarlar butonu görünsün.
+        const advancedButton = document.getElementById('advanced-options-btn');
+        if (advancedButton) {
+            advancedButton.style.display = 'inline-flex';
+        }
+
     } else {
-        advancedContainer.style.visibility = 'hidden';
+        // Eğer seçilen format kalite ayarını DESTEKLEMİYORSA (örn: Favicon):
+        // Ayarlar bölümünü gizle ve ayarlar butonunu da gizle.
+        advancedContainer.style.display = 'none';
+        
+        const advancedButton = document.getElementById('advanced-options-btn');
+        if (advancedButton) {
+            advancedButton.style.display = 'none';
+        }
     }
 }
 
