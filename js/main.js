@@ -1,74 +1,118 @@
 // ===============================================
-// DİL (i18n) AYARLARI
+// APPLICATION STATE & CONSTANTS
 // ===============================================
 
-let translations = {};
-const supportedLanguages = ['en', 'de', 'zh', 'tr'];
-let currentLanguage = 'en'; // Varsayılan dil
+// Step 5: All global variables are consolidated into a single central object
+// to manage the application's state.
+const appState = {
+    translations: {},
+    currentLanguage: 'en', // Default language
+    fileQueue: [],
+    cropper: null,
+    currentCropTarget: null,
+    cropHistory: [],
+    ultimateOriginalUrl: null,
+};
 
-// Dil dosyasını yükleyen fonksiyon
+// Constants (Values that do not change throughout the application's lifecycle)
+const SUPPORTED_LANGUAGES = ['en', 'de', 'zh', 'tr'];
+const DEFAULT_QUALITY_SETTINGS = {
+    jpeg: { default: 85, min: 50, max: 95 },
+    png: { default: 90, min: 60, max: 100 },
+    webp: { default: 80, min: 50, max: 95 },
+    avif: { default: 60, min: 30, max: 80 },
+    heic: { default: 80, min: 50, max: 95 }
+};
+
+// ===============================================
+// HELPER FUNCTIONS (Dynamic Loading)
+// ===============================================
+
+const loadScript = (src) => new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+        return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Script load error for ${src}`));
+    document.head.appendChild(script);
+});
+
+const loadStyle = (href) => new Promise((resolve, reject) => {
+    if (document.querySelector(`link[href="${href}"]`)) {
+        return resolve();
+    }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.onload = () => resolve();
+    link.onerror = () => reject(new Error(`Style load error for ${href}`));
+    document.head.appendChild(link);
+});
+
+// ===============================================
+// LANGUAGE (i18n) SETTINGS
+// ===============================================
+
 async function loadTranslations() {
     try {
         const response = await fetch('/languages.json');
         if (!response.ok) {
             throw new Error('Failed to load language file.');
         }
-        translations = await response.json();
+        const data = await response.json();
+        // Step 4: Validate that the fetched data is a valid object
+        if (typeof data !== 'object' || data === null) {
+            throw new Error('Language file format is invalid.');
+        }
+        appState.translations = data;
         console.log("Translations loaded successfully.");
     } catch (error) {
         console.error(error);
     }
 }
 
-// --- GÜNCELLENMİŞ GÜVENLİK FONKSİYONU ---
-// Sayfadaki metinleri güncelleyen fonksiyon
-// innerHTML yerine textContent kullanarak olası XSS (Cross-Site Scripting)
-// saldırılarını önler. Bu, çeviri dosyasının (languages.json)
-// ele geçirilmesi durumunda bile HTML/script enjekte edilememesini sağlar.
 function translatePage() {
-    if (!translations[currentLanguage]) {
-        console.warn(`No translations found for language: ${currentLanguage}`);
+    if (!appState.translations[appState.currentLanguage]) {
+        console.warn(`No translations found for language: '${appState.currentLanguage}'.`);
         document.documentElement.classList.remove('untranslated');
         return;
     }
 
     document.querySelectorAll('[data-i18n-key]').forEach(element => {
         const key = element.getAttribute('data-i18n-key');
-        if (translations[currentLanguage][key]) {
-            // GÜVENLİK İYİLEŞTİRMESİ:
-            // element.innerHTML yerine element.textContent kullanıldı.
-            element.textContent = translations[currentLanguage][key];
+        if (appState.translations[appState.currentLanguage][key]) {
+            element.textContent = appState.translations[appState.currentLanguage][key];
         }
     });
 
-    document.documentElement.lang = currentLanguage;
+    document.documentElement.lang = appState.currentLanguage;
     document.querySelectorAll('.lang-link').forEach(link => {
-        link.classList.toggle('active', link.dataset.lang === currentLanguage);
+        link.classList.toggle('active', link.dataset.lang === appState.currentLanguage);
     });
 
     document.documentElement.classList.remove('untranslated');
 }
 
-
-// main.js'teki setLanguage fonksiyonunu güncelleyin
 function setLanguage(lang) {
-    if (supportedLanguages.includes(lang)) {
-        currentLanguage = lang;
+    if (SUPPORTED_LANGUAGES.includes(lang)) {
+        appState.currentLanguage = lang;
         localStorage.setItem('selectedLanguage', lang);
         translatePage();
     }
 }
 
-// Sayfa ilk yüklendiğinde çalışacak fonksiyon
 async function initializeI18n() {
     await loadTranslations();
     const savedLang = localStorage.getItem('selectedLanguage');
     const browserLang = navigator.language.split('-')[0];
 
     let initialLang = 'en';
-    if (savedLang && supportedLanguages.includes(savedLang)) {
+    if (savedLang && SUPPORTED_LANGUAGES.includes(savedLang)) {
         initialLang = savedLang;
-    } else if (supportedLanguages.includes(browserLang)) {
+    } else if (SUPPORTED_LANGUAGES.includes(browserLang)) {
         initialLang = browserLang;
     }
     
@@ -98,28 +142,15 @@ async function initializeI18n() {
 }
 
 // ==========================================================
-// BURADAN SONRASI ANA SAYFAYA ÖZEL FONKSİYONLAR
+// MAIN APPLICATION LOGIC
 // ==========================================================
-
-let fileQueue = []; 
-const DEFAULT_QUALITY_SETTINGS = {
-    jpeg: { default: 85, min: 50, max: 95 },
-    png: { default: 90, min: 60, max: 100 },
-    webp: { default: 80, min: 50, max: 95 },
-    avif: { default: 60, min: 30, max: 80 },
-    heic: { default: 80, min: 50, max: 95 }
-};
-let cropper = null;
-let currentCropTarget = null;
-let cropHistory = []; 
-let ultimateOriginalUrl = null; 
 
 const fileInput = document.getElementById('file-input');
 const uploadArea = document.querySelector('.upload-area');
 const initialUploadAreaHTML = uploadArea.innerHTML;
 
 // ===============================================
-// OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
+// EVENT LISTENERS
 // ===============================================
 
 fileInput.addEventListener('change', (event) => {
@@ -154,9 +185,9 @@ document.body.addEventListener('click', async (e) => {
     if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
+            if (appState.cropper) {
+                appState.cropper.destroy();
+                appState.cropper = null;
             }
             modal.remove();
         }
@@ -180,19 +211,18 @@ document.body.addEventListener('click', async (e) => {
         const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
         const formatToRetry = targetButton.dataset.format; 
 
-        const fileToRetry = fileQueue[indexToRetry];
+        const fileToRetry = appState.fileQueue[indexToRetry];
         const listItemToRetry = document.querySelectorAll('.file-list-item')[indexToRetry];
 
         if (fileToRetry && listItemToRetry) {
-            console.log(`Retrying file: ${fileToRetry.name} with format ${formatToRetry}`);
             processSingleFile(fileToRetry, listItemToRetry, indexToRetry, formatToRetry);
         }
     }
 
     if (targetButton && targetButton.classList.contains('btn-delete-item')) {
         const indexToRemove = parseInt(targetButton.dataset.fileIndex, 10);
-        fileQueue.splice(indexToRemove, 1);
-        if (fileQueue.length === 0) {
+        appState.fileQueue.splice(indexToRemove, 1);
+        if (appState.fileQueue.length === 0) {
             resetUI();
         } else {
             updateUIForFileList();
@@ -214,7 +244,7 @@ document.body.addEventListener('click', async (e) => {
             ctx.drawImage(img, 0, 0);
             canvas.toBlob(async (pngBlob) => {
                 await navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
-                const originalText = 'Copy Image'; // Assuming this is the original text or get it from an attribute
+                const originalText = 'Copy Image';
                 copyBtn.textContent = `✓`;
                 copyBtn.classList.add('copied');
                 setTimeout(() => {
@@ -223,8 +253,8 @@ document.body.addEventListener('click', async (e) => {
                 }, 2000);
             }, 'image/png');
         } catch (error) {
-            console.error('Failed to copy image:', error);
-            alert('Failed to copy image. Your browser might not fully support this action.');
+            console.error('Could not copy image:', error);
+            alert('Could not copy image. Your browser may not fully support this action.');
         }
     }
 
@@ -235,24 +265,23 @@ document.body.addEventListener('click', async (e) => {
     }
 
     if (targetButton && targetButton.classList.contains('btn-crop')) {
-        currentCropTarget = targetButton.closest('.action-icon-group');
+        appState.currentCropTarget = targetButton.closest('.action-icon-group');
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
-        showCropModal(originalUrl, optimizedUrl);
+        await showCropModal(originalUrl, optimizedUrl);
     }
 
     if (targetButton && targetButton.id === 'apply-crop-btn') {
-        if (!cropper) return;
+        if (!appState.cropper) return;
 
         const currentState = {
-            optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
-            original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
+            optimized: appState.currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
+            original: appState.currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
         };
-        cropHistory.push(currentState);
-
+        appState.cropHistory.push(currentState);
         
         let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
-        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+        let croppedCanvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
 
         if (isCircle) {
             const circleCanvas = document.createElement('canvas');
@@ -270,7 +299,7 @@ document.body.addEventListener('click', async (e) => {
 
         const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
         
-        const sourceForOriginalCrop = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
+        const sourceForOriginalCrop = appState.currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
         
         const originalCroppedBlob = await new Promise((resolve, reject) => {
             const originalImage = new Image();
@@ -278,9 +307,9 @@ document.body.addEventListener('click', async (e) => {
             originalImage.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const cropBoxData = cropper.getData(true);
-                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
-                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
+                const cropBoxData = appState.cropper.getData(true);
+                const scaleX = originalImage.naturalWidth / appState.cropper.getImageData().naturalWidth;
+                const scaleY = originalImage.naturalHeight / appState.cropper.getImageData().naturalHeight;
                 canvas.width = cropBoxData.width * scaleX;
                 canvas.height = cropBoxData.height * scaleY;
                 ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
@@ -308,51 +337,41 @@ document.body.addEventListener('click', async (e) => {
         const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
         const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
 
-        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
-        const compareButton = currentCropTarget.querySelector('.btn-compare');
-        const cropButton = currentCropTarget.querySelector('.btn-crop');
-        const copyButton = currentCropTarget.querySelector('.btn-copy');
-        const base64Button = currentCropTarget.querySelector('.btn-base64');
+        const downloadLink = appState.currentCropTarget.querySelector('.btn-download-item');
+        const compareButton = appState.currentCropTarget.querySelector('.btn-compare');
+        const cropButton = appState.currentCropTarget.querySelector('.btn-crop');
+        const copyButton = appState.currentCropTarget.querySelector('.btn-copy');
+        const base64Button = appState.currentCropTarget.querySelector('.btn-base64');
 
         if(downloadLink) downloadLink.href = newOptimizedUrl;
-
         if(compareButton) {
             compareButton.dataset.optimizedUrl = newOptimizedUrl;
             compareButton.dataset.originalUrl = newOriginalUrl; 
         }
-
-        if(cropButton) {
-            cropButton.dataset.optimizedUrl = newOptimizedUrl;
-        }
-        
-        if(copyButton) {
-            copyButton.dataset.optimizedUrl = newOptimizedUrl;
-        }
-        
-        if (base64Button) {
-            base64Button.dataset.optimizedUrl = newOptimizedUrl;
-        }
+        if(cropButton) cropButton.dataset.optimizedUrl = newOptimizedUrl;
+        if(copyButton) copyButton.dataset.optimizedUrl = newOptimizedUrl;
+        if (base64Button) base64Button.dataset.optimizedUrl = newOptimizedUrl;
 
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            cropper.destroy();
-            cropper = null;
+            appState.cropper.destroy();
+            appState.cropper = null;
             modal.remove();
         }
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
-        if (!cropper) return;
+        if (!appState.cropper) return;
         const shape = targetButton.dataset.shape;
         const cropBox = document.querySelector('.cropper-view-box');
         const cropFace = document.querySelector('.cropper-face');
         
         if (shape === 'circle') {
-            cropper.setAspectRatio(1/1);
+            appState.cropper.setAspectRatio(1/1);
             if (cropBox) cropBox.style.borderRadius = '50%';
             if (cropFace) cropFace.style.borderRadius = '50%';
         } else {
-            cropper.setAspectRatio(NaN);
+            appState.cropper.setAspectRatio(NaN);
             if (cropBox) cropBox.style.borderRadius = '0';
             if (cropFace) cropFace.style.borderRadius = '0';
         }
@@ -366,28 +385,23 @@ document.body.addEventListener('click', async (e) => {
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
-            
             const reader = new FileReader();
-            reader.onloadend = () => {
-                showBase64Modal(reader.result);
-            };
+            reader.onloadend = () => { showBase64Modal(reader.result); };
             reader.readAsDataURL(blob);
-
         } catch (error) {
-            console.error('Failed to get Base64 data:', error);
+            console.error('Could not get Base64 data:', error);
             alert('Could not generate Base64 code.');
         }
     }
     
     if (targetButton && targetButton.id === 'crop-reset-btn') {
-        if (!cropper) return;
-
-        if (currentCropTarget) {
-            const cropButton = currentCropTarget.querySelector('.btn-crop');
-            const compareButton = currentCropTarget.querySelector('.btn-compare');
-            const copyButton = currentCropTarget.querySelector('.btn-copy');
-            const base64Button = currentCropTarget.querySelector('.btn-base64');
-            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+        if (!appState.cropper) return;
+        if (appState.currentCropTarget) {
+            const cropButton = appState.currentCropTarget.querySelector('.btn-crop');
+            const compareButton = appState.currentCropTarget.querySelector('.btn-compare');
+            const copyButton = appState.currentCropTarget.querySelector('.btn-copy');
+            const base64Button = appState.currentCropTarget.querySelector('.btn-base64');
+            const downloadLink = appState.currentCropTarget.querySelector('.btn-download-item');
 
             const initialOriginalUrl = cropButton.dataset.originalUrl;
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
@@ -402,18 +416,17 @@ document.body.addEventListener('click', async (e) => {
             if (downloadLink) downloadLink.href = initialOptimizedUrl;
         }
 
-
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
-            cropper.destroy();
-            cropper = null;
+            appState.cropper.destroy();
+            appState.cropper = null;
             modal.remove();
         }
     }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeI18n(); // DİL FONKSİYONUNU BAŞLAT
+    initializeI18n(); 
 
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return;
@@ -443,27 +456,20 @@ document.body.addEventListener('change', (e) => {
 function sanitizeFilename(filename) {
     const extension = filename.slice(filename.lastIndexOf('.'));
     let baseName = filename.slice(0, filename.lastIndexOf('.'));
-
-    baseName = baseName.toLowerCase();
-    baseName = baseName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    baseName = baseName.replace(/\s+/g, '-').replace(/-+/g, '-');
-    baseName = baseName.replace(/[^a-z0-9-]/g, '');
-
+    baseName = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/[^a-z0-9-]/g, '');
     if (!baseName) {
         baseName = `file-${Date.now()}`;
     }
-
     return baseName + extension;
 }
 
 function handleFiles(files) {
-    fileQueue = [];
-    cropHistory = [];
+    appState.fileQueue = [];
+    appState.cropHistory = [];
     for (const file of files) { 
-        fileQueue.push(file); 
+        appState.fileQueue.push(file); 
     }
     updateUIForFileList();
-    
     fileInput.value = null; 
 }
 
@@ -488,44 +494,31 @@ function uploadWithProgress(url, file, onProgress) {
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', url, true);
         xhr.setRequestHeader('Content-Type', file.type);
-
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
                 const percentComplete = (event.loaded / event.total) * 100;
                 onProgress(percentComplete);
             }
         };
-
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 resolve(xhr.response);
             } else {
-                reject(new Error(`Upload failed with status: ${xhr.status}`));
+                reject(new Error(`Upload failed: ${xhr.status}`));
             }
         };
-
-        xhr.onerror = () => {
-            reject(new Error('Network error during upload.'));
-        };
-
+        xhr.onerror = () => reject(new Error('Network error during upload.'));
         xhr.send(file);
     });
 }
 
-
-// --- GÜNCELLENMİŞ GÜVENLİK FONKSİYONU ---
-// Bu fonksiyon, listItem.innerHTML kullanarak HTML oluşturmak yerine
-// DOM API'larını (createElement, appendChild) kullanarak arayüzü
-// güvenli bir şekilde inşa eder. Özellikle `file.name` gibi kullanıcıdan
-// gelen veriler `textContent` ile atanarak XSS saldırıları önlenir.
 function updateUIForFileList() {
-    uploadArea.innerHTML = ''; // Önceki içeriği temizle
+    uploadArea.innerHTML = ''; 
     const fileListElement = document.createElement('ul');
     fileListElement.className = 'file-list';
-
     let containsPng = false;
 
-    fileQueue.forEach((file, index) => {
+    appState.fileQueue.forEach((file, index) => {
         if (file.name.toLowerCase().endsWith('.png')) {
             containsPng = true;
         }
@@ -534,93 +527,65 @@ function updateUIForFileList() {
         listItem.className = 'file-list-item';
         listItem.dataset.originalFilename = file.name;
 
-        // --- Güvenli DOM oluşturma başlangıcı ---
-
-        // Dosya Bilgisi Bölümü
+        // Safe DOM creation (with createElement and textContent)
         const fileInfoDiv = document.createElement('div');
         fileInfoDiv.className = 'file-info';
-
         const fileIconSpan = document.createElement('span');
         fileIconSpan.className = 'file-icon';
         fileIconSpan.textContent = '📄';
-
         const fileDetailsDiv = document.createElement('div');
         fileDetailsDiv.className = 'file-details';
-
         const fileNameSpan = document.createElement('span');
         fileNameSpan.className = 'file-name';
-        fileNameSpan.textContent = file.name; // GÜVENLİK: textContent kullanıldı
-
+        fileNameSpan.textContent = file.name; 
         const fileSizeSpan = document.createElement('span');
         fileSizeSpan.className = 'file-size';
-        fileSizeSpan.textContent = formattedSize; // GÜVENLİK: textContent kullanıldı
-
-        fileDetailsDiv.appendChild(fileNameSpan);
-        fileDetailsDiv.appendChild(fileSizeSpan);
-        fileInfoDiv.appendChild(fileIconSpan);
-        fileInfoDiv.appendChild(fileDetailsDiv);
-
-        // Dosya Durum Bölümü
+        fileSizeSpan.textContent = formattedSize;
+        fileDetailsDiv.append(fileNameSpan, fileSizeSpan);
+        fileInfoDiv.append(fileIconSpan, fileDetailsDiv);
         const fileItemStatusDiv = document.createElement('div');
         fileItemStatusDiv.className = 'file-item-status';
-
         const statusSpan = document.createElement('span');
         statusSpan.textContent = 'Ready';
-
         const deleteButton = document.createElement('button');
         deleteButton.className = 'icon-btn btn-delete-item';
         deleteButton.dataset.fileIndex = index;
         deleteButton.title = 'Remove file';
-        // SVG içeriği statik olduğu için innerHTML burada güvenle kullanılabilir.
         deleteButton.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
-        fileItemStatusDiv.appendChild(statusSpan);
-        fileItemStatusDiv.appendChild(deleteButton);
-
-        // Oluşturulan bölümleri ana liste öğesine ekle
-        listItem.appendChild(fileInfoDiv);
-        listItem.appendChild(fileItemStatusDiv);
-
+        fileItemStatusDiv.append(statusSpan, deleteButton);
+        listItem.append(fileInfoDiv, fileItemStatusDiv);
         fileListElement.appendChild(listItem);
     });
-
-    // Aksiyon Alanı (HTML string'ler statik olduğu ve kullanıcı verisi içermediği için innerHTML burada kabul edilebilir)
-    const formatOptionsHTML = `...`; // Bu kısımlar değişmediği için kısa kesilmiştir
-    const advancedSliderHTML = `...`;
     
-    // Kodun geri kalanı, statik HTML'ler olduğu için orijinaldeki gibi bırakılmıştır.
-    // Kullanıcıdan gelen dinamik veriler artık güvenli yöntemlerle işlenmektedir.
     const actionArea = document.createElement('div');
     actionArea.className = 'action-area';
     
-    // Not: Buradaki HTML'ler statiktir, kullanıcı girdisi içermezler.
-    // Bu nedenle güvenlik açısından kritik değildirler.
-    const formatOptionsHTMLContent = `
-        <div class="format-options-header">
-            <span class="format-label">Output Format:</span>
-            <div class="tooltip-container">
-                <span class="info-icon">?</span>
-                <div class="tooltip-content">
-                    <div class="tooltip-grid-item"><h4>JPEG (.jpg)</h4><p>Best for photographs.</p></div>
-                    <div class="tooltip-grid-item"><h4>PNG</h4><p>Best for graphics with transparency.</p></div>
-                    <div class="tooltip-grid-item"><h4>WebP</h4><p>Modern format for web use.</p></div>
-                    <div class="tooltip-grid-item"><h4>AVIF</h4><p>Newest format with highest compression.</p></div>
-                    <div class="tooltip-grid-item"><h4>HEIC</h4><p>Modern format by Apple, great for photos.</p></div>
-                    <div class="tooltip-grid-item"><h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p></div>
-                </div>
+    const formatOptionsHTML = `
+    <div class="format-options-header">
+        <span class="format-label">Output Format:</span>
+        <div class="tooltip-container">
+            <span class="info-icon">?</span>
+            <div class="tooltip-content">
+                <div class="tooltip-grid-item"><h4>JPEG (.jpg)</h4><p>Best for photographs.</p></div>
+                <div class="tooltip-grid-item"><h4>PNG</h4><p>Best for graphics with transparency.</p></div>
+                <div class="tooltip-grid-item"><h4>WebP</h4><p>Modern format for web use.</p></div>
+                <div class="tooltip-grid-item"><h4>AVIF</h4><p>Newest format with highest compression.</p></div>
+                <div class="tooltip-grid-item"><h4>HEIC</h4><p>Modern format by Apple, great for photos.</p></div>
+                <div class="tooltip-grid-item"><h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p></div>
             </div>
         </div>
-        <div class="format-options">
-            <div class="radio-group"><input type="radio" id="jpeg" name="format" value="jpeg" checked><label for="jpeg">JPG</label></div>
-            <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
-            <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
-            <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
-            <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div>
-            <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
-            <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
-        </div>`;
+    </div>
+    <div class="format-options">
+        <div class="radio-group"><input type="radio" id="jpeg" name="format" value="jpeg" checked><label for="jpeg">JPG</label></div>
+        <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
+        <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
+        <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
+        <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div>
+        <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
+        <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
+    </div>`;
 
-    const advancedSliderHTMLContent = `
+    const advancedSliderHTML = `
         <div class="advanced-slider" style="display: none;">
             <div class="quality-label-container">
                 <label for="quality-slider" data-i18n-key="quality_label">Quality:</label>
@@ -628,29 +593,25 @@ function updateUIForFileList() {
             <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
             <output for="quality-slider" id="quality-output">85</output>
         </div>`;
+
+    let smartTipHTML = containsPng ? `<div class="smart-tip">💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.</div>` : '';
     
-    let smartTipHTML = '';
-    if (containsPng) {
-        smartTipHTML = `<div class="smart-tip">💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.</div>`;
-    }
-    
-    actionArea.innerHTML = formatOptionsHTMLContent + advancedSliderHTMLContent + `
+    const actionButtonsHTML = `
         <div class="action-buttons-container initial-actions">
             <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
-            <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>
+            <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${appState.fileQueue.length} files)</button>
             <button class="icon-btn" id="advanced-options-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span class="icon-tooltip">Advanced Settings</span>
             </button>
-        </div>
-    ` + smartTipHTML;
-    
-    uploadArea.appendChild(fileListElement);
-    uploadArea.appendChild(actionArea);
-    uploadArea.classList.add("file-selected");
+        </div>`;
 
+    actionArea.innerHTML = formatOptionsHTML + advancedSliderHTML + actionButtonsHTML + smartTipHTML;
+    
+    uploadArea.append(fileListElement, actionArea);
+    uploadArea.classList.add("file-selected");
     updateQualitySlider();
-    translatePage(); // Dinamik eklenen alanlar için çeviriyi yeniden çalıştır
+    translatePage(); 
 }
 
 function updateQualitySlider() {
@@ -673,9 +634,6 @@ function updateQualitySlider() {
     }
 }
 
-// --- GÜNCELLENMİŞ GÜVENLİK FONKSİYONU ---
-// Bu fonksiyon, işlem sonrası sonuçları ve butonları gösterirken
-// `innerHTML` yerine güvenli DOM oluşturma yöntemleri kullanır.
 async function processSingleFile(file, listItem, index, retryFormat = null) {
     const statusElement = listItem.querySelector('.file-item-status');
     const selectedFormat = retryFormat !== null ? retryFormat : document.querySelector('input[name="format"]:checked').value;
@@ -685,8 +643,8 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
 
     try {
         statusElement.innerHTML = createProgressBarHTML('Preparing...');
-    
         const safeFilename = sanitizeFilename(file.name);
+        
         const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -694,6 +652,10 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         });
         if (!linkResponse.ok) throw new Error('Could not get upload link.');
         const { uploadUrl, key } = await linkResponse.json();
+        
+        if (!uploadUrl || !key) {
+            throw new Error("API response missing 'uploadUrl' or 'key'.");
+        }
 
         const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
         statusElement.innerHTML = uploadProgressBarContainer;
@@ -708,11 +670,7 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         await new Promise(resolve => setTimeout(resolve, 400));
         
         statusElement.innerHTML = createProgressBarHTML('Optimizing...');
-        
-        const optimizePayload = { key: key, outputFormat: selectedFormat };
-        if (qualityValue) {
-            optimizePayload.quality = qualityValue;
-        }
+        const optimizePayload = { key: key, outputFormat: selectedFormat, quality: qualityValue };
         
         const optimizeResponse = await fetch('/.netlify/functions/optimize', {
             method: 'POST',
@@ -724,15 +682,17 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
              throw new Error(errorData.error);
         }
         const data = await optimizeResponse.json();
+        
+        if (!data.downloadUrl || !data.newFilename || data.originalSize === undefined || data.optimizedSize === undefined) {
+            throw new Error('Optimization API response is incomplete or invalid.');
+        }
 
         const originalFullName = listItem.dataset.originalFilename || file.name;
         const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
         const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
         const finalDownloadName = originalBaseName + newExtension;
 
-        // --- Güvenli DOM oluşturma başlangıcı ---
-        statusElement.innerHTML = ''; // Durum alanını temizle
-
+        statusElement.innerHTML = ''; 
         const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
         
         let statusTextSpan;
@@ -749,7 +709,6 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         const actionGroup = document.createElement('div');
         actionGroup.className = 'action-icon-group';
         
-        // Butonlar ve linkler (statik SVG'ler için innerHTML kullanımı güvenlidir)
         const compareBtn = document.createElement('button');
         compareBtn.className = 'icon-btn btn-compare';
         compareBtn.title = 'Compare';
@@ -781,18 +740,15 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         downloadLink.className = 'btn btn-download-item';
         downloadLink.href = data.downloadUrl;
         downloadLink.textContent = 'Download';
-        downloadLink.setAttribute('download', finalDownloadName); // GÜVENLİK: setAttribute kullanıldı
+        downloadLink.setAttribute('download', finalDownloadName);
 
         actionGroup.append(compareBtn, cropBtn, copyBtn, base64Btn, downloadLink);
         statusElement.append(statusTextSpan, actionGroup);
-        // --- Güvenli DOM oluşturma sonu ---
 
     } catch (error) {
-        console.error('Processing failed for', file.name, ':', error);
+        console.error(`Processing failed for '${file.name}':`, error);
         
-        // Hata durumu için de HTML string'i güvenli hale getirelim.
-        statusElement.innerHTML = ''; // Temizle
-
+        statusElement.innerHTML = '';
         const errorSpan = document.createElement('span');
         errorSpan.className = 'status-failed';
         errorSpan.textContent = `Failed! ${error.message}`;
@@ -808,51 +764,36 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
             </svg>
             <span class="icon-tooltip">Retry</span>`;
         
-        statusElement.appendChild(errorSpan);
-        statusElement.appendChild(retryButton);
+        statusElement.append(errorSpan, retryButton);
     }
 }
 
 async function startBatchOptimization() {
-    console.log(`Starting optimization for ${fileQueue.length} files...`);
+    console.log(`Starting optimization for ${appState.fileQueue.length} files...`);
     const optimizeBtn = document.getElementById('optimize-all-btn');
     const clearBtn = document.getElementById('clear-all-btn');
-
-    if (optimizeBtn) {
-        optimizeBtn.textContent = 'Processing...';
-        optimizeBtn.disabled = true;
-    }
-    if (clearBtn) {
-        clearBtn.disabled = true;
-    }
+    if (optimizeBtn) { optimizeBtn.textContent = 'Processing...'; optimizeBtn.disabled = true; }
+    if (clearBtn) { clearBtn.disabled = true; }
 
     const listItems = document.querySelectorAll('.file-list-item');
     const batchSize = 5;
-    let processedCount = 0;
 
-    for (let i = 0; i < fileQueue.length; i += batchSize) {
-        const batch = fileQueue.slice(i, i + batchSize);
+    for (let i = 0; i < appState.fileQueue.length; i += batchSize) {
+        const batch = appState.fileQueue.slice(i, i + batchSize);
         const batchListItems = Array.from(listItems).slice(i, i + batchSize);
         
         const optimizationPromises = batch.map((file, index) => {
             const globalIndex = i + index;
-            const listItem = batchListItems[index];
-            return processSingleFile(file, listItem, globalIndex);
+            return processSingleFile(file, batchListItems[index], globalIndex);
         });
-
         await Promise.all(optimizationPromises);
-
-        processedCount += batch.length;
-        console.log(`${processedCount} of ${fileQueue.length} files processed.`);
     }
-    
     updateMainButtonAfterCompletion();
 }
 
 function updateMainButtonAfterCompletion() {
     const actionArea = document.querySelector('.action-area');
     if (actionArea) {
-        // Bu HTML statik olduğu için innerHTML kullanımı sorun teşkil etmez.
         actionArea.innerHTML = `
             <div class="action-buttons-container">
                 <button class="btn btn-primary" id="download-all-btn">Download All as .ZIP</button>
@@ -865,49 +806,34 @@ function updateMainButtonAfterCompletion() {
 async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
     if (!downloadAllBtn || downloadAllBtn.disabled) return;
-
-    const loadScript = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-            return resolve();
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Script load error for ${src}`));
-        document.head.appendChild(script);
-    });
-
+    
     try {
         downloadAllBtn.textContent = 'Loading Assets...';
         downloadAllBtn.disabled = true;
 
         await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
 
-        console.log('Starting ZIP download process...');
         downloadAllBtn.textContent = 'Zipping...';
 
-        const zip = new JSZip();
+        const zip = new JSZip(); 
         const listItems = document.querySelectorAll('.file-list-item');
 
         const fetchPromises = Array.from(listItems).map(item => {
             const downloadLink = item.querySelector('a.btn-download-item');
-            if (!downloadLink) return Promise.resolve(null); // Eğer link bulunamazsa atla
+            if (!downloadLink) return Promise.resolve(null);
 
             const fileUrl = downloadLink.href;
             const fileName = downloadLink.getAttribute('download');
 
             return fetch(fileUrl)
                 .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
+                    if (!response.ok) throw new Error(`Failed to fetch '${fileUrl}'`);
                     return response.blob();
                 })
-                .then(blob => ({
-                    name: fileName,
-                    blob: blob
-                }));
+                .then(blob => ({ name: fileName, blob: blob }));
         });
 
-        const files = (await Promise.all(fetchPromises)).filter(f => f !== null); // null olanları filtrele
+        const files = (await Promise.all(fetchPromises)).filter(f => f !== null);
         files.forEach(file => {
             zip.file(file.name, file.blob);
         });
@@ -924,9 +850,8 @@ async function handleZipDownload() {
 
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
-
     } catch (error) {
-        console.error('Failed to create ZIP file or load assets:', error);
+        console.error('Failed to create ZIP file:', error);
         alert('An error occurred while creating the ZIP file. Please try again.');
         downloadAllBtn.textContent = 'Download All as .ZIP';
         downloadAllBtn.disabled = false;
@@ -934,21 +859,14 @@ async function handleZipDownload() {
 }
 
 function resetUI() {
-    console.log('Resetting UI to initial state.');
-    fileQueue = [];
-    cropHistory = [];
-    // initialUploadAreaHTML statik ve güvenli olduğu için innerHTML ile atanabilir.
+    appState.fileQueue = [];
+    appState.cropHistory = [];
     uploadArea.innerHTML = initialUploadAreaHTML;
     uploadArea.classList.remove('file-selected');
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showComparisonModal(originalUrl, optimizedUrl) {
-    // Modal içeriği dinamik URL'ler içerse de, bu URL'ler objectURL veya kendi
-    // sunucumuzdan geldiği için XSS riski düşüktür. Yine de en güvenli yöntem
-    // burada da `createElement` kullanmaktır, ancak acil güvenlik odağı
-    // kullanıcı tarafından sağlanan metinlerdedir.
     const modalHTML = `
         <div class="modal-overlay">
             <div class="modal-content">
@@ -963,9 +881,22 @@ function showComparisonModal(originalUrl, optimizedUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-function showCropModal(originalUrl, optimizedUrl) {
-    cropHistory = [];
-    ultimateOriginalUrl = originalUrl; 
+async function showCropModal(originalUrl, optimizedUrl) {
+    try {
+        if (!window.Cropper) {
+            await Promise.all([
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js'),
+                loadStyle('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css')
+            ]);
+        }
+    } catch (error) {
+        console.error("Failed to load Cropper.js assets:", error);
+        alert("An error occurred while loading the image editor. Please try again.");
+        return;
+    }
+
+    appState.cropHistory = [];
+    appState.ultimateOriginalUrl = originalUrl;
 
     const modalHTML = `
         <div class="modal-overlay">
@@ -978,7 +909,7 @@ function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All<span class="tooltip-text">Warning: All changes will be reset. You will revert to the initial optimized image.</span></button>
+                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All<span class="tooltip-text">Warning: All changes will be reset.</span></button>
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
@@ -991,10 +922,10 @@ function showCropModal(originalUrl, optimizedUrl) {
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
-         if (cropper) {
-            cropper.destroy();
+         if (appState.cropper) {
+            appState.cropper.destroy();
          }
-         cropper = new Cropper(image, {
+         appState.cropper = new Cropper(image, {
             viewMode: 1,
             background: false,
             autoCropArea: 0.8,
@@ -1010,8 +941,6 @@ function showCropModal(originalUrl, optimizedUrl) {
 }
 
 function showBase64Modal(base64String) {
-    // Bu modal'daki metinler i18n sistemiyle çevrildiği için
-    // ve translatePage fonksiyonu artık güvenli olduğu için bu kısım da güvenlidir.
     const modalHTML = `
         <div class="modal-overlay">
             <div class="modal-content base64-modal-content">
@@ -1059,7 +988,7 @@ function showBase64Modal(base64String) {
             newWindow.document.write(`<html><head><title>Base64 Image Preview</title></head><body style="margin:0; display:flex; justify-content:center; align-items:center; background-color:#2e2e2e;"><img src="${base64String}" alt="Base64 Preview"></body></html>`);
             newWindow.document.close();
         } else {
-            alert("Please allow popups to preview the image.");
+            alert("Please allow pop-ups to preview the image.");
         }
     });
 }
