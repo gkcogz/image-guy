@@ -597,22 +597,13 @@ body.untranslated {
 /* =================================
    6. Format Seçenekleri ve Tooltip
    ================================= */
-/* =================================
-   6. Format Seçenekleri ve Tooltip
-   ================================= */
-
-/* "Output Format" ve "Quality" başlıklarını ve ikonlarını tutan ana konteynerler */
-.format-options-header,
-.quality-label-container {
+.format-options-header {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin: 1.5rem 0;
-}
-
-.quality-label-container {
-    margin-bottom: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .format-options {
@@ -620,7 +611,6 @@ body.untranslated {
     justify-content: center;
     align-items: center;
     gap: 1.5rem;
-    flex-wrap: wrap;
 }
 
 .format-label {
@@ -633,11 +623,9 @@ body.untranslated {
     gap: 0.5rem;
 }
 
-/* Tooltip'in genel yapısı */
 .tooltip-container {
     position: relative;
     display: flex;
-    align-items: center;
 }
 
 .info-icon {
@@ -658,31 +646,19 @@ body.untranslated {
 .tooltip-content {
     visibility: hidden;
     opacity: 0;
-    position: absolute;
-    z-index: 10;
-    bottom: 125%; /* İkonun üstünde */
-    left: 50%;
-    transform: translateX(-50%); /* Tam ortala */
+    width: 480px;
     background-color: var(--dark-gray);
     color: var(--white-color);
     border-radius: 8px;
     padding: 1rem;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -240px;
+    transition: opacity 0.3s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: opacity 0.3s, visibility 0.3s;
-    pointer-events: none; /* Üzerine gelmeyi engelle, böylece titremez */
-}
-
-/* Sadece ikonun üzerine gelindiğinde tooltip'i göster */
-.tooltip-container:hover .tooltip-content {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto; /* Görünür olduğunda üzerine gelinebilir */
-}
-
-/* Ana Tooltip (Formatlar için) */
-.format-tooltip {
-    width: 480px;
-    margin-left: 0; /* Ortalamak için transform yeterli */
+    pointer-events: none;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.8rem 1.5rem;
@@ -692,29 +668,22 @@ body.untranslated {
     text-align: left;
 }
 
-.tooltip-grid-item h4 {
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-content h4 {
     font-size: 0.9rem;
     color: var(--primary-color);
-    margin: 0 0 0.4rem 0;
+    margin-top: 0;
+    margin-bottom: 0.4rem;
 }
 
-.tooltip-grid-item p {
+.tooltip-content p {
     font-size: 0.8rem;
     line-height: 1.5;
-    margin: 0;
-}
-
-/* Kalite Ayarı Tooltip'i */
-.quality-tooltip {
-    width: 300px;
-    padding: 0.8rem 1rem;
-    text-align: left;
-}
-
-.quality-tooltip p {
-    font-size: 0.85rem;
-    line-height: 1.5;
-    margin: 0;
+    margin-bottom: 0;
 }
 
 .tooltip-content hr {
@@ -1425,4 +1394,3 @@ body.mobile-menu-active::before {
     text-underline-offset: 3px;
     font-weight: 500;
 }
-
