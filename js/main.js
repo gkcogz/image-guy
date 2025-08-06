@@ -626,14 +626,6 @@ const formatOptionsHTML = `
         <div class="advanced-slider" style="display: none;">
             <div class="quality-label-container">
                 <label for="quality-slider" data-i18n-key="quality_label">Quality:</label>
-                <div class="tooltip-container">
-                    <span class="info-icon">?</span>
-                    <div class="tooltip-content quality-tooltip">
-                        <p data-i18n-key="quality_tooltip_text">
-                            Adjusts the compression level. Lower values result in smaller file sizes but lower quality. Higher values provide better quality at the cost of a larger file size. The default value is optimized for a good balance.
-                        </p>
-                    </div>
-                </div>
             </div>
             <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
             <output for="quality-slider" id="quality-output">85</output>
