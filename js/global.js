@@ -1,5 +1,5 @@
 // ===============================================
-// DİL (i18n) AYARLARI - TÜM SAYFALAR İÇİN
+// LANGUAGE (i18n) SETTINGS - FOR ALL PAGES
 // ===============================================
 
 let translations = {};
@@ -12,7 +12,14 @@ async function loadTranslations() {
         if (!response.ok) {
             throw new Error('Failed to load language file.');
         }
-        translations = await response.json();
+        const data = await response.json();
+
+        // SAĞLAMLAŞTIRMA: Gelen verinin geçerli bir nesne olduğunu doğrula.
+        if (typeof data !== 'object' || data === null) {
+            throw new Error('Language file format is invalid.');
+        }
+
+        translations = data;
         console.log("Translations loaded successfully.");
     } catch (error) {
         console.error(error);
@@ -22,14 +29,15 @@ async function loadTranslations() {
 function translatePage() {
     if (!translations[currentLanguage]) {
         console.warn(`No translations found for language: ${currentLanguage}`);
-        // Çeviri olmasa bile içeriği görünür yap, sayfa boş kalmasın.
+        // Make content visible even if there's no translation, so the page isn't blank.
         document.body.classList.remove('untranslated');
         return;
     }
     document.querySelectorAll('[data-i18n-key]').forEach(element => {
         const key = element.getAttribute('data-i18n-key');
         if (translations[currentLanguage][key]) {
-            element.innerHTML = translations[currentLanguage][key];
+            // GÜVENLİK İYİLEŞTİRMESİ: XSS saldırılarını önlemek için innerHTML yerine textContent kullanıldı.
+            element.textContent = translations[currentLanguage][key];
         }
     });
     document.documentElement.lang = currentLanguage;
@@ -37,8 +45,7 @@ function translatePage() {
         link.classList.toggle('active', link.dataset.lang === currentLanguage);
     });
 
-    // === YENİ EKLENEN SATIR ===
-    // Çeviri bitti, şimdi gövdeyi (body) görünür yap.
+    // Translation finished, now make the body visible.
     document.body.classList.remove('untranslated');
 }
 
@@ -62,7 +69,7 @@ async function initializeI18n() {
         initialLang = browserLang;
     }
     
-    setLanguage(initialLang); // await'e gerek yok
+    setLanguage(initialLang);
 
     const switcherBtn = document.getElementById('lang-switcher-btn');
     const dropdown = document.getElementById('language-dropdown');
@@ -91,13 +98,13 @@ async function initializeI18n() {
 
 
 // ===============================================
-// SAYFA YÜKLENDİĞİNDE ÇALIŞACAK GENEL KODLAR
+// GENERAL CODE TO RUN ON PAGE LOAD
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Dil fonksiyonlarını başlat
+    // Initialize language functions
     initializeI18n();
 
-    // Mobil menü fonksiyonunu başlat
+    // Initialize mobile menu function
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const mainNav = document.querySelector('.main-nav');
     if (menuToggle && mainNav) {

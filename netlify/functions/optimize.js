@@ -1,4 +1,4 @@
-// Dosya Adı: netlify/functions/optimize.js (Tam ve Güncellenmiş Hali)
+// File Name: netlify/functions/optimize.js (Complete and Hardened Version)
 
 const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
@@ -30,7 +30,26 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        const { key, outputFormat, quality } = JSON.parse(event.body);
+        // ROBUSTNESS: Validate input from the request body.
+        let body;
+        try {
+            body = JSON.parse(event.body);
+        } catch (e) {
+            return {
+                statusCode: 400, // Bad Request
+                body: JSON.stringify({ error: 'Invalid JSON in request body.' }),
+            };
+        }
+
+        const { key, outputFormat, quality } = body;
+
+        if (!key || !outputFormat) {
+            return {
+                statusCode: 400, // Bad Request
+                body: JSON.stringify({ error: 'Missing required fields: key or outputFormat.' }),
+            };
+        }
+
         const originalFilename = key.replace(/original-\d+-/, '');
 
         const getCommand = new GetObjectCommand({
@@ -41,7 +60,7 @@ exports.handler = async (event, context) => {
         const fileDataBuffer = await streamToBuffer(response.Body);
         const originalSize = fileDataBuffer.length;
 
-        console.log(`Processing file: ${originalFilename} to format: ${outputFormat} with quality: ${quality || 'default'}`);
+        console.log(`Processing file: ${originalFilename}, format: ${outputFormat}, quality: ${quality || 'default'}`);
 
         let processingBuffer = fileDataBuffer;
         if (originalFilename.toLowerCase().endsWith('.heic') || originalFilename.toLowerCase().endsWith('.heif')) {
@@ -108,7 +127,7 @@ exports.handler = async (event, context) => {
         let finalBuffer, finalKey, finalContentType, finalFilename;
 
         if (optimizedSize >= originalSize) {
-            console.log(`Optimization skipped for ${originalFilename}, original is better.`);
+            console.log(`Optimization skipped for ${originalFilename}, original is smaller.`);
             finalBuffer = fileDataBuffer;
             finalKey = key;
             finalContentType = response.ContentType;
@@ -147,10 +166,11 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error('Detailed error:', error);
+        // SECURE ERROR HANDLING: Log the detailed error for debugging, but return a generic message to the client.
+        console.error('An error occurred in the optimize function:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
+            body: JSON.stringify({ error: 'An internal server error occurred during optimization.' }),
         };
     }
 };
