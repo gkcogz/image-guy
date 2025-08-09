@@ -505,6 +505,8 @@ img-comparison-slider img {
     border-color: var(--primary-color);
 }
 
+/* --- Base64 Modal Stilleri (Güncellenmiş) --- */
+
 .base64-modal-content {
     width: 100%;
     max-width: 600px;
@@ -537,25 +539,45 @@ img-comparison-slider img {
     font-size: 0.9rem;
     color: var(--dark-gray);
     background-color: transparent;
-    word-break: break-all;
 }
 
 .base64-textarea:focus {
     outline: none;
 }
 
+/* Modal'ın en altındaki aksiyon bölümü */
 .modal-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between; /* ÖNEMLİ: Öğeleri iki uca yaslar */
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+/* Sağ taraftaki butonları bir arada tutmak için bir grup */
+.modal-actions-group-right {
+    display: flex;
     align-items: center;
     gap: 1rem;
-    width: 100%;
 }
 
 #copy-base64-btn {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.copy-success-msg {
+    visibility: hidden;
+    opacity: 0;
+    color: var(--success-color);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.copy-success-msg.visible {
+    visibility: visible;
+    opacity: 1;
 }
 
 .copy-success-msg {

@@ -985,19 +985,23 @@ function showBase64Modal(base64String) {
                 <div class="base64-container">
                     <textarea class="base64-textarea" readonly>${base64String}</textarea>
                 </div>
+                
                 <div class="modal-actions">
                     <button class="btn btn-secondary" id="check-base64-btn" data-i18n-key="base64_check_button">
                         <span>Check Code</span>
                     </button>
-                    <button class="btn btn-primary" id="copy-base64-btn">
-                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span data-i18n-key="base64_copy_button">Copy to Clipboard</span>
-                    </button>
-                    <span class="copy-success-msg" data-i18n-key="base64_copied_message">Copied!</span>
+                    <div class="modal-actions-group-right">
+                        <button class="btn btn-primary" id="copy-base64-btn">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            <span data-i18n-key="base64_copy_button">Copy to Clipboard</span>
+                        </button>
+                        <span class="copy-success-msg" data-i18n-key="base64_copied_message">Copied!</span>
+                    </div>
                 </div>
-            </div>
+                </div>
         </div>
     `;
+
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     translatePage();
 
