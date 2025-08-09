@@ -297,6 +297,7 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
         else if (selectedFormat === 'webp') exportMimeType = 'image/webp';
         
         // Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
+// Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
         appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
             if (!blob) {
                 console.error("Cropping failed to produce a blob.");
@@ -328,11 +329,16 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
                 modal.remove();
             }
 
-            // Yeni kırpılmış dosyayı tekrar optimizasyon sürecine sok
-            console.log(`Re-optimizing cropped file at index ${fileIndex}...`);
-            await processSingleFile(newCroppedFile, listItem, fileIndex);
+            // --- DEĞİŞİKLİK BURADA ---
+            // Yeniden optimizasyon yapmadan önce o anki formatı bir değişkene al
+            const currentFormat = document.querySelector('input[name="format"]:checked').value;
+
+            // Yeni kırpılmış dosyayı, formatı belirterek tekrar optimizasyon sürecine sok
+            console.log(`Re-optimizing cropped file at index ${fileIndex} to format ${currentFormat}...`);
+            await processSingleFile(newCroppedFile, listItem, fileIndex, currentFormat); // Formatı 4. parametre olarak gönderiyoruz
 
         }, exportMimeType, 0.9);
+
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
