@@ -1,0 +1,167 @@
+/* =================================
+   MOBİL UYUMLULUK (RESPONSIVE)
+   ================================= */
+
+@media (max-width: 768px) {
+    /* --- Genel Düzen --- */
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+    .upload-area {
+        padding: 1.5rem;
+    }
+    .how-it-works h2, .sustainability-mission h3 {
+        font-size: 1.8rem;
+    }
+    .sustainability-mission p {
+        font-size: 1rem;
+    }
+
+    /* --- Header & Mobil Menü --- */
+    .mobile-menu-button {
+        display: block;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1002;
+        background: var(--white-color);
+        border-radius: 50%;
+        padding: 8px;
+        cursor: pointer;
+        border: 1px solid var(--light-gray);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .header .main-nav {
+        display: none; /* Varsayılan olarak menü gizli */
+    }
+    
+    .main-nav {
+        display: flex;
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 250px;
+        height: 100%;
+        background: var(--white-color);
+        box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+        gap: 2rem;
+    }
+
+    .main-nav.mobile-active {
+        transform: translateX(0);
+    }
+
+    .main-nav ul {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+        padding: 0;
+    }
+
+    .main-nav ul li {
+        margin-left: 0;
+    }
+
+    .main-nav a {
+        font-size: 1.2rem;
+        font-weight: 500;
+        padding: 10px 30px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+
+    .main-nav a:hover {
+        background-color: var(--secondary-color);
+    }
+
+    .language-switcher {
+        margin-left: 0;
+        margin-top: 1.5rem;
+    }
+
+    .language-dropdown {
+        top: auto;
+        bottom: 100%;
+    }
+
+    /* --- Dosya Listesi --- */
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .file-item-status {
+        width: 100%;
+        justify-content: flex-start;
+        flex-direction: row; /* Yan yana daha iyi durabilir */
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .action-icon-group {
+        width: 100%;
+        justify-content: flex-start; /* Soldan başlasın */
+        gap: 12px;
+    }
+    
+    .btn-download-item {
+        margin-left: auto; /* İndir butonunu sağa iter */
+    }
+
+    /* --- Form Kontrolleri --- */
+    .format-options-header {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .format-options {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .action-buttons-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* --- "How It Works" Bölümü --- */
+    .steps {
+        flex-direction: column;
+    }
+    .how-it-works .step p {
+        font-size: 0.95em;
+    }
+
+    /* --- Diğer Bölümler --- */
+    .footer-container {
+        gap: 1rem;
+    }
+
+    .footer-links {
+        gap: 1rem 1.5rem;
+    }
+
+    .crop-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .photo-strip-container {
+        padding-left: 20px;
+    }
+
+    .photo-strip-container img {
+        height: 150px;
+    }
+}

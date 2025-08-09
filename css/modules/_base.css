@@ -1,0 +1,75 @@
+/* =================================
+   1. Temel Stiller ve Değişkenler
+   ================================= */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #f8f9fa;
+    --dark-gray: #343a40;
+    --light-gray: #e9ecef;
+    --white-color: #ffffff;
+    --success-color: #28a745;
+    --warning-color: #fd7e14;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-gray);
+    background-color: var(--white-color);
+}
+
+/* Çeviri yüklenirken içeriğin anlık parlamasını (FOUC) engelle */
+html.untranslated body {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.25s ease-in-out;
+}
+
+/* Genel blog içeriği stilleri */
+.post-content p {
+    margin-bottom: 1.25em;
+    line-height: 1.7;
+}
+
+.post-content ul {
+    margin-bottom: 1.25em;
+    padding-left: 1.5em;
+}
+
+.post-content h2 {
+    font-size: 1.8em;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5em;
+}
+
+figure {
+    margin: 2em 0;
+    text-align: center;
+}
+
+figcaption {
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 0.5em;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 1em;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 1em;
+}
+
+code {
+    font-family: 'Courier New', Courier, monospace;
+}

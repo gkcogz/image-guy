@@ -1,0 +1,891 @@
+/* =================================
+   BİLEŞENLER (COMPONENTS)
+   ================================= */
+
+/* --- Butonlar --- */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 24px;
+    font-size: 1rem;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    font-size: 1.1rem;
+    padding: 12px 28px;
+}
+
+.btn-secondary {
+    background-color: var(--white-color);
+    border-color: var(--light-gray);
+    color: var(--dark-gray);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: #dbe1e8;
+}
+
+.icon-btn {
+    background-color: #f8f9fa;
+    color: var(--dark-gray);
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    position: relative;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    pointer-events: none;
+}
+
+.icon-btn:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.icon-btn.copied {
+    background-color: var(--success-color);
+    color: var(--white-color);
+    border-color: var(--success-color);
+}
+
+.icon-btn.copied svg {
+    display: none;
+}
+
+.btn-delete-item {
+    border: none;
+    background-color: transparent;
+    padding: 4px;
+}
+
+.btn-download-item {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    border-color: var(--dark-gray);
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+.btn-download-item:hover {
+    background-color: #555;
+    transform: translateY(-1px);
+}
+
+.btn-retry {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 0.75rem;
+}
+
+.btn-retry:hover svg {
+    stroke: var(--primary-color);
+}
+
+
+/* --- Yükleme Alanı ve Dosya Listesi --- */
+.upload-area {
+    background: var(--white-color);
+    border: 3px dashed var(--light-gray);
+    border-radius: 10px;
+    padding: 3rem;
+    max-width: 700px;
+    margin: 0 auto;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.upload-area:hover, .upload-area.drag-over {
+    border-color: var(--primary-color);
+}
+
+.upload-area.file-selected {
+    border-style: solid;
+    padding: 1.5rem;
+}
+
+.file-list {
+    list-style: none;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.file-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--secondary-color);
+    padding: 0.8rem 1.2rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.file-icon {
+    font-size: 2.5rem;
+    color: #6c757d;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.file-name {
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: #6c757d;
+}
+
+.file-item-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.savings {
+    color: var(--success-color);
+    font-weight: 700;
+}
+
+.savings-info {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.status-failed {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    position: relative;
+    height: 24px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out;
+}
+
+.progress-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--dark-gray);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.progress-bar-fill-indeterminate {
+    width: 100%;
+    background-color: var(--primary-color);
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 40px 40px;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    from { background-position: 40px 0; }
+    to { background-position: 0 0; }
+}
+
+/* --- Formlar ve Kontroller --- */
+.action-area {
+    text-align: center;
+    width: 100%;
+}
+
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.initial-actions {
+    align-items: center;
+}
+
+#download-all-btn {
+    background-color: var(--success-color);
+}
+
+.format-options-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.format-options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.format-label {
+    font-weight: 500;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Tooltip ve İpuçları --- */
+.smart-tip {
+    font-size: 0.9rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 0.8rem 1rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+.tooltip-container {
+    position: relative;
+    display: flex;
+}
+
+.info-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    width: 480px;
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    border-radius: 8px;
+    padding: 1rem;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -240px;
+    transition: opacity 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    pointer-events: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem 1.5rem;
+}
+
+.tooltip-grid-item {
+    text-align: left;
+}
+
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-content h4 {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 0.4rem;
+}
+
+.tooltip-content p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.icon-btn .icon-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.icon-btn:hover .icon-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* --- Modallar (Compare, Crop, Base64) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1001;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background-color: white;
+    border: none;
+    font-size: 2rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    padding: 0;
+    z-index: 1002;
+}
+
+img-comparison-slider img {
+    object-fit: contain;
+    max-width: 85vw;
+    max-height: 85vh;
+    display: block;
+}
+
+.crop-modal-content {
+    /* .modal-content'ten stilleri miras alır, sadece farklı olanları yazarız */
+    width: auto;
+    height: auto;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.crop-modal-content.ready {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.crop-modal-content h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.crop-image-container {
+    max-width: 70vw;
+    max-height: 60vh;
+    margin-bottom: 1.5rem;
+}
+
+.crop-image-container img {
+    max-width: 100%;
+    display: block;
+}
+
+.crop-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.crop-shape-btn.active {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
+}
+
+.base64-modal-content {
+    width: 100%;
+    max-width: 600px;
+}
+
+.base64-modal-content h2 {
+    margin-bottom: 0.5rem;
+}
+
+.base64-modal-content p {
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+}
+
+.base64-container {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.base64-textarea {
+    width: 100%;
+    min-height: 150px;
+    border: none;
+    resize: vertical;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+    background-color: transparent;
+    word-break: break-all;
+}
+
+.base64-textarea:focus {
+    outline: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+#copy-base64-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-success-msg {
+    visibility: hidden;
+    opacity: 0;
+    color: var(--success-color);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.copy-success-msg.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* --- Kalite Ayar Slider'ı --- */
+.advanced-slider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.advanced-slider label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#quality-output {
+    font-weight: 600;
+    font-size: 1rem;
+    background-color: var(--light-gray);
+    padding: 2px 8px;
+    border-radius: 5px;
+    min-width: 30px;
+    text-align: center;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 200px;
+    height: 8px;
+    background: var(--light-gray);
+    border-radius: 5px;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid var(--white-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid var(--white-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+    transform: scale(1.1);
+}
+
+#advanced-options-btn {
+    padding: 8px;
+    margin-left: 0.5rem;
+}
+
+#advanced-options-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* --- Dil Değiştirici (Dropdown) --- */
+.language-switcher {
+    position: relative;
+    margin-left: auto;
+    padding-left: 30px;
+}
+
+.language-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background-color: var(--white-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--light-gray);
+    overflow: hidden;
+    z-index: 100;
+    width: 120px;
+}
+
+.language-dropdown a {
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.language-dropdown a:hover {
+    background-color: var(--secondary-color);
+}
+
+.language-dropdown a.active {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* --- Yardım Butonu ve Sohbet Penceresi --- */
+.help-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: auto;
+    height: 50px;
+    border-radius: 25px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 20px;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    z-index: 999;
+}
+
+.help-toggle-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.help-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-width: calc(100% - 40px);
+    height: 450px;
+    max-height: calc(100% - 40px);
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none; /* JS ile flex'e çevrilir */
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.chat-header {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #343a40;
+}
+
+.chat-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 80%;
+    line-height: 1.5;
+}
+
+.bot-message {
+    background-color: #e9ecef;
+    color: #212529;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+}
+
+.chat-form {
+    display: flex;
+    border-top: 1px solid #dee2e6;
+    padding: 10px;
+    flex-shrink: 0;
+}
+
+.chat-form input {
+    flex-grow: 1;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 15px;
+    margin-right: 10px;
+}
+
+.chat-form button {
+    background-color: #007bff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.chat-form button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* --- Resim Karşılaştırma Kutucukları (Blog) --- */
+.image-comparison {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 2rem 0;
+}
+
+.image-comparison figure {
+    flex: 1 1 300px;
+    max-width: 400px;
+    text-align: center;
+}
+
+.image-comparison img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.image-comparison figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* --- Detaylar/Açılır Kapanır Paneller (Blog) --- */
+details { 
+    border: 1px solid #e0e0e0; 
+    border-radius: 8px; 
+    margin-bottom: 1em; 
+}
+
+summary { 
+    font-weight: 600; 
+    cursor: pointer; 
+    padding: 0.8em 1.2em; 
+    outline: none; 
+}
+
+details[open] > summary { 
+    border-bottom: 1px solid #e0e0e0; 
+}
+
+.details-content { 
+    padding: 0.5em 1.2em 1.2em 1.2em; 
+}
+
+/* =================================
+   MOBİL MENÜ - MASAÜSTÜ VARSAYILAN STİLLERİ
+   ================================= */
+
+/* Hamburger menü butonunu masaüstünde (varsayılan olarak) gizle */
+.mobile-menu-button {
+    display: none;
+}
+
+/* --- Genel Blog İçeriği Resim Stilleri --- */
+
+/* Makale içindeki resimleri responsive yapar ve hizalar */
+.post-content img {
+    max-width: 100%; /* Resmin, içinde bulunduğu alandan taşmasını engeller */
+    height: auto;    /* Genişlik değiştikçe orantısını korur */
+    display: block;  /* Ortalamak için gereklidir */
+    margin: 1.5rem auto; /* Dikeyde boşluk bırakır ve yatayda ortalar */
+    border-radius: 8px; /* Kenarları yumuşatır */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Hafif bir gölge ekler */
+}
+
+/* Doğal boyutunda kalması gereken resimler için istisna kuralı */
+/* Bu kural _components.css dosyanızda zaten olmalı, burada tekrar hatırlatıyorum */
+.img-natural-size {
+    display: inline-block;
+    max-width: 100%;
+    width: auto !important;
+    height: auto !important;
+    box-shadow: none; /* Doğal boyuttaki küçük resimlerde gölge olmasın */
+}

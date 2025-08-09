@@ -1,0 +1,217 @@
+/* =================================
+   2. Sayfa Düzeni (Layout)
+   ================================= */
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    background: var(--white-color);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo-image {
+    height: 50px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Ana Navigasyon */
+.main-nav {
+    display: flex;
+    align-items: center;
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 20px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+/* =================================
+   Footer Düzeni Düzeltmesi
+   ================================= */
+
+.footer {
+    background: var(--dark-gray);
+    color: var(--white-color);
+    padding: 2.5rem 0;
+    margin-top: auto;
+}
+
+/* Ana footer kapsayıcısı: Tüm içeriği dikeyde ve ortalı hizalar */
+.footer-container {
+    display: flex;
+    flex-direction: column; /* ÖNEMLİ: Öğeleri alt alta sıralar */
+    align-items: center;    /* ÖNEMLİ: Öğeleri yatayda ortalar */
+    gap: 1.25rem;           /* Her bir bölüm arasına boşluk koyar */
+}
+
+/* Linkler, telif hakkı ve rozet gibi her bir bölüm */
+.footer-links,
+.footer-copyright,
+.footer-co2-badge {
+    width: 100%;            /* Her birinin tam genişliği kaplamasını sağlar */
+    text-align: center;     /* İçindeki metinleri ortalar */
+}
+
+/* Linklerin kendi iç düzeni */
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.footer-links a {
+    color: var(--white-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--primary-color);
+}
+
+/* Telif hakkı yazısının kendi iç düzeni */
+.footer-copyright {
+    font-size: 0.9rem;
+    color: #adb5bd;
+}
+
+.footer-copyright .photo-credit {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #999;
+}
+
+.footer-copyright .photo-credit a {
+    color: #888;
+    text-decoration: none;
+}
+
+.footer-copyright .photo-credit a:hover {
+    text-decoration: underline;
+}
+
+/* CO2 Rozetinin kendi iç düzeni ve stili */
+.footer-co2-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin-top: 1rem; /* Üstündeki öğeden biraz daha fazla ayırır */
+    border: none;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    max-width: 480px; /* Rozetin çok geniş olmasını engeller */
+}
+
+.footer-co2-badge .feather-leaf {
+    color: #28a745; 
+    flex-shrink: 0;
+}
+
+.footer-co2-badge p {
+    margin: 0;
+    font-size: 0.95em;
+    color: #495057; 
+}
+
+.footer-co2-badge p strong {
+    color: #212529; 
+    font-weight: 700;
+}
+
+/* Footer CO2 Rozetinin Genişletilmiş Hali */
+.footer-co2-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 30px; /* DEĞİŞİKLİK: İç yan boşluklar artırıldı */
+    margin-top: 1rem;
+    border: none;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    max-width: 532px; /* DEĞİŞİKLİK: Genişlik artırıldı (önceki 480px) */
+}
+
+/* Anons Çubuğu */
+.announcement-bar {
+    background-color: var(--dark-gray);
+    color: var(--white-color);
+    padding: 0.5rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.announcement-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: scroll 25s linear infinite;
+}
+
+.announcement-text span {
+    font-size: 0.9rem;
+    margin-right: 50px;
+}
+
+.announcement-bar:hover .announcement-text {
+    animation-play-state: paused;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Mobil Menü Arka Planı */
+body.mobile-menu-active {
+    overflow: hidden;
+}
+body.mobile-menu-active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+}
