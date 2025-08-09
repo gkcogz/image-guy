@@ -26,9 +26,8 @@ export default function initHelpWidget() {
         e.preventDefault();
         
         const form = e.target;
-        const data = new FormData(form);
-        const userMessage = data.get('message').trim();
-        const action = form.action;
+        const formData = new FormData(form);
+        const userMessage = formData.get('message').trim();
         const submitButton = form.querySelector('button[type="submit"]');
 
         if (!userMessage) return;
@@ -38,11 +37,19 @@ export default function initHelpWidget() {
         helpInput.value = '';
         submitButton.disabled = true;
 
-        // 2. Formu gönder (contactForm.js'teki mantık)
-        fetch(action, {
+        // Netlify'ın anlayacağı form verisini hazırla
+        const netlifyData = new URLSearchParams();
+        for (const pair of formData.entries()) {
+            netlifyData.append(pair[0], pair[1]);
+        }
+        // Formun adını Netlify'a bildir
+        netlifyData.append('form-name', form.getAttribute('name'));
+
+        // 2. Formu Netlify'ın beklediği formatta gönder
+        fetch('/', { // Action her zaman sitenin kök dizini olmalı
             method: 'POST',
-            body: data,
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: netlifyData.toString()
         }).then(response => {
             if (response.ok) {
                 // 3. Başarılı olursa bot'tan teşekkür mesajı göster
@@ -51,14 +58,11 @@ export default function initHelpWidget() {
                 form.reset();
             } else {
                 // 4. Hata olursa hata mesajı göster
-                response.json().then(data => {
-                    const errorMessage = data.errors ? data.errors.map(e => e.message).join(", ") : "Oops! There was a problem sending your message.";
-                    appendMessage(errorMessage, 'bot-message');
-                });
+                throw new Error('Form submission failed.');
             }
         }).catch(() => {
             // 5. Ağ hatası olursa hata mesajı göster
-            const networkError = "Oops! A network error occurred. Please check your connection and try again.";
+            const networkError = "Oops! An error occurred. Please check your connection and try again.";
             appendMessage(networkError, 'bot-message');
         }).finally(() => {
             // 6. Butonu tekrar aktif et
