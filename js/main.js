@@ -4,6 +4,8 @@
 
 // Step 5: All global variables are consolidated into a single central object
 // to manage the application's state.
+import initHelpWidget from './help-widget.js';
+
 const appState = {
     translations: {},
     currentLanguage: 'en', // Default language
@@ -431,6 +433,7 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeI18n(); 
+    initHelpWidget(); 
 
     const menuToggle = document.getElementById('mobile-menu-toggle');
     if (!menuToggle) return;
