@@ -715,47 +715,59 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
-        // --- YENİ VE DAHA SAĞLAM SIFIRLAMA MANTIĞI ---
         if (button.id === 'crop-reset-btn') {
             if (!appState.cropper || !appState.currentCropTarget) return;
-
+    
             const actionGroup = appState.currentCropTarget;
             const cropButton = actionGroup.querySelector('.btn-crop');
-            const image = document.getElementById('image-to-crop'); // Get the image element
-
+            const image = document.getElementById('image-to-crop');
+    
             if (!cropButton || !image) return;
-
+    
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-
-            // 1. Mevcut cropper eklentisini tamamen yok et.
-            appState.cropper.destroy();
-
-            // 2. Yeni resim yüklendikten SONRA cropper'ı yeniden başlatmak için bir dinleyici kur.
-            image.onload = () => {
-                // Cropper'ı ilk oluşturulduğu zamanki ayarlarla yeniden başlat.
+            const modalContent = image.closest('.crop-modal-content');
+    
+            if (modalContent) modalContent.classList.remove('ready');
+    
+            try {
+                appState.cropper.destroy();
+                appState.cropper = null;
+    
+                image.src = initialOptimizedUrl;
+                await image.decode();
+    
                 appState.cropper = new Cropper(image, {
                     viewMode: 1,
                     background: false,
                     autoCropArea: 0.8,
                     ready: function () {
-                        // Gerekirse aktif buton stillerini yeniden uygula
-                        document.querySelector('.crop-shape-btn.active')?.classList.remove('active');
-                        document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                        // Reset UI elements inside the modal
+                        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                        const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
+                        if (rectBtn) rectBtn.classList.add('active');
+                        
+                        const cropBox = document.querySelector('.cropper-view-box');
+                        const cropFace = document.querySelector('.cropper-face');
+                        if (cropBox) cropBox.style.borderRadius = '0';
+                        if (cropFace) cropFace.style.borderRadius = '0';
+                        
+                        if (modalContent) modalContent.classList.add('ready');
                     }
                 });
-            };
-            
-            // 3. Resmin kaynağını değiştir. Bu, yukarıdaki 'onload' olayını tetikleyecektir.
-            image.src = initialOptimizedUrl;
-
-            // 4. Arka planda, ana listedeki butonların URL'lerini güncelle.
-            actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
-            cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-            actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
-            actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
-            actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
+    
+                // Update data attributes on the main page
+                actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
+                cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
+    
+            } catch (error) {
+                console.error("Failed to reset cropper:", error);
+                alert("An error occurred while resetting the image. Please close the editor and try again.");
+                if (modalContent) modalContent.classList.add('ready');
+            }
         }
-        // --- YENİ MANTIĞIN SONU ---
         
         if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;
