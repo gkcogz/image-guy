@@ -4,15 +4,29 @@
 
 @media (max-width: 768px) {
     /* --- Genel Düzen --- */
+    html {
+        font-size: 102%; /* Okunabilirlik için temel font boyutunu hafifçe artırır */
+    }
+
     .hero h1 {
         font-size: 2.2rem;
     }
+
     .upload-area {
         padding: 1.5rem;
+        /* Dokunma efektinin daha yumuşak olması için */
+        transition: transform 0.1s ease-in-out, background-color 0.1s ease-in-out;
     }
+
+    .upload-area:active {
+        background-color: #eef8ff; /* Çok hafif bir mavi tonu */
+        transform: scale(0.98);    /* Hafifçe küçülme efekti */
+    }
+
     .how-it-works h2, .sustainability-mission h3 {
         font-size: 1.8rem;
     }
+
     .sustainability-mission p {
         font-size: 1rem;
     }
@@ -101,17 +115,20 @@
     .file-item-status {
         width: 100%;
         justify-content: flex-start;
-        flex-direction: row; /* Yan yana daha iyi durabilir */
+        flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
     }
 
     .action-icon-group {
-        width: 100%;
-        justify-content: flex-start; /* Soldan başlasın */
-        gap: 12px;
+        justify-content: flex-start;
+        gap: 6px; /* Butonlar arası boşluğu biraz azaltabiliriz */
     }
     
+    .file-item-status .icon-btn {
+        padding: 10px; /* Dokunma alanını genişletir */
+    }
+
     .btn-download-item {
         margin-left: auto; /* İndir butonunu sağa iter */
     }
@@ -133,9 +150,32 @@
         align-items: stretch;
     }
 
-    /* --- "How It Works" Bölümü --- */
+    /* --- "How It Works" Bölümü (Yatay Kaydırma Olarak Güncellendi) --- */
     .steps {
-        flex-direction: column;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 1.5rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        /* Gerekirse konteynerin kenar boşluklarını sıfırlayın */
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .steps::-webkit-scrollbar {
+        display: none;
+    }
+
+    .step {
+        flex: 0 0 75%;
+        min-width: 250px;
+        border-left: 1px solid #e9ecef;
+    }
+    .step:first-child {
+        border-left: none;
     }
     .how-it-works .step p {
         font-size: 0.95em;
