@@ -6,12 +6,15 @@
 // to manage the application's state.
 import initHelpWidget from './help-widget.js';
 
+// main.js dosyanızın başındaki appState objesi
+
 const appState = {
     translations: {},
-    currentLanguage: 'en', // Default language
+    currentLanguage: 'en',
     fileQueue: [],
     cropper: null,
     currentCropTarget: null,
+    currentCropIndex: -1, // <-- BU SATIRI EKLEYİN
     cropHistory: [],
     ultimateOriginalUrl: null,
 };
@@ -270,27 +273,28 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
         showComparisonModal(originalUrl, optimizedUrl);
     }
 
-    if (targetButton && targetButton.classList.contains('btn-crop')) {
+
+    if (targetButton.classList.contains('btn-crop')) {
         appState.currentCropTarget = targetButton.closest('.action-icon-group');
+        // YENİ: Kırpma işlemi başlamadan önce dosyanın index'ini appState'e kaydet.
+        appState.currentCropIndex = parseInt(targetButton.dataset.fileIndex, 10);
+
         const originalUrl = targetButton.dataset.originalUrl;
         const optimizedUrl = targetButton.dataset.optimizedUrl;
         await showCropModal(originalUrl, optimizedUrl);
     }
 
-    if (targetButton && targetButton.id === 'apply-crop-btn') {
-        if (!appState.cropper) return;
+// main.js -> document.body.addEventListener('click', ...) içi
 
-        // Kullanıcının en son seçtiği formatı ve kaliteyi al
+    if (targetButton && targetButton.id === 'apply-crop-btn') {
+        if (!appState.cropper || appState.currentCropIndex < 0) return;
+
+        // Tarayıcının desteklediği formatı belirle
         const selectedFormatElement = document.querySelector('input[name="format"]:checked');
         const selectedFormat = selectedFormatElement ? selectedFormatElement.value : 'jpeg';
-        
-        // Tarayıcının desteklediği formatları belirle (genellikle jpeg, webp, png)
         let exportMimeType = 'image/jpeg';
-        if (selectedFormat === 'png') {
-            exportMimeType = 'image/png';
-        } else if (selectedFormat === 'webp') {
-            exportMimeType = 'image/webp';
-        }
+        if (selectedFormat === 'png') exportMimeType = 'image/png';
+        else if (selectedFormat === 'webp') exportMimeType = 'image/webp';
         
         // Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
         appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
@@ -300,24 +304,19 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
                 return;
             }
 
-            // O anki dosya listesi öğesini (list item) bul
             const listItem = appState.currentCropTarget.closest('.file-list-item');
-            if (!listItem) {
-                console.error("Could not find the parent list item for cropping.");
-                return;
-            }
+            if (!listItem) return;
 
-            // Bu Blob'dan yeni bir "File" nesnesi oluştur
+            // Blob'dan yeni bir "File" nesnesi oluştur
             const originalFullName = listItem.dataset.originalFilename || 'cropped-image.png';
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newCroppedFile = new File([blob], `${originalBaseName}-cropped.png`, { type: 'image/png' });
 
-            // Dosya sırasındaki (fileQueue) eski dosyanın yerini bu yeni kırpılmış dosya ile değiştir
-            const fileIndex = parseInt(listItem.querySelector('.btn-delete-item').dataset.fileIndex, 10);
+            // Sakladığımız index'i kullanarak doğru dosyayı güncelle
+            const fileIndex = appState.currentCropIndex;
             if (appState.fileQueue[fileIndex]) {
                 appState.fileQueue[fileIndex] = newCroppedFile;
             } else {
-                console.error("Could not find file in queue to replace.");
                 return;
             }
             
@@ -329,11 +328,11 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
                 modal.remove();
             }
 
-            // YENİ OLUŞTURDUĞUMUZ KIRPILMIŞ DOSYAYI TEKRAR OPTİMİZASYON SÜRECİNE SOK
+            // Yeni kırpılmış dosyayı tekrar optimizasyon sürecine sok
             console.log(`Re-optimizing cropped file at index ${fileIndex}...`);
             await processSingleFile(newCroppedFile, listItem, fileIndex);
 
-        }, exportMimeType, 0.9); // 0.9 = %90 kalite (jpeg/webp için)
+        }, exportMimeType, 0.9);
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
@@ -722,6 +721,7 @@ async function processSingleFile(file, listItem, index, retryFormat = null) {
         cropBtn.dataset.originalUrl = originalObjectUrl;
         cropBtn.dataset.optimizedUrl = data.downloadUrl;
         cropBtn.dataset.initialOptimizedUrl = data.downloadUrl;
+        cropBtn.dataset.fileIndex = index; // <-- BU SATIRI EKLEYİN
         cropBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>`;
 
         const copyBtn = document.createElement('button');
