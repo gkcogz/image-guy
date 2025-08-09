@@ -12,7 +12,6 @@ function initializeUploader() {
     const fileInput = document.getElementById('file-input');
 
     // Güvenlik Kontrolü (Guard Clause):
-    // Eğer ana uploader elementleri sayfada yoksa, kodun geri kalanını çalıştırma.
     if (!uploadArea || !fileInput) {
         return;
     }
@@ -28,7 +27,6 @@ function initializeUploader() {
         currentCropIndex: -1,
         cropHistory: [],
         ultimateOriginalUrl: null,
-        // İYİLEŞTİRME: Hafıza sızıntısını önlemek için oluşturulan URL'leri takip et.
         createdObjectUrls: [],
     };
 
@@ -51,9 +49,7 @@ function initializeUploader() {
     // ===============================================
 
     const loadScript = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-            return resolve();
-        }
+        if (document.querySelector(`script[src="${src}"]`)) { return resolve(); }
         const script = document.createElement('script');
         script.src = src;
         script.async = true;
@@ -63,9 +59,7 @@ function initializeUploader() {
     });
 
     const loadStyle = (href) => new Promise((resolve, reject) => {
-        if (document.querySelector(`link[href="${href}"]`)) {
-            return resolve();
-        }
+        if (document.querySelector(`link[href="${href}"]`)) { return resolve(); }
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = href;
@@ -82,21 +76,35 @@ function initializeUploader() {
         const extension = filename.slice(filename.lastIndexOf('.'));
         let baseName = filename.slice(0, filename.lastIndexOf('.'));
         baseName = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/[^a-z0-9-]/g, '');
-        if (!baseName) {
-            baseName = `file-${Date.now()}`;
-        }
+        if (!baseName) { baseName = `file-${Date.now()}`; }
         return baseName + extension;
     }
 
     function handleFiles(files) {
-        resetUI(); // Yeni dosyalar gelince eski arayüzü ve URL'leri temizle
+        resetUI();
+    
+        const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
+        const largeFiles = [];
+        const validFiles = [];
+
         for (const file of files) {
-            // İYİLEŞTİRME: Her dosyaya benzersiz bir ID ata.
-            file.uniqueId = `file-${Date.now()}-${Math.random()}`; 
-            appState.fileQueue.push(file); 
+            if (file.size > MAX_FILE_SIZE) {
+                largeFiles.push(file.name);
+            } else {
+                file.uniqueId = `file-${Date.now()}-${Math.random()}`;
+                validFiles.push(file);
+            }
         }
+
+        if (largeFiles.length > 0) {
+            alert(`Aşağıdaki dosyalar çok büyük (Maksimum 30 MB):\n- ${largeFiles.join("\n- ")}`);
+        }
+        
+        if (validFiles.length === 0) return;
+
+        appState.fileQueue = validFiles;
         updateUIForFileList();
-        fileInput.value = null; 
+        fileInput.value = null;
     }
 
     function formatFileSize(bytes, decimals = 2) {
@@ -109,10 +117,8 @@ function initializeUploader() {
     }
     
     function resetUI() {
-        // İYİLEŞTİRME: Önceki işlemlerden kalan obje URL'lerini hafızadan temizle.
         appState.createdObjectUrls.forEach(url => URL.revokeObjectURL(url));
         appState.createdObjectUrls = [];
-
         appState.fileQueue = [];
         appState.cropHistory = [];
         uploadArea.innerHTML = initialUploadAreaHTML;
@@ -121,52 +127,103 @@ function initializeUploader() {
     }
 
     // ===============================================
-    // UI & MODAL FUNCTIONS
+    // UI & MODAL & RENDERING FUNCTIONS
     // ===============================================
 
-    const createProgressBarHTML = (text) => `
-        <div class="progress-bar-container">
-            <div class="progress-bar-fill progress-bar-fill-indeterminate"></div>
-            <span class="progress-bar-text">${text}</span>
-        </div>
-    `;
+    function renderFileStatus(statusElement, statusType, data = {}) {
+        statusElement.innerHTML = ''; 
+        switch (statusType) {
+            case 'READY':
+                statusElement.innerHTML = `
+                    <span>Ready</span>
+                    <button class="icon-btn btn-delete-item" data-file-index="${data.index}" title="Remove file">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>`;
+                break;
+            case 'PROGRESS_INDETERMINATE':
+                statusElement.innerHTML = `
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill progress-bar-fill-indeterminate"></div>
+                        <span class="progress-bar-text">${data.text}</span>
+                    </div>`;
+                break;
+            case 'PROGRESS_DETERMINATE':
+                statusElement.innerHTML = `
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${data.percent.toFixed(0)}%;"></div>
+                        <span class="progress-bar-text">Uploading ${data.percent.toFixed(0)}%</span>
+                    </div>`;
+                break;
+            case 'SUCCESS':
+                const savingsText = data.savings >= 1 ? `✓ ${data.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
+                const savingsClass = data.savings >= 1 ? 'savings' : 'savings-info';
+                
+                statusElement.innerHTML = `
+                    <span class="${savingsClass}">${savingsText}</span>
+                    <div class="action-icon-group">
+                        <button class="icon-btn btn-compare" title="Compare" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" data-initial-optimized-url="${data.optimizedUrl}" data-file-index="${data.index}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-copy" title="Copy Image" data-optimized-url="${data.optimizedUrl}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-base64" title="Get Base64 Code" data-optimized-url="${data.optimizedUrl}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        </button>
+                        <a class="btn btn-download-item" href="${data.optimizedUrl}" download="${data.downloadName}">Download</a>
+                    </div>`;
+                break;
+            case 'ERROR':
+                statusElement.innerHTML = `
+                    <span class="status-failed">Failed! ${data.message}</span>
+                    <button class="icon-btn btn-retry" data-file-index="${data.index}" data-format="${data.format}">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        <span class="icon-tooltip">Retry</span>
+                    </button>`;
+                break;
+        }
+    }
 
     function updateUIForFileList() {
         uploadArea.innerHTML = ''; 
         const fileListElement = document.createElement('ul');
         fileListElement.className = 'file-list';
-        let containsPng = false;
-
+        
         appState.fileQueue.forEach((file, index) => {
-            if (file.name.toLowerCase().endsWith('.png')) {
-                containsPng = true;
-            }
             const formattedSize = formatFileSize(file.size);
             const listItem = document.createElement('li');
             listItem.className = 'file-list-item';
             listItem.dataset.originalFilename = file.name;
-            // İYİLEŞTİRME: Benzersiz ID'yi DOM elementine ata.
             listItem.dataset.fileId = file.uniqueId;
 
-            listItem.innerHTML = `
-                <div class="file-info">
-                    <span class="file-icon">📄</span>
-                    <div class="file-details">
-                        <span class="file-name">${file.name}</span>
-                        <span class="file-size">${formattedSize}</span>
-                    </div>
-                </div>
-                <div class="file-item-status">
-                    <span>Ready</span>
-                    <button class="icon-btn btn-delete-item" data-file-index="${index}" title="Remove file">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+            const fileInfoDiv = document.createElement('div');
+            fileInfoDiv.className = 'file-info';
+            fileInfoDiv.innerHTML = `
+                <span class="file-icon">📄</span>
+                <div class="file-details">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formattedSize}</span>
                 </div>`;
+            
+            const fileStatusDiv = document.createElement('div');
+            fileStatusDiv.className = 'file-item-status';
+            
+            renderFileStatus(fileStatusDiv, 'READY', { index });
+
+            listItem.append(fileInfoDiv, fileStatusDiv);
             fileListElement.appendChild(listItem);
         });
         
         const actionArea = document.createElement('div');
         actionArea.className = 'action-area';
+        
+        const containsPng = appState.fileQueue.some(file => file.name.toLowerCase().endsWith('.png'));
         
         const formatOptionsHTML = `
         <div class="format-options-header">
@@ -222,7 +279,9 @@ function initializeUploader() {
     }
 
     function updateQualitySlider() {
-        const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+        const selectedFormatRadio = document.querySelector('input[name="format"]:checked');
+        if (!selectedFormatRadio) return;
+        const selectedFormat = selectedFormatRadio.value;
         const advancedContainer = document.querySelector('.advanced-slider');
         if (!advancedContainer) return; 
 
@@ -238,14 +297,10 @@ function initializeUploader() {
                 qualitySlider.value = settings.default;
                 qualityOutput.textContent = settings.default;
             }
-            if (advancedButton) {
-                advancedButton.style.display = 'inline-flex';
-            }
+            if (advancedButton) advancedButton.style.display = 'inline-flex';
         } else {
             advancedContainer.style.display = 'none';
-            if (advancedButton) {
-                advancedButton.style.display = 'none';
-            }
+            if (advancedButton) advancedButton.style.display = 'none';
         }
     }
 
@@ -259,8 +314,7 @@ function initializeUploader() {
                         <img slot="second" src="${optimizedUrl}" />
                     </img-comparison-slider>
                 </div>
-            </div>
-        `;
+            </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
@@ -277,9 +331,6 @@ function initializeUploader() {
             alert("An error occurred while loading the image editor. Please try again.");
             return;
         }
-
-        appState.cropHistory = [];
-        appState.ultimateOriginalUrl = originalUrl;
 
         const modalHTML = `
             <div class="modal-overlay">
@@ -299,8 +350,7 @@ function initializeUploader() {
                         <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
         const image = document.getElementById('image-to-crop');
@@ -308,9 +358,7 @@ function initializeUploader() {
         image.crossOrigin = "anonymous";
 
         image.onload = () => {
-             if (appState.cropper) {
-                appState.cropper.destroy();
-             }
+             if (appState.cropper) appState.cropper.destroy();
              appState.cropper = new Cropper(image, {
                 viewMode: 1,
                 background: false,
@@ -321,9 +369,7 @@ function initializeUploader() {
                 }
             });
         };
-        if (image.complete) {
-            image.onload();
-        }
+        if (image.complete) image.onload();
     }
 
     function showBase64Modal(base64String) {
@@ -347,8 +393,7 @@ function initializeUploader() {
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
         const textarea = document.querySelector('.base64-textarea');
@@ -387,8 +432,7 @@ function initializeUploader() {
             xhr.setRequestHeader('Content-Type', file.type);
             xhr.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
-                    const percentComplete = (event.loaded / event.total) * 100;
-                    onProgress(percentComplete);
+                    onProgress((event.loaded / event.total) * 100);
                 }
             };
             xhr.onload = () => {
@@ -405,21 +449,19 @@ function initializeUploader() {
     
     async function processSingleFile(file, listItem, index, retryFormat = null) {
         const statusElement = listItem.querySelector('.file-item-status');
-        const selectedFormat = retryFormat !== null ? retryFormat : document.querySelector('input[name="format"]:checked').value;
+        const selectedFormat = retryFormat || document.querySelector('input[name="format"]:checked').value;
         const qualitySlider = document.getElementById('quality-slider');
         const qualityValue = qualitySlider ? qualitySlider.value : null;
         
         const originalObjectUrl = URL.createObjectURL(file);
         appState.createdObjectUrls.push(originalObjectUrl);
 
-        // DÜZELTME: Eğer daha önce kaydedilmemişse, dosyanın en orijinal boyutunu
-        // bir data attribute'una kaydet.
         if (!listItem.dataset.ultimateOriginalSize) {
             listItem.dataset.ultimateOriginalSize = file.size;
         }
 
         try {
-            statusElement.innerHTML = createProgressBarHTML('Preparing...');
+            renderFileStatus(statusElement, 'PROGRESS_INDETERMINATE', { text: 'Preparing...' });
             const safeFilename = sanitizeFilename(file.name);
             
             const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
@@ -430,23 +472,16 @@ function initializeUploader() {
             if (!linkResponse.ok) throw new Error('Could not get upload link.');
             const { uploadUrl, key } = await linkResponse.json();
             
-            if (!uploadUrl || !key) {
-                throw new Error("API response missing 'uploadUrl' or 'key'.");
-            }
+            if (!uploadUrl || !key) throw new Error("API response missing 'uploadUrl' or 'key'.");
 
-            statusElement.innerHTML = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
-            const progressBarFill = listItem.querySelector('.progress-bar-fill');
-            const progressBarText = listItem.querySelector('.progress-bar-text');
-            
             await new Promise(resolve => setTimeout(resolve, 50));
             await uploadWithProgress(uploadUrl, file, (percent) => {
-                progressBarFill.style.width = `${percent.toFixed(0)}%`;
-                progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+                renderFileStatus(statusElement, 'PROGRESS_DETERMINATE', { percent });
             });
             await new Promise(resolve => setTimeout(resolve, 400));
             
-            statusElement.innerHTML = createProgressBarHTML('Optimizing...');
-            const optimizePayload = { key: key, outputFormat: selectedFormat, quality: qualityValue };
+            renderFileStatus(statusElement, 'PROGRESS_INDETERMINATE', { text: 'Optimizing...' });
+            const optimizePayload = { key, outputFormat: selectedFormat, quality: qualityValue };
             
             const optimizeResponse = await fetch('/.netlify/functions/optimize', {
                 method: 'POST',
@@ -463,59 +498,28 @@ function initializeUploader() {
                 throw new Error('Optimization API response is incomplete or invalid.');
             }
 
+            const ultimateOriginalSize = parseInt(listItem.dataset.ultimateOriginalSize, 10);
+            const savings = ((ultimateOriginalSize - data.optimizedSize) / ultimateOriginalSize * 100);
+            
             const originalFullName = listItem.dataset.originalFilename || file.name;
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
-            const finalDownloadName = originalBaseName + newExtension;
 
-            statusElement.innerHTML = '';
-            
-            // DÜZELTME: Tasarruf oranını, kaydettiğimiz en orijinal boyuta göre hesapla.
-            const ultimateOriginalSize = parseInt(listItem.dataset.ultimateOriginalSize, 10);
-            const finalOptimizedSize = data.optimizedSize;
-            const savings = ((ultimateOriginalSize - finalOptimizedSize) / ultimateOriginalSize * 100);
-            
-            let statusTextSpan;
-            if (savings >= 1) {
-                statusTextSpan = document.createElement('span');
-                statusTextSpan.className = 'savings';
-                statusTextSpan.textContent = `✓ ${savings.toFixed(0)}% Saved`;
-            } else {
-                statusTextSpan = document.createElement('span');
-                statusTextSpan.className = 'savings-info';
-                statusTextSpan.textContent = `✓ Already Optimized`;
-            }
-            
-            const actionGroup = document.createElement('div');
-            actionGroup.className = 'action-icon-group';
-            actionGroup.innerHTML = `
-                <button class="icon-btn btn-compare" title="Compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
-                </button>
-                <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" data-initial-optimized-url="${data.downloadUrl}" data-file-index="${index}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
-                </button>
-                <button class="icon-btn btn-copy" title="Copy Image" data-optimized-url="${data.downloadUrl}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
-                <button class="icon-btn btn-base64" title="Get Base64 Code" data-optimized-url="${data.downloadUrl}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                </button>
-                <a class="btn btn-download-item" href="${data.downloadUrl}" download="${finalDownloadName}">Download</a>
-            `;
-            statusElement.append(statusTextSpan, actionGroup);
+            renderFileStatus(statusElement, 'SUCCESS', {
+                savings,
+                originalUrl: originalObjectUrl,
+                optimizedUrl: data.downloadUrl,
+                downloadName: originalBaseName + newExtension,
+                index
+            });
 
         } catch (error) {
             console.error(`Processing failed for '${file.name}':`, error);
-            statusElement.innerHTML = `
-                <span class="status-failed">Failed! ${error.message}</span>
-                <button class="icon-btn btn-retry" data-file-index="${index}" data-format="${selectedFormat}">
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                    <span class="icon-tooltip">Retry</span>
-                </button>`;
+            renderFileStatus(statusElement, 'ERROR', {
+                message: error.message,
+                index,
+                format: selectedFormat
+            });
         }
     }
 
@@ -526,17 +530,15 @@ function initializeUploader() {
         if (optimizeBtn) { optimizeBtn.textContent = 'Processing...'; optimizeBtn.disabled = true; }
         if (clearBtn) { clearBtn.disabled = true; }
 
-        const listItems = document.querySelectorAll('.file-list-item');
         const batchSize = 5;
 
         for (let i = 0; i < appState.fileQueue.length; i += batchSize) {
             const batch = appState.fileQueue.slice(i, i + batchSize);
-            const batchListItems = Array.from(listItems).slice(i, i + batchSize);
             
             const optimizationPromises = batch.map((file, index) => {
                 const globalIndex = i + index;
                 const listItem = document.querySelector(`[data-file-id="${file.uniqueId}"]`);
-                if(listItem) {
+                if (listItem) {
                     return processSingleFile(file, listItem, globalIndex);
                 }
                 return Promise.resolve();
@@ -545,7 +547,7 @@ function initializeUploader() {
         }
         updateMainButtonAfterCompletion();
     }
-
+    
     function updateMainButtonAfterCompletion() {
         const actionArea = document.querySelector('.action-area');
         if (actionArea) {
@@ -571,10 +573,9 @@ function initializeUploader() {
             downloadAllBtn.textContent = 'Zipping...';
 
             const zip = new JSZip(); 
-            const listItems = document.querySelectorAll('.file-list-item');
-
-            const fetchPromises = Array.from(listItems).map(item => {
-                const downloadLink = item.querySelector('a.btn-download-item');
+            const fetchPromises = appState.fileQueue.map(file => {
+                const listItem = document.querySelector(`[data-file-id="${file.uniqueId}"]`);
+                const downloadLink = listItem ? listItem.querySelector('a.btn-download-item') : null;
                 if (!downloadLink) return Promise.resolve(null);
 
                 const fileUrl = downloadLink.href;
@@ -603,51 +604,23 @@ function initializeUploader() {
             document.body.removeChild(tempLink);
             URL.revokeObjectURL(tempUrl);
 
-            downloadAllBtn.textContent = 'Download All as .ZIP';
-            downloadAllBtn.disabled = false;
         } catch (error) {
             console.error('Failed to create ZIP file:', error);
             alert('An error occurred while creating the ZIP file. Please try again.');
-            downloadAllBtn.textContent = 'Download All as .ZIP';
-            downloadAllBtn.disabled = false;
+        } finally {
+            if(downloadAllBtn) {
+                downloadAllBtn.textContent = 'Download All as .ZIP';
+                downloadAllBtn.disabled = false;
+            }
         }
     }
     
     // ===============================================
-    // EVENT LISTENERS
+    // EVENT HANDLERS & ROUTER
     // ===============================================
 
-    fileInput.addEventListener('change', (event) => {
-        const files = event.target.files;
-        if (files.length > 0) { handleFiles(files); }
-    });
-
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-    uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('drag-over');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) { handleFiles(files); }
-    });
-
-    document.body.addEventListener('click', async (e) => {
-        const targetButton = e.target.closest('button');
-
-        if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
-            return;
-        }
-
-        if (targetButton && targetButton.id === 'advanced-options-btn') {
-            e.preventDefault();
-            const slider = document.querySelector('.advanced-slider');
-            if (slider) {
-                slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
-            }
-            return; 
-        }
-
-        if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+    function handleModalEvents(event) {
+        if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-close-btn')) {
             const modal = document.querySelector('.modal-overlay');
             if (modal) {
                 if (appState.cropper) {
@@ -656,121 +629,143 @@ function initializeUploader() {
                 }
                 modal.remove();
             }
-            return;
         }
-        
-        if (!targetButton) return;
+    }
+    
+    function handleGeneralActionButtons(button) {
+        if (button.id === 'choose-file-btn') fileInput.click();
+        if (button.id === 'optimize-all-btn') startBatchOptimization();
+        if (button.id === 'download-all-btn') handleZipDownload();
+        if (button.id === 'clear-all-btn') resetUI();
+        if (button.id === 'advanced-options-btn') {
+            const slider = document.querySelector('.advanced-slider');
+            if (slider) slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
+        }
+    }
 
-        if (targetButton.id === 'choose-file-btn') {
-            e.preventDefault();
-            fileInput.click();
+    async function handleListItemActions(button) {
+        if (button.classList.contains('btn-delete-item')) {
+            const indexToRemove = parseInt(button.dataset.fileIndex, 10);
+            appState.fileQueue.splice(indexToRemove, 1);
+            if (appState.fileQueue.length === 0) { resetUI(); } else { updateUIForFileList(); }
         }
-        if (targetButton.id === 'optimize-all-btn') {
-            startBatchOptimization();
-        }
-        if (targetButton.id === 'download-all-btn') {
-            handleZipDownload();
-        }
-        if (targetButton.id === 'clear-all-btn') {
-            resetUI();
-        }
-        if (targetButton.classList.contains('btn-retry')) {
-            const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
-            const formatToRetry = targetButton.dataset.format;
+        if (button.classList.contains('btn-retry')) {
+            const indexToRetry = parseInt(button.dataset.fileIndex, 10);
             const fileToRetry = appState.fileQueue[indexToRetry];
-            
             if (fileToRetry) {
                 const listItemToRetry = document.querySelector(`[data-file-id="${fileToRetry.uniqueId}"]`);
-                if (listItemToRetry) {
-                    processSingleFile(fileToRetry, listItemToRetry, indexToRetry, formatToRetry);
-                }
+                if (listItemToRetry) processSingleFile(fileToRetry, listItemToRetry, indexToRetry, button.dataset.format);
             }
         }
-        if (targetButton.classList.contains('btn-delete-item')) {
-            const indexToRemove = parseInt(targetButton.dataset.fileIndex, 10);
-            appState.fileQueue.splice(indexToRemove, 1);
-            if (appState.fileQueue.length === 0) {
-                resetUI();
-            } else {
-                updateUIForFileList();
-            }
+        if (button.classList.contains('btn-crop')) {
+            appState.currentCropTarget = button.closest('.action-icon-group');
+            appState.currentCropIndex = parseInt(button.dataset.fileIndex, 10);
+            await showCropModal(button.dataset.originalUrl, button.dataset.optimizedUrl);
         }
-        if (targetButton.classList.contains('btn-copy')) {
-            const copyBtn = targetButton;
-            const imageUrl = copyBtn.dataset.optimizedUrl;
+        if (button.classList.contains('btn-compare')) {
+            showComparisonModal(button.dataset.originalUrl, button.dataset.optimizedUrl);
+        }
+        if (button.classList.contains('btn-copy')) {
+            const copyBtn = button;
             try {
-                const response = await fetch(imageUrl);
+                const response = await fetch(copyBtn.dataset.optimizedUrl);
                 const blob = await response.blob();
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = await createImageBitmap(blob);
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                canvas.toBlob(async (pngBlob) => {
-                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
-                    const originalHTML = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '✓';
-                    copyBtn.classList.add('copied');
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalHTML;
-                        copyBtn.classList.remove('copied');
-                    }, 2000);
-                }, 'image/png');
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '✓';
+                copyBtn.classList.add('copied');
+                setTimeout(() => { copyBtn.innerHTML = originalHTML; copyBtn.classList.remove('copied'); }, 2000);
             } catch (error) {
                 console.error('Could not copy image:', error);
-                alert('Could not copy image. Your browser may not fully support this action.');
+                alert('Could not copy image.');
             }
         }
-        if (targetButton.classList.contains('btn-compare')) {
-            const originalUrl = targetButton.dataset.originalUrl;
-            const optimizedUrl = targetButton.dataset.optimizedUrl;
-            showComparisonModal(originalUrl, optimizedUrl);
+        if (button.classList.contains('btn-base64')) {
+            try {
+                const response = await fetch(button.dataset.optimizedUrl);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.onloadend = () => { showBase64Modal(reader.result); };
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                console.error('Could not get Base64 data:', error);
+                alert('Could not generate Base64 code.');
+            }
         }
-        if (targetButton.classList.contains('btn-crop')) {
-            appState.currentCropTarget = targetButton.closest('.action-icon-group');
-            appState.currentCropIndex = parseInt(targetButton.dataset.fileIndex, 10);
-            const originalUrl = targetButton.dataset.originalUrl;
-            const optimizedUrl = targetButton.dataset.optimizedUrl;
-            await showCropModal(originalUrl, optimizedUrl);
+    }
+    
+// index-page.js dosyasındaki bu fonksiyonu güncelleyin
+
+    async function handleCropModalActions(button) {
+        if (button.classList.contains('crop-shape-btn')) {
+            if (!appState.cropper) return;
+            const shape = button.dataset.shape;
+            const isCircle = shape === 'circle';
+            appState.cropper.setAspectRatio(isCircle ? 1 / 1 : NaN);
+            
+            const cropBox = document.querySelector('.cropper-view-box');
+            const cropFace = document.querySelector('.cropper-face');
+            if (cropBox) cropBox.style.borderRadius = isCircle ? '50%' : '0';
+            if (cropFace) cropFace.style.borderRadius = isCircle ? '50%' : '0';
+
+            document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
         }
-        if (targetButton.id === 'apply-crop-btn') {
+
+        // --- DÜZELTİLMİŞ BÖLÜM BURADA BAŞLIYOR ---
+        if (button.id === 'crop-reset-btn') {
+            if (!appState.cropper || !appState.currentCropTarget) return;
+
+            const actionGroup = appState.currentCropTarget;
+            const cropButton = actionGroup.querySelector('.btn-crop');
+            if (!cropButton) return;
+
+            // 1. Kırpma öncesi orijinal optimize edilmiş URL'i al
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
+
+            // 2. YENİ: Aktif cropper'ın içindeki resmi bu orijinal URL ile değiştirerek görseli sıfırla.
+            appState.cropper.replace(initialOptimizedUrl);
+
+            // 3. Arka plandaki butonların linklerini de orijinal haline döndür.
+            actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
+            cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+            actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
+            actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
+            actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
+
+            // 4. İYİLEŞTİRME: Pencereyi kapatma. Kullanıcı sıfırlanmış hali görüp
+            // düzenlemeye devam edebilir veya kendisi kapatabilir.
+        }
+        // --- DÜZELTİLMİŞ BÖLÜM BURADA BİTİYOR ---
+
+        if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;
         
             async function processBlob(blob, format) {
-                if (!blob) {
-                    console.error("Cropping failed to produce a blob.");
-                    alert("An error occurred during cropping. Please try again.");
-                    return;
-                }
-        
+                if (!blob) { console.error("Cropping failed to produce a blob."); return; }
                 const fileIndex = appState.currentCropIndex;
                 const fileToUpdate = appState.fileQueue[fileIndex];
                 if (!fileToUpdate) return;
                 
                 const listItem = document.querySelector(`[data-file-id="${fileToUpdate.uniqueId}"]`);
                 if (!listItem) return;
-        
+
                 const originalFullName = listItem.dataset.originalFilename || `cropped-image.${format}`;
                 const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
                 const newCroppedFile = new File([blob], `${originalBaseName}-cropped.${format}`, { type: `image/${format}` });
                 newCroppedFile.uniqueId = fileToUpdate.uniqueId;
-        
+                
                 appState.fileQueue[fileIndex] = newCroppedFile;
-        
+                
                 const modal = document.querySelector('.modal-overlay');
-                if (modal) {
-                    appState.cropper.destroy();
-                    appState.cropper = null;
-                    modal.remove();
-                }
-        
+                if (modal) { appState.cropper.destroy(); appState.cropper = null; modal.remove(); }
+                
                 await processSingleFile(newCroppedFile, listItem, fileIndex, format);
             }
 
             const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
-            const selectedFormat = isCircleCrop ? 'png' : (document.querySelector('input[name="format"]:checked') ? document.querySelector('input[name="format"]:checked').value : 'jpeg');
-            let exportMimeType = selectedFormat === 'png' ? 'image/png' : (selectedFormat === 'webp' ? 'image/webp' : 'image/jpeg');
+            const selectedFormat = isCircleCrop ? 'png' : (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
+            const exportMimeType = selectedFormat === 'png' ? 'image/png' : (selectedFormat === 'webp' ? 'image/webp' : 'image/jpeg');
             
             const croppedCanvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
         
@@ -784,84 +779,39 @@ function initializeUploader() {
             circularCanvas.width = croppedCanvas.width;
             circularCanvas.height = croppedCanvas.height;
             context.beginPath();
-            context.arc(croppedCanvas.width / 2, croppedCanvas.height / 2, croppedCanvas.width / 2, 0, 2 * Math.PI);
+            context.arc(circularCanvas.width / 2, circularCanvas.height / 2, circularCanvas.width / 2, 0, 2 * Math.PI);
             context.closePath();
             context.clip();
             context.drawImage(croppedCanvas, 0, 0);
             circularCanvas.toBlob((blob) => { processBlob(blob, 'png'); }, 'image/png');
         }
-        if (targetButton.classList.contains('crop-shape-btn')) {
-            if (!appState.cropper) return;
-            const shape = targetButton.dataset.shape;
-            const cropBox = document.querySelector('.cropper-view-box');
-            const cropFace = document.querySelector('.cropper-face');
-            
-            if (shape === 'circle') {
-                appState.cropper.setAspectRatio(1/1);
-                if (cropBox) cropBox.style.borderRadius = '50%';
-                if (cropFace) cropFace.style.borderRadius = '50%';
-            } else {
-                appState.cropper.setAspectRatio(NaN);
-                if (cropBox) cropBox.style.borderRadius = '0';
-                if (cropFace) cropFace.style.borderRadius = '0';
-            }
-            
-            document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-            targetButton.classList.add('active');
-        }
-        if (targetButton.classList.contains('btn-base64')) {
-            const imageUrl = targetButton.dataset.optimizedUrl;
-            try {
-                const response = await fetch(imageUrl);
-                const blob = await response.blob();
-                const reader = new FileReader();
-                reader.onloadend = () => { showBase64Modal(reader.result); };
-                reader.readAsDataURL(blob);
-            } catch (error) {
-                console.error('Could not get Base64 data:', error);
-                alert('Could not generate Base64 code.');
-            }
-        }
-        if (targetButton.id === 'crop-reset-btn') {
-            if (!appState.cropper) return;
-            if (appState.currentCropTarget) {
-                const cropButton = appState.currentCropTarget.querySelector('.btn-crop');
-                const compareButton = appState.currentCropTarget.querySelector('.btn-compare');
-                const copyButton = appState.currentCropTarget.querySelector('.btn-copy');
-                const base64Button = appState.currentCropTarget.querySelector('.btn-base64');
-                const downloadLink = appState.currentCropTarget.querySelector('.btn-download-item');
-    
-                const initialOriginalUrl = cropButton.dataset.originalUrl;
-                const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-    
-                if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-                if (compareButton) {
-                    compareButton.dataset.originalUrl = initialOriginalUrl;
-                    compareButton.dataset.optimizedUrl = initialOptimizedUrl;
-                }
-                if (copyButton) copyButton.dataset.optimizedUrl = initialOptimizedUrl;
-                if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
-                if (downloadLink) downloadLink.href = initialOptimizedUrl;
-            }
-    
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) {
-                appState.cropper.destroy();
-                appState.cropper = null;
-                modal.remove();
-            }
-        }
+    }
+
+    // ANA OLAY YÖNLENDİRİCİSİ (EVENT ROUTER)
+    document.body.addEventListener('click', async (e) => {
+        handleModalEvents(e);
+        const targetButton = e.target.closest('button');
+        if (!targetButton) return;
+        
+        handleGeneralActionButtons(targetButton);
+        await handleListItemActions(targetButton);
+        await handleCropModalActions(targetButton);
     });
-    
+
     document.body.addEventListener('change', (e) => {
-        if (e.target.name === 'format') {
-            updateQualitySlider();
-        }
+        if (e.target.name === 'format') updateQualitySlider();
         if (e.target.id === 'quality-slider') {
             const qualityOutput = document.getElementById('quality-output');
-            if(qualityOutput) {
-                qualityOutput.textContent = e.target.value;
-            }
+            if (qualityOutput) qualityOutput.textContent = e.target.value;
         }
+    });
+
+    // Drag-drop event listeners
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+    uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
     });
 }
