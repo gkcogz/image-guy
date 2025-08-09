@@ -412,6 +412,12 @@ function initializeUploader() {
         const originalObjectUrl = URL.createObjectURL(file);
         appState.createdObjectUrls.push(originalObjectUrl);
 
+        // DÜZELTME: Eğer daha önce kaydedilmemişse, dosyanın en orijinal boyutunu
+        // bir data attribute'una kaydet.
+        if (!listItem.dataset.ultimateOriginalSize) {
+            listItem.dataset.ultimateOriginalSize = file.size;
+        }
+
         try {
             statusElement.innerHTML = createProgressBarHTML('Preparing...');
             const safeFilename = sanitizeFilename(file.name);
@@ -453,7 +459,7 @@ function initializeUploader() {
             }
             const data = await optimizeResponse.json();
             
-            if (!data.downloadUrl || !data.newFilename || data.originalSize === undefined || data.optimizedSize === undefined) {
+            if (!data.downloadUrl || !data.newFilename || data.optimizedSize === undefined) {
                 throw new Error('Optimization API response is incomplete or invalid.');
             }
 
@@ -463,7 +469,11 @@ function initializeUploader() {
             const finalDownloadName = originalBaseName + newExtension;
 
             statusElement.innerHTML = '';
-            const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+            
+            // DÜZELTME: Tasarruf oranını, kaydettiğimiz en orijinal boyuta göre hesapla.
+            const ultimateOriginalSize = parseInt(listItem.dataset.ultimateOriginalSize, 10);
+            const finalOptimizedSize = data.optimizedSize;
+            const savings = ((ultimateOriginalSize - finalOptimizedSize) / ultimateOriginalSize * 100);
             
             let statusTextSpan;
             if (savings >= 1) {
@@ -525,7 +535,11 @@ function initializeUploader() {
             
             const optimizationPromises = batch.map((file, index) => {
                 const globalIndex = i + index;
-                return processSingleFile(file, batchListItems[index], globalIndex);
+                const listItem = document.querySelector(`[data-file-id="${file.uniqueId}"]`);
+                if(listItem) {
+                    return processSingleFile(file, listItem, globalIndex);
+                }
+                return Promise.resolve();
             });
             await Promise.all(optimizationPromises);
         }
