@@ -344,8 +344,8 @@ function initializeUploader() {
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                         <div class="tooltip-wrapper">
-                            <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
-                            <span class="tooltip-text">Warning: All changes will be reset.</span>
+                            <button class="btn btn-secondary" id="crop-reset-btn">Değişiklikleri İptal Et</button>
+                            <span class="tooltip-text">Uyarı: Bu resimdeki tüm değişiklikler iptal edilecek.</span>
                         </div>
                         <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                     </div>
@@ -694,8 +694,6 @@ function initializeUploader() {
         }
     }
     
-// index-page.js dosyasındaki bu fonksiyonu güncelleyin
-
     async function handleCropModalActions(button) {
         if (button.classList.contains('crop-shape-btn')) {
             if (!appState.cropper) return;
@@ -711,8 +709,6 @@ function initializeUploader() {
             document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
         }
-
-        // --- DÜZELTİLMİŞ BÖLÜM BURADA BAŞLIYOR ---
         if (button.id === 'crop-reset-btn') {
             if (!appState.cropper || !appState.currentCropTarget) return;
 
@@ -720,24 +716,15 @@ function initializeUploader() {
             const cropButton = actionGroup.querySelector('.btn-crop');
             if (!cropButton) return;
 
-            // 1. Kırpma öncesi orijinal optimize edilmiş URL'i al
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-
-            // 2. YENİ: Aktif cropper'ın içindeki resmi bu orijinal URL ile değiştirerek görseli sıfırla.
             appState.cropper.replace(initialOptimizedUrl);
 
-            // 3. Arka plandaki butonların linklerini de orijinal haline döndür.
             actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
             cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
-
-            // 4. İYİLEŞTİRME: Pencereyi kapatma. Kullanıcı sıfırlanmış hali görüp
-            // düzenlemeye devam edebilir veya kendisi kapatabilir.
         }
-        // --- DÜZELTİLMİŞ BÖLÜM BURADA BİTİYOR ---
-
         if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;
         
@@ -803,6 +790,14 @@ function initializeUploader() {
         if (e.target.id === 'quality-slider') {
             const qualityOutput = document.getElementById('quality-output');
             if (qualityOutput) qualityOutput.textContent = e.target.value;
+        }
+    });
+
+    // --- YENİ EKLENEN DÜZELTME ---
+    fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length > 0) {
+            handleFiles(files);
         }
     });
 
