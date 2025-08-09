@@ -7,11 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeUploader() {
-    // İYİLEŞTİRME: Kritik DOM elementlerini en başta seç ve varlıklarını kontrol et.
+    // Critical DOM elements are selected at the beginning and their existence is checked.
     const uploadArea = document.querySelector('.upload-area');
     const fileInput = document.getElementById('file-input');
 
-    // Güvenlik Kontrolü (Guard Clause):
+    // Guard Clause:
+    // If the main uploader elements are not on the page, do not run the rest of the code.
     if (!uploadArea || !fileInput) {
         return;
     }
@@ -97,7 +98,7 @@ function initializeUploader() {
         }
 
         if (largeFiles.length > 0) {
-            alert(`Aşağıdaki dosyalar çok büyük (Maksimum 30 MB):\n- ${largeFiles.join("\n- ")}`);
+            alert(`The following files are too large (Max 30 MB):\n- ${largeFiles.join("\n- ")}`);
         }
         
         if (validFiles.length === 0) return;
@@ -344,8 +345,8 @@ function initializeUploader() {
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                         <div class="tooltip-wrapper">
-                            <button class="btn btn-secondary" id="crop-reset-btn">Değişiklikleri İptal Et</button>
-                            <span class="tooltip-text">Uyarı: Bu resimdeki tüm değişiklikler iptal edilecek.</span>
+                            <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                            <span class="tooltip-text">Warning: All changes will be reset.</span>
                         </div>
                         <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                     </div>
@@ -709,6 +710,7 @@ function initializeUploader() {
             document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
         }
+        
         if (button.id === 'crop-reset-btn') {
             if (!appState.cropper || !appState.currentCropTarget) return;
 
@@ -717,14 +719,21 @@ function initializeUploader() {
             if (!cropButton) return;
 
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-            appState.cropper.replace(initialOptimizedUrl);
 
             actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
             cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
+            
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                appState.cropper.destroy();
+                appState.cropper = null;
+                modal.remove();
+            }
         }
+        
         if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;
         
@@ -774,7 +783,7 @@ function initializeUploader() {
         }
     }
 
-    // ANA OLAY YÖNLENDİRİCİSİ (EVENT ROUTER)
+    // MAIN EVENT ROUTER
     document.body.addEventListener('click', async (e) => {
         handleModalEvents(e);
         const targetButton = e.target.closest('button');
@@ -793,7 +802,6 @@ function initializeUploader() {
         }
     });
 
-    // --- YENİ EKLENEN DÜZELTME ---
     fileInput.addEventListener('change', (event) => {
         const files = event.target.files;
         if (files.length > 0) {
