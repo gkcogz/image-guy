@@ -715,33 +715,46 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
+        // --- NIHAI ÇÖZÜM: Elementi tamamen değiştirme ---
         if (button.id === 'crop-reset-btn') {
-            if (!appState.cropper || !appState.currentCropTarget) return;
-    
+            if (!appState.currentCropTarget) return;
+
             const actionGroup = appState.currentCropTarget;
             const cropButton = actionGroup.querySelector('.btn-crop');
-            const image = document.getElementById('image-to-crop');
-    
-            if (!cropButton || !image) return;
+            const oldImage = document.getElementById('image-to-crop');
+            const imageContainer = oldImage?.parentElement;
+
+            if (!cropButton || !oldImage || !imageContainer) return;
     
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-            const modalContent = image.closest('.crop-modal-content');
+            const modalContent = oldImage.closest('.crop-modal-content');
     
             if (modalContent) modalContent.classList.remove('ready');
     
             try {
-                appState.cropper.destroy();
-                appState.cropper = null;
-    
-                image.src = initialOptimizedUrl;
-                await image.decode();
-    
-                appState.cropper = new Cropper(image, {
+                if (appState.cropper) {
+                    appState.cropper.destroy();
+                    appState.cropper = null;
+                }
+
+                const newImage = new Image();
+                newImage.id = 'image-to-crop';
+                newImage.crossOrigin = 'anonymous';
+                
+                // Yeni resmi yükle ve bekle
+                newImage.src = initialOptimizedUrl;
+                await newImage.decode();
+
+                // Eski resmi DOM'dan kaldır ve yenisini ekle
+                imageContainer.innerHTML = ''; // Konteynerı temizle
+                imageContainer.appendChild(newImage);
+
+                // Yeni element üzerinde Cropper'ı başlat
+                appState.cropper = new Cropper(newImage, {
                     viewMode: 1,
                     background: false,
                     autoCropArea: 0.8,
                     ready: function () {
-                        // Reset UI elements inside the modal
                         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
                         const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
                         if (rectBtn) rectBtn.classList.add('active');
@@ -755,7 +768,7 @@ function initializeUploader() {
                     }
                 });
     
-                // Update data attributes on the main page
+                // Arka plandaki data-attributeları güncelle
                 actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
                 cropButton.dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
