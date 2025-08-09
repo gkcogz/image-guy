@@ -345,8 +345,8 @@ function initializeUploader() {
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                         <div class="tooltip-wrapper">
-                            <button class="btn btn-secondary" id="crop-reset-btn">Değişiklikleri İptal Et</button>
-                            <span class="tooltip-text">Uyarı: Bu resimdeki tüm değişiklikler iptal edilecek.</span>
+                            <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                            <span class="tooltip-text">Warning: All changes will be deleted.</span>
                         </div>
                         <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                     </div>
@@ -506,7 +506,6 @@ function initializeUploader() {
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
 
-            // THIS IS THE FINAL FIX: Preserve the initial URL across re-renders.
             const existingCropBtn = listItem.querySelector('.btn-crop');
             const initialUrlToKeep = existingCropBtn?.dataset.initialOptimizedUrl || data.downloadUrl;
 
@@ -716,6 +715,7 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
+        // GÜNCELLENMİŞ KOD BAŞLANGICI
         if (button.id === 'crop-reset-btn') {
             if (!appState.cropper || !appState.currentCropTarget) return;
 
@@ -725,19 +725,20 @@ function initializeUploader() {
 
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
 
+            // 1. Cropper'ı hem görsel olarak sıfırla hem de resmi ilk haliyle değiştir.
+            appState.cropper.reset();
+            appState.cropper.replace(initialOptimizedUrl);
+
+            // 2. Arka plandaki URL'leri de güncelle.
             actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
             cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
             
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) {
-                appState.cropper.destroy();
-                appState.cropper = null;
-                modal.remove();
-            }
+            // 3. Modal pencereyi kapatan kodlar kaldırıldı. Artık görsel sıfırlama yapılıyor.
         }
+        // GÜNCELLENMİŞ KOD SONU
         
         if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;
