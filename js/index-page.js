@@ -165,7 +165,7 @@ function initializeUploader() {
                         <button class="icon-btn btn-compare" title="Compare" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                         </button>
-                        <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" data-initial-optimized-url="${data.optimizedUrl}" data-file-index="${data.index}">
+                        <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" data-initial-optimized-url="${data.initialOptimizedUrl}" data-file-index="${data.index}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
                         </button>
                         <button class="icon-btn btn-copy" title="Copy Image" data-optimized-url="${data.optimizedUrl}">
@@ -345,8 +345,8 @@ function initializeUploader() {
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                         <div class="tooltip-wrapper">
-                            <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
-                            <span class="tooltip-text">Warning: All changes will be reset.</span>
+                            <button class="btn btn-secondary" id="crop-reset-btn">Değişiklikleri İptal Et</button>
+                            <span class="tooltip-text">Uyarı: Bu resimdeki tüm değişiklikler iptal edilecek.</span>
                         </div>
                         <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                     </div>
@@ -506,10 +506,15 @@ function initializeUploader() {
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
 
+            // THIS IS THE FINAL FIX: Preserve the initial URL across re-renders.
+            const existingCropBtn = listItem.querySelector('.btn-crop');
+            const initialUrlToKeep = existingCropBtn?.dataset.initialOptimizedUrl || data.downloadUrl;
+
             renderFileStatus(statusElement, 'SUCCESS', {
                 savings,
                 originalUrl: originalObjectUrl,
                 optimizedUrl: data.downloadUrl,
+                initialOptimizedUrl: initialUrlToKeep,
                 downloadName: originalBaseName + newExtension,
                 index
             });
