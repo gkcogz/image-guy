@@ -204,4 +204,12 @@
     .photo-strip-container img {
         height: 150px;
     }
+
+@media (max-width: 768px) {
+ .compare-btn,
+ .copy-base64-text {
+ display: none !important;
+ }
+}
+
 }
