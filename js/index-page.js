@@ -18,7 +18,6 @@ function initializeUploader() {
     // APPLICATION STATE & CONSTANTS
     // ===============================================
 
-    // Sadece uploader ile ilgili olan state değişkenleri
     const appState = {
         fileQueue: [],
         cropper: null,
@@ -28,7 +27,6 @@ function initializeUploader() {
         ultimateOriginalUrl: null,
     };
 
-    // Değişmeyen sabit değerler
     const DEFAULT_QUALITY_SETTINGS = {
         jpeg: { default: 85, min: 50, max: 95 },
         png: { default: 90, min: 60, max: 100 },
@@ -503,7 +501,6 @@ function initializeUploader() {
             cropBtn.dataset.originalUrl = originalObjectUrl;
             cropBtn.dataset.optimizedUrl = data.downloadUrl;
             cropBtn.dataset.initialOptimizedUrl = data.downloadUrl;
-            // Hata Düzeltmesi: İstenen data-file-index özniteliği eklendi.
             cropBtn.dataset.fileIndex = index;
             cropBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>`;
 
@@ -662,7 +659,6 @@ function initializeUploader() {
     document.body.addEventListener('click', async (e) => {
         const targetButton = e.target.closest('button');
 
-        // Modallar ve genel tıklamalar için erken çıkış
         if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
             return;
         }
@@ -689,7 +685,6 @@ function initializeUploader() {
             return;
         }
         
-        // Düğme bazlı işlemler
         if (targetButton) {
             if (targetButton.id === 'choose-file-btn') {
                 e.preventDefault();
@@ -756,57 +751,91 @@ function initializeUploader() {
             }
             if (targetButton.classList.contains('btn-crop')) {
                 appState.currentCropTarget = targetButton.closest('.action-icon-group');
-                // Hata Düzeltmesi: Kırpma için index güvenilir bir şekilde saklanıyor.
                 appState.currentCropIndex = parseInt(targetButton.dataset.fileIndex, 10);
                 const originalUrl = targetButton.dataset.originalUrl;
                 const optimizedUrl = targetButton.dataset.optimizedUrl;
                 await showCropModal(originalUrl, optimizedUrl);
             }
-            if (targetButton.id === 'apply-crop-btn') {
-                if (!appState.cropper || appState.currentCropIndex < 0) return;
 
-                const selectedFormat = document.querySelector('input[name="format"]:checked') 
-                    ? document.querySelector('input[name="format"]:checked').value 
-                    : 'jpeg';
-                
-                let exportMimeType = 'image/jpeg';
-                if (selectedFormat === 'png') exportMimeType = 'image/png';
-                else if (selectedFormat === 'webp') exportMimeType = 'image/webp';
-                
-                appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
+            // GÜNCELLENMİŞ VE DÜZELTİLMİŞ apply-crop-btn KOD BLOĞU
+            if (targetButton && targetButton.id === 'apply-crop-btn') {
+                if (!appState.cropper || appState.currentCropIndex < 0) return;
+            
+                async function processBlob(blob, format) {
                     if (!blob) {
                         console.error("Cropping failed to produce a blob.");
                         alert("An error occurred during cropping. Please try again.");
                         return;
                     }
-                    
+            
                     const fileIndex = appState.currentCropIndex;
                     const listItem = document.querySelectorAll('.file-list-item')[fileIndex];
                     if (!listItem) return;
-
-                    const originalFullName = listItem.dataset.originalFilename || 'cropped-image.png';
+            
+                    const originalFullName = listItem.dataset.originalFilename || `cropped-image.${format}`;
                     const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
-                    // Hata Düzeltmesi: Yazım hatası 'newCroovedFile' -> 'newCroppedFile' olarak düzeltildi.
-                    const newCroppedFile = new File([blob], `${originalBaseName}-cropped.png`, { type: 'image/png' });
-
+                    const newCroppedFile = new File([blob], `${originalBaseName}-cropped.${format}`, { type: `image/${format}` });
+            
                     if (appState.fileQueue[fileIndex]) {
                         appState.fileQueue[fileIndex] = newCroppedFile;
                     } else {
                         return;
                     }
-                    
+            
                     const modal = document.querySelector('.modal-overlay');
                     if (modal) {
                         appState.cropper.destroy();
                         appState.cropper = null;
                         modal.remove();
                     }
-                    
-                    // Hata Düzeltmesi: Kırpılan resim yeniden optimizasyon için processSingleFile'a gönderiliyor.
-                    console.log(`Re-optimizing cropped file at index ${fileIndex} to format ${selectedFormat}...`);
-                    await processSingleFile(newCroppedFile, listItem, fileIndex, selectedFormat);
-                }, exportMimeType, 0.9);
+            
+                    console.log(`Re-optimizing cropped file at index ${fileIndex} to format ${format}...`);
+                    await processSingleFile(newCroppedFile, listItem, fileIndex, format);
+                }
+
+                const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
+            
+                const selectedFormat = isCircleCrop ? 'png' : (document.querySelector('input[name="format"]:checked') ? document.querySelector('input[name="format"]:checked').value : 'jpeg');
+                
+                let exportMimeType = 'image/jpeg';
+                if (selectedFormat === 'png') exportMimeType = 'image/png';
+                else if (selectedFormat === 'webp') exportMimeType = 'image/webp';
+                
+                const croppedCanvas = appState.cropper.getCroppedCanvas({
+                    imageSmoothingQuality: 'high'
+                });
+            
+                if (!isCircleCrop) {
+                    croppedCanvas.toBlob((blob) => {
+                        processBlob(blob, selectedFormat);
+                    }, exportMimeType, 0.9);
+                    return;
+                }
+                
+                const circularCanvas = document.createElement('canvas');
+                const context = circularCanvas.getContext('2d');
+            
+                circularCanvas.width = croppedCanvas.width;
+                circularCanvas.height = croppedCanvas.height;
+            
+                context.beginPath();
+                context.arc(
+                    croppedCanvas.width / 2,
+                    croppedCanvas.height / 2,
+                    croppedCanvas.width / 2,
+                    0,
+                    2 * Math.PI
+                );
+                context.closePath();
+                context.clip();
+            
+                context.drawImage(croppedCanvas, 0, 0);
+            
+                circularCanvas.toBlob((blob) => {
+                    processBlob(blob, 'png');
+                }, 'image/png');
             }
+
             if (targetButton.classList.contains('crop-shape-btn')) {
                 if (!appState.cropper) return;
                 const shape = targetButton.dataset.shape;
