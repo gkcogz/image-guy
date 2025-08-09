@@ -135,12 +135,6 @@
         display: none !important;
     }
 
-    .btn-download-item {
-        /* DÜZELTME: Bu kural, butonun sağa yaslanmasına neden oluyordu.
-           Diğer butonların yanında durması için devre dışı bırakıldı. */
-        /* margin-left: auto; */
-    }
-
     /* --- Form Kontrolleri --- */
     .format-options-header {
         justify-content: center;
