@@ -286,18 +286,20 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
 
 // main.js -> document.body.addEventListener('click', ...) içi
 
-    if (targetButton && targetButton.id === 'apply-crop-btn') {
+if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!appState.cropper || appState.currentCropIndex < 0) return;
 
-        // Tarayıcının desteklediği formatı belirle
-        const selectedFormatElement = document.querySelector('input[name="format"]:checked');
-        const selectedFormat = selectedFormatElement ? selectedFormatElement.value : 'jpeg';
+        // KULLANICININ EN SON SEÇTİĞİ FORMATI GÜVENİLİR BİR YERDEN ALALIM
+        // Not: Bu satırı değiştirmiyoruz, bir sonraki adımı etkiliyor
+        const selectedFormat = document.querySelector('input[name="format"]:checked') 
+            ? document.querySelector('input[name="format"]:checked').value 
+            : 'jpeg'; // Eğer hiçbir şey seçili değilse varsayılan olarak jpeg kullan
+        
         let exportMimeType = 'image/jpeg';
         if (selectedFormat === 'png') exportMimeType = 'image/png';
         else if (selectedFormat === 'webp') exportMimeType = 'image/webp';
         
         // Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
-// Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
         appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
             if (!blob) {
                 console.error("Cropping failed to produce a blob.");
@@ -313,10 +315,9 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newCroppedFile = new File([blob], `${originalBaseName}-cropped.png`, { type: 'image/png' });
 
-            // Sakladığımız index'i kullanarak doğru dosyayı güncelle
             const fileIndex = appState.currentCropIndex;
             if (appState.fileQueue[fileIndex]) {
-                appState.fileQueue[fileIndex] = newCroppedFile;
+                appState.fileQueue[fileIndex] = newCroovedFile;
             } else {
                 return;
             }
@@ -329,16 +330,10 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
                 modal.remove();
             }
 
-            // --- DEĞİŞİKLİK BURADA ---
-            // Yeniden optimizasyon yapmadan önce o anki formatı bir değişkene al
-            const currentFormat = document.querySelector('input[name="format"]:checked').value;
-
-            // Yeni kırpılmış dosyayı, formatı belirterek tekrar optimizasyon sürecine sok
-            console.log(`Re-optimizing cropped file at index ${fileIndex} to format ${currentFormat}...`);
-            await processSingleFile(newCroppedFile, listItem, fileIndex, currentFormat); // Formatı 4. parametre olarak gönderiyoruz
+            console.log(`Re-optimizing cropped file at index ${fileIndex} to format ${selectedFormat}...`);
+            await processSingleFile(newCroppedFile, listItem, fileIndex, selectedFormat); // Formatı 4. parametre olarak gönderiyoruz
 
         }, exportMimeType, 0.9);
-
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
