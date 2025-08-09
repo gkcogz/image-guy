@@ -114,7 +114,7 @@
                     </div>
                     <div class="step">
                         <h3 data-i18n-key="home_howitworks_step3_title">3. Optimize</h3>
-                        <p data-i18n-key="home_howitworks_step3_text">Our server compresses your images with sharp library.</p>
+                        <p data-i18n-key="home_howitworks_step3_text">Our server compresses your images with sharp library. Compression ratio is given in %.</p>
                     </div>
                     <div class="step">
                         <h3 data-i18n-key="home_howitworks_step4_title">4. Edit & Review</h3>
@@ -169,6 +169,8 @@
                 </div>
             </div>
             <form id="help-form" class="chat-form" name="help-requests" data-netlify="true">
+                <input type="hidden" name="form-name" value="help-requests" />
+
                 <input type="text" id="help-input" name="message" placeholder="Type your message..." required autocomplete="off">
                 <button type="submit" aria-label="Send message">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
