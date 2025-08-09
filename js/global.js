@@ -1,13 +1,11 @@
 import initHelpWidget from './help-widget.js';
 
-// --- Global State and Constants ---
 const appState = {
     translations: {},
     currentLanguage: 'en',
 };
 const SUPPORTED_LANGUAGES = ['en', 'de', 'zh', 'tr'];
 
-// --- i18n Functions ---
 async function loadTranslations() {
     try {
         const response = await fetch('/languages.json');
@@ -15,6 +13,7 @@ async function loadTranslations() {
         const data = await response.json();
         if (typeof data !== 'object' || data === null) throw new Error('Language file format is invalid.');
         appState.translations = data;
+        console.log("Translations loaded successfully.");
     } catch (error) {
         console.error(error);
     }
@@ -57,6 +56,7 @@ async function initializeI18n() {
         initialLang = browserLang;
     }
     setLanguage(initialLang);
+
     const switcherBtn = document.getElementById('lang-switcher-btn');
     const dropdown = document.getElementById('language-dropdown');
     if (switcherBtn && dropdown) {
@@ -79,7 +79,6 @@ async function initializeI18n() {
     }
 }
 
-// --- Mobile Menu Function ---
 function initializeMobileMenu() {
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const mainNav = document.querySelector('.main-nav');
@@ -98,7 +97,7 @@ function initializeMobileMenu() {
     });
 }
 
-// --- Initialize All Global Functions ---
+// Sayfa yüklendiğinde tüm genel fonksiyonları başlat
 document.addEventListener('DOMContentLoaded', () => {
     initializeI18n(); 
     initHelpWidget(); 
