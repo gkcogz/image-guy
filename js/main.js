@@ -939,7 +939,12 @@ async function showCropModal(originalUrl, optimizedUrl) {
                 <div class="crop-actions">
                     <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
                     <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
-                    <button class="btn btn-secondary" id="crop-reset-btn">Reset All<span class="tooltip-text">Warning: All changes will be reset.</span></button>
+                    
+                    <div class="tooltip-wrapper">
+                        <button class="btn btn-secondary" id="crop-reset-btn">Reset All</button>
+                        <span class="tooltip-text">Warning: All changes will be reset.</span>
+                    </div>
+
                     <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
                 </div>
             </div>
