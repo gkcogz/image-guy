@@ -188,7 +188,6 @@
 }
 
 /* --- Dosya Listesindeki Buton Grubu --- */
-/* EKSİK OLAN VE YENİ EKLENEN KURAL */
 .action-icon-group {
     display: flex;
     align-items: center;
@@ -548,7 +547,7 @@ img-comparison-slider img {
 /* Modal'ın en altındaki aksiyon bölümü */
 .modal-actions {
     display: flex;
-    justify-content: space-between; /* ÖNEMLİ: Öğeleri iki uca yaslar */
+    justify-content: flex-end; /* DÜZELTME: Butonları sağa yaslamak için 'flex-end' kullanıldı. */
     align-items: center;
     width: 100%;
     gap: 1rem;
@@ -565,19 +564,6 @@ img-comparison-slider img {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.copy-success-msg {
-    visibility: hidden;
-    opacity: 0;
-    color: var(--success-color);
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.copy-success-msg.visible {
-    visibility: visible;
-    opacity: 1;
 }
 
 .copy-success-msg {
