@@ -1,6 +1,5 @@
 /* =================================
    BİLEŞENLER (COMPONENTS)
-   - Sitenin her yerinde kullanılabilen, yeniden kullanılabilir UI elemanları.
    ================================= */
 
 /* --- Butonlar --- */
@@ -107,6 +106,7 @@
     stroke: var(--primary-color);
 }
 
+
 /* --- Yükleme Alanı ve Dosya Listesi --- */
 .upload-area {
     background: var(--white-color);
@@ -185,6 +185,15 @@
     gap: 1rem;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+/* --- Dosya Listesindeki Buton Grubu --- */
+/* EKSİK OLAN VE YENİ EKLENEN KURAL */
+.action-icon-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .savings {
