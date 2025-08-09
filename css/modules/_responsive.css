@@ -128,6 +128,12 @@
     .file-item-status .icon-btn {
         padding: 10px; /* Dokunma alanını genişletir */
     }
+    
+    /* Mobil görünümde "Compare" ve "Copy" butonlarını gizle */
+    .btn-compare,
+    .btn-copy {
+        display: none !important;
+    }
 
     .btn-download-item {
         margin-left: auto; /* İndir butonunu sağa iter */
@@ -204,12 +210,4 @@
     .photo-strip-container img {
         height: 150px;
     }
-
-@media (max-width: 768px) {
- .compare-btn,
- .copy-base64-text {
- display: none !important;
- }
-}
-
 }

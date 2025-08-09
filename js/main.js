@@ -280,90 +280,60 @@ if (targetButton && targetButton.classList.contains('btn-copy')) {
     if (targetButton && targetButton.id === 'apply-crop-btn') {
         if (!appState.cropper) return;
 
-        const currentState = {
-            optimized: appState.currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
-            original: appState.currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
-        };
-        appState.cropHistory.push(currentState);
+        // Kullanıcının en son seçtiği formatı ve kaliteyi al
+        const selectedFormatElement = document.querySelector('input[name="format"]:checked');
+        const selectedFormat = selectedFormatElement ? selectedFormatElement.value : 'jpeg';
         
-        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
-        let croppedCanvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-
-        if (isCircle) {
-            const circleCanvas = document.createElement('canvas');
-            const context = circleCanvas.getContext('2d');
-            const size = Math.min(croppedCanvas.width, croppedCanvas.height);
-            circleCanvas.width = size;
-            circleCanvas.height = size;
-            context.beginPath();
-            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-            context.closePath();
-            context.clip();
-            context.drawImage(croppedCanvas, 0, 0);
-            croppedCanvas = circleCanvas;
+        // Tarayıcının desteklediği formatları belirle (genellikle jpeg, webp, png)
+        let exportMimeType = 'image/jpeg';
+        if (selectedFormat === 'png') {
+            exportMimeType = 'image/png';
+        } else if (selectedFormat === 'webp') {
+            exportMimeType = 'image/webp';
         }
-
-        const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
         
-        const sourceForOriginalCrop = appState.currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
-        
-        const originalCroppedBlob = await new Promise((resolve, reject) => {
-            const originalImage = new Image();
-            originalImage.crossOrigin = "anonymous";
-            originalImage.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const cropBoxData = appState.cropper.getData(true);
-                const scaleX = originalImage.naturalWidth / appState.cropper.getImageData().naturalWidth;
-                const scaleY = originalImage.naturalHeight / appState.cropper.getImageData().naturalHeight;
-                canvas.width = cropBoxData.width * scaleX;
-                canvas.height = cropBoxData.height * scaleY;
-                ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
-                
-                if(isCircle) {
-                    const circleCanvas = document.createElement('canvas');
-                    const context = circleCanvas.getContext('2d');
-                    const size = Math.min(canvas.width, canvas.height);
-                    circleCanvas.width = size;
-                    circleCanvas.height = size;
-                    context.beginPath();
-                    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-                    context.closePath();
-                    context.clip();
-                    context.drawImage(canvas, 0, 0);
-                    circleCanvas.toBlob(resolve, 'image/png');
-                } else {
-                    canvas.toBlob(resolve, 'image/png');
-                }
-            };
-            originalImage.onerror = reject;
-            originalImage.src = sourceForOriginalCrop;
-        });
+        // Kırpılmış resmi sıkıştırılmamış bir Blob olarak al
+        appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
+            if (!blob) {
+                console.error("Cropping failed to produce a blob.");
+                alert("An error occurred during cropping. Please try again.");
+                return;
+            }
 
-        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
-        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
+            // O anki dosya listesi öğesini (list item) bul
+            const listItem = appState.currentCropTarget.closest('.file-list-item');
+            if (!listItem) {
+                console.error("Could not find the parent list item for cropping.");
+                return;
+            }
 
-        const downloadLink = appState.currentCropTarget.querySelector('.btn-download-item');
-        const compareButton = appState.currentCropTarget.querySelector('.btn-compare');
-        const cropButton = appState.currentCropTarget.querySelector('.btn-crop');
-        const copyButton = appState.currentCropTarget.querySelector('.btn-copy');
-        const base64Button = appState.currentCropTarget.querySelector('.btn-base64');
+            // Bu Blob'dan yeni bir "File" nesnesi oluştur
+            const originalFullName = listItem.dataset.originalFilename || 'cropped-image.png';
+            const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+            const newCroppedFile = new File([blob], `${originalBaseName}-cropped.png`, { type: 'image/png' });
 
-        if(downloadLink) downloadLink.href = newOptimizedUrl;
-        if(compareButton) {
-            compareButton.dataset.optimizedUrl = newOptimizedUrl;
-            compareButton.dataset.originalUrl = newOriginalUrl; 
-        }
-        if(cropButton) cropButton.dataset.optimizedUrl = newOptimizedUrl;
-        if(copyButton) copyButton.dataset.optimizedUrl = newOptimizedUrl;
-        if (base64Button) base64Button.dataset.optimizedUrl = newOptimizedUrl;
+            // Dosya sırasındaki (fileQueue) eski dosyanın yerini bu yeni kırpılmış dosya ile değiştir
+            const fileIndex = parseInt(listItem.querySelector('.btn-delete-item').dataset.fileIndex, 10);
+            if (appState.fileQueue[fileIndex]) {
+                appState.fileQueue[fileIndex] = newCroppedFile;
+            } else {
+                console.error("Could not find file in queue to replace.");
+                return;
+            }
+            
+            // Kırpma penceresini kapat
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                appState.cropper.destroy();
+                appState.cropper = null;
+                modal.remove();
+            }
 
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            appState.cropper.destroy();
-            appState.cropper = null;
-            modal.remove();
-        }
+            // YENİ OLUŞTURDUĞUMUZ KIRPILMIŞ DOSYAYI TEKRAR OPTİMİZASYON SÜRECİNE SOK
+            console.log(`Re-optimizing cropped file at index ${fileIndex}...`);
+            await processSingleFile(newCroppedFile, listItem, fileIndex);
+
+        }, exportMimeType, 0.9); // 0.9 = %90 kalite (jpeg/webp için)
     }
     
     if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
