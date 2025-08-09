@@ -715,30 +715,47 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
-        // GÜNCELLENMİŞ KOD BAŞLANGICI
+        // --- YENİ VE DAHA SAĞLAM SIFIRLAMA MANTIĞI ---
         if (button.id === 'crop-reset-btn') {
             if (!appState.cropper || !appState.currentCropTarget) return;
 
             const actionGroup = appState.currentCropTarget;
             const cropButton = actionGroup.querySelector('.btn-crop');
-            if (!cropButton) return;
+            const image = document.getElementById('image-to-crop'); // Get the image element
+
+            if (!cropButton || !image) return;
 
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
 
-            // 1. Cropper'ı hem görsel olarak sıfırla hem de resmi ilk haliyle değiştir.
-            appState.cropper.reset();
-            appState.cropper.replace(initialOptimizedUrl);
+            // 1. Mevcut cropper eklentisini tamamen yok et.
+            appState.cropper.destroy();
 
-            // 2. Arka plandaki URL'leri de güncelle.
+            // 2. Yeni resim yüklendikten SONRA cropper'ı yeniden başlatmak için bir dinleyici kur.
+            image.onload = () => {
+                // Cropper'ı ilk oluşturulduğu zamanki ayarlarla yeniden başlat.
+                appState.cropper = new Cropper(image, {
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                    ready: function () {
+                        // Gerekirse aktif buton stillerini yeniden uygula
+                        document.querySelector('.crop-shape-btn.active')?.classList.remove('active');
+                        document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                    }
+                });
+            };
+            
+            // 3. Resmin kaynağını değiştir. Bu, yukarıdaki 'onload' olayını tetikleyecektir.
+            image.src = initialOptimizedUrl;
+
+            // 4. Arka planda, ana listedeki butonların URL'lerini güncelle.
             actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
             cropButton.dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
             actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
-            
-            // 3. Modal pencereyi kapatan kodlar kaldırıldı. Artık görsel sıfırlama yapılıyor.
         }
-        // GÜNCELLENMİŞ KOD SONU
+        // --- YENİ MANTIĞIN SONU ---
         
         if (button.id === 'apply-crop-btn') {
             if (!appState.cropper || appState.currentCropIndex < 0) return;

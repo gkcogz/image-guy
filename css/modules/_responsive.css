@@ -136,7 +136,9 @@
     }
 
     .btn-download-item {
-        margin-left: auto; /* İndir butonunu sağa iter */
+        /* DÜZELTME: Bu kural, butonun sağa yaslanmasına neden oluyordu.
+           Diğer butonların yanında durması için devre dışı bırakıldı. */
+        /* margin-left: auto; */
     }
 
     /* --- Form Kontrolleri --- */
