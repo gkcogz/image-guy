@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (MİMARİSİ DÜZELTİLMİŞ NİHAİ VE TAM VERSİYON)
+// index-page.js (TAM VE EKSİKSİZ DÜZELTİLMİŞ HALİ)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +20,7 @@ function initializeUploader() {
     const appState = {
         fileQueue: [],
         cropper: null,
+        currentCropTarget: null,
         currentCropIndex: -1,
         createdObjectUrls: [],
     };
@@ -78,11 +79,12 @@ function initializeUploader() {
     }
     
     // ===============================================
-    // CORE FILE HANDLING & UI
+    // CORE FILE HANDLING & UI RESET
     // ===============================================
     function handleFiles(files) {
         resetUI();
-        const MAX_FILE_SIZE = 30 * 1024 * 1024;
+
+        const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
         const largeFiles = [];
         const validFiles = [];
 
@@ -90,6 +92,7 @@ function initializeUploader() {
             if (file.size > MAX_FILE_SIZE) {
                 largeFiles.push(file.name);
             } else {
+                file.uniqueId = `file-${Date.now()}-${Math.random()}`;
                 validFiles.push(file);
             }
         }
@@ -97,60 +100,78 @@ function initializeUploader() {
         if (largeFiles.length > 0) {
             alert(`The following files are too large (Max 30 MB):\n- ${largeFiles.join("\n- ")}`);
         }
+
         if (validFiles.length === 0) return;
 
-        appState.fileQueue = validFiles.map(file => ({
-            fileObject: file,
-            uniqueId: `file-${Date.now()}-${Math.random()}`,
-            status: 'ready', // ready, processing, success, error
-            originalUrl: null,
-            initialOptimizedUrl: null,
-            currentOptimizedUrl: null,
-            downloadName: null,
-            savings: 0,
-            progressText: '',
-            errorMessage: '',
-        }));
-        
+        appState.fileQueue = validFiles;
         updateUIForFileList();
         fileInput.value = null;
     }
 
     function resetUI() {
         appState.createdObjectUrls.forEach(url => URL.revokeObjectURL(url));
-        Object.assign(appState, { fileQueue: [], cropper: null, currentCropIndex: -1, createdObjectUrls: [] });
+        appState.createdObjectUrls = [];
+        appState.fileQueue = [];
         uploadArea.innerHTML = initialUploadAreaHTML;
         uploadArea.classList.remove('file-selected');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function renderFileStatus(statusElement, fileState) {
+    // ===============================================
+    // RENDERING & MODALS
+    // ===============================================
+    function renderFileStatus(statusElement, statusType, data = {}) {
         statusElement.innerHTML = '';
-        switch (fileState.status) {
-            case 'ready':
+        switch (statusType) {
+            case 'READY':
                 statusElement.innerHTML = `
                     <span>Ready</span>
-                    <button class="icon-btn btn-delete-item" title="Remove file" type="button">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <button class="icon-btn btn-delete-item" data-file-index="${data.index}" title="Remove file" type="button">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>`;
                 break;
-            case 'processing':
-                statusElement.innerHTML = `<div class="progress-bar-container"><div class="progress-bar-fill progress-bar-fill-indeterminate"></div><span class="progress-bar-text">${fileState.progressText || 'Processing...'}</span></div>`;
-                break;
-            case 'success':
-                const savingsText = fileState.savings >= 1 ? `✓ ${fileState.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
+            case 'PROGRESS_INDETERMINATE':
+            case 'PROGRESS_DETERMINATE':
+                const text = statusType === 'PROGRESS_DETERMINATE' ? `Uploading ${data.percent.toFixed(0)}%` : data.text;
+                const fillClass = statusType === 'PROGRESS_DETERMINATE' ? '' : 'progress-bar-fill-indeterminate';
+                const fillWidth = statusType === 'PROGRESS_DETERMINATE' ? `style="width: ${data.percent.toFixed(0)}%;"` : '';
                 statusElement.innerHTML = `
-                    <span class="${fileState.savings >= 1 ? 'savings' : 'savings-info'}">${savingsText}</span>
-                    <div class="action-icon-group">
-                        <button class="icon-btn btn-compare" title="Compare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg></button>
-                        <button class="icon-btn btn-crop" title="Edit & Crop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg></button>
-                        <button class="icon-btn btn-copy" title="Copy Image" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                        <button class="icon-btn btn-base64" title="Get Base64 Code" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></button>
-                        <a class="btn btn-download-item" href="${fileState.currentOptimizedUrl}" download="${fileState.downloadName}">Download</a>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill ${fillClass}" ${fillWidth}></div>
+                        <span class="progress-bar-text">${text}</span>
                     </div>`;
                 break;
-            case 'error':
-                statusElement.innerHTML = `<span class="status-failed">Failed! ${fileState.errorMessage}</span><button class="icon-btn btn-retry" type="button"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>`;
+            case 'SUCCESS':
+                const savingsText = data.savings >= 1 ? `✓ ${data.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
+                const savingsClass = data.savings >= 1 ? 'savings' : 'savings-info';
+                statusElement.innerHTML = `
+                    <span class="${savingsClass}">${savingsText}</span>
+                    <div class="action-icon-group">
+                        <button class="icon-btn btn-compare" title="Compare" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" data-initial-optimized-url="${data.initialOptimizedUrl}" data-file-index="${data.index}" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-copy" title="Copy Image" data-optimized-url="${data.optimizedUrl}" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                        <button class="icon-btn btn-base64" title="Get Base64 Code" data-optimized-url="${data.optimizedUrl}" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        </button>
+                        <a class="btn btn-download-item" href="${data.optimizedUrl}" download="${data.downloadName}">Download</a>
+                    </div>`;
+                break;
+            case 'ERROR':
+                statusElement.innerHTML = `
+                    <span class="status-failed">Failed! ${data.message}</span>
+                    <button class="icon-btn btn-retry" data-file-index="${data.index}" data-format="${data.format}" type="button">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        <span class="icon-tooltip">Retry</span>
+                    </button>`;
                 break;
         }
     }
@@ -160,25 +181,32 @@ function initializeUploader() {
         const fileListElement = document.createElement('ul');
         fileListElement.className = 'file-list';
 
-        appState.fileQueue.forEach((fileState) => {
+        appState.fileQueue.forEach((file, index) => {
+            const formattedSize = formatFileSize(file.size);
             const listItem = document.createElement('li');
             listItem.className = 'file-list-item';
-            listItem.dataset.fileId = fileState.uniqueId;
+            listItem.dataset.originalFilename = file.name;
+            listItem.dataset.fileId = file.uniqueId;
 
             const fileInfoDiv = document.createElement('div');
             fileInfoDiv.className = 'file-info';
-            fileInfoDiv.innerHTML = `<span class="file-icon">📄</span><div class="file-details"><span class="file-name">${fileState.fileObject.name}</span><span class="file-size">${formatFileSize(fileState.fileObject.size)}</span></div>`;
+            fileInfoDiv.innerHTML = `
+                <span class="file-icon">📄</span>
+                <div class="file-details">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formattedSize}</span>
+                </div>`;
 
             const fileStatusDiv = document.createElement('div');
             fileStatusDiv.className = 'file-item-status';
-            renderFileStatus(fileStatusDiv, fileState);
+            renderFileStatus(fileStatusDiv, 'READY', { index });
             listItem.append(fileInfoDiv, fileStatusDiv);
             fileListElement.appendChild(listItem);
         });
 
         const actionArea = document.createElement('div');
         actionArea.className = 'action-area';
-        const containsPng = appState.fileQueue.some(f => f.fileObject.name.toLowerCase().endsWith('.png'));
+        const containsPng = appState.fileQueue.some(f => f.name.toLowerCase().endsWith('.png'));
         actionArea.innerHTML = `
             <div class="format-options-header">
                 <span class="format-label">Output Format:</span>
@@ -249,14 +277,22 @@ function initializeUploader() {
             if (advancedButton) advancedButton.style.display = 'none';
         }
     }
-    
-    async function showCropModal() {
-        const currentFileState = appState.fileQueue[appState.currentCropIndex];
-        if (!currentFileState || !currentFileState.currentOptimizedUrl) {
-            console.error("Cannot open crop modal: file state or URL is missing.");
-            return;
-        }
 
+    function showComparisonModal(originalUrl, optimizedUrl) {
+        const modalHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <button class="modal-close-btn" type="button">&times;</button>
+                    <img-comparison-slider>
+                        <img slot="first" src="${originalUrl}" />
+                        <img slot="second" src="${optimizedUrl}" />
+                    </img-comparison-slider>
+                </div>
+            </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    async function showCropModal(originalUrl, optimizedUrl) {
         try {
             if (!window.Cropper) {
                 await Promise.all([
@@ -276,7 +312,7 @@ function initializeUploader() {
                     <button class="modal-close-btn" type="button">&times;</button>
                     <h2>Edit & Crop Image</h2>
                     <div class="crop-image-container">
-                        <img id="image-to-crop" src="${currentFileState.currentOptimizedUrl}">
+                        <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
                     </div>
                     <div class="crop-actions">
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
@@ -312,22 +348,7 @@ function initializeUploader() {
         };
         if (image.complete) image.onload();
     }
-    
-    function showComparisonModal(fileState) {
-        if (!fileState || !fileState.originalUrl || !fileState.currentOptimizedUrl) return;
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <img-comparison-slider>
-                        <img slot="first" src="${fileState.originalUrl}" />
-                        <img slot="second" src="${fileState.currentOptimizedUrl}" />
-                    </img-comparison-slider>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
-    
+
     function showBase64Modal(base64String) {
         const modalHTML = `
             <div class="modal-overlay">
@@ -390,49 +411,62 @@ function initializeUploader() {
             xhr.open('PUT', url, true);
             xhr.setRequestHeader('Content-Type', file.type);
             xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) onProgress((event.loaded / event.total) * 100);
+                if (event.lengthComputable) {
+                    onProgress((event.loaded / event.total) * 100);
+                }
             };
-            xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve(xhr.response) : reject(new Error(`Upload failed: ${xhr.status}`));
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    reject(new Error(`Upload failed: ${xhr.status}`));
+                }
+            };
             xhr.onerror = () => reject(new Error('Network error during upload.'));
             xhr.send(file);
         });
     }
 
-    async function processSingleFile(fileState, fileObjectToProcess) {
-        Object.assign(fileState, { status: 'processing', progressText: 'Preparing...' });
-        updateUIForFileList();
+    async function processSingleFile(file, listItem, index, retryFormat = null) {
+        const statusElement = listItem.querySelector('.file-item-status');
+        const selectedFormat = retryFormat || (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityValue = qualitySlider ? qualitySlider.value : null;
+
+        const originalObjectUrl = URL.createObjectURL(file);
+        appState.createdObjectUrls.push(originalObjectUrl);
+
+        if (!listItem.dataset.ultimateOriginalSize) {
+            listItem.dataset.ultimateOriginalSize = file.size;
+        }
 
         try {
-            if (!fileState.originalUrl) {
-                const originalObjectUrl = URL.createObjectURL(fileObjectToProcess);
-                appState.createdObjectUrls.push(originalObjectUrl);
-                fileState.originalUrl = originalObjectUrl;
-            }
-            
-            const safeFilename = sanitizeFilename(fileObjectToProcess.name);
+            renderFileStatus(statusElement, 'PROGRESS_INDETERMINATE', { text: 'Preparing...' });
+            const safeFilename = sanitizeFilename(file.name);
+
             const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: safeFilename, fileType: fileObjectToProcess.type }),
+                body: JSON.stringify({ filename: safeFilename, fileType: file.type }),
             });
             if (!linkResponse.ok) throw new Error('Could not get upload link.');
             const { uploadUrl, key } = await linkResponse.json();
 
             if (!uploadUrl || !key) throw new Error("API response missing 'uploadUrl' or 'key'.");
 
-            Object.assign(fileState, { progressText: 'Uploading...' });
-            updateUIForFileList();
-            await uploadWithProgress(uploadUrl, fileObjectToProcess, () => {});
+            await new Promise(resolve => setTimeout(resolve, 50));
+            await uploadWithProgress(uploadUrl, file, (percent) => {
+                renderFileStatus(statusElement, 'PROGRESS_DETERMINATE', { percent });
+            });
+            await new Promise(resolve => setTimeout(resolve, 400));
 
-            Object.assign(fileState, { progressText: 'Optimizing...' });
-            updateUIForFileList();
-            const selectedFormat = (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
-            const qualityValue = document.getElementById('quality-slider')?.value || null;
+            renderFileStatus(statusElement, 'PROGRESS_INDETERMINATE', { text: 'Optimizing...' });
+            const optimizePayload = { key, outputFormat: selectedFormat, quality: qualityValue };
 
             const optimizeResponse = await fetch('/.netlify/functions/optimize', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, outputFormat: selectedFormat, quality: qualityValue }),
+                body: JSON.stringify(optimizePayload),
             });
             if (!optimizeResponse.ok) {
                 const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
@@ -441,37 +475,59 @@ function initializeUploader() {
             const data = await optimizeResponse.json();
 
             if (!data.downloadUrl || !data.newFilename || data.optimizedSize === undefined) {
-                throw new Error('Optimization API response is incomplete.');
+                throw new Error('Optimization API response is incomplete or invalid.');
             }
 
-            const originalSize = fileState.fileObject.size;
+            const ultimateOriginalSize = parseInt(listItem.dataset.ultimateOriginalSize, 10);
+            const savings = ((ultimateOriginalSize - data.optimizedSize) / ultimateOriginalSize * 100);
+
+            const originalFullName = listItem.dataset.originalFilename || file.name;
+            const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
-            
-            Object.assign(fileState, {
-                status: 'success',
-                initialOptimizedUrl: fileState.initialOptimizedUrl || data.downloadUrl,
-                currentOptimizedUrl: data.downloadUrl,
-                savings: ((originalSize - data.optimizedSize) / originalSize * 100),
-                downloadName: sanitizeFilename(fileState.fileObject.name).replace(/\.[^/.]+$/, "") + newExtension
+
+            const existingCropBtn = listItem.querySelector('.btn-crop');
+            const initialUrlToKeep = existingCropBtn?.dataset.initialOptimizedUrl || data.downloadUrl;
+
+            renderFileStatus(statusElement, 'SUCCESS', {
+                savings,
+                originalUrl: originalObjectUrl,
+                optimizedUrl: data.downloadUrl,
+                initialOptimizedUrl: initialUrlToKeep,
+                downloadName: originalBaseName + newExtension,
+                index
             });
 
         } catch (error) {
-            console.error(`Processing failed for '${fileObjectToProcess.name}':`, error);
-            Object.assign(fileState, { status: 'error', errorMessage: error.message });
+            console.error(`Processing failed for '${file.name}':`, error);
+            renderFileStatus(statusElement, 'ERROR', {
+                message: error.message,
+                index,
+                format: selectedFormat
+            });
         }
-        updateUIForFileList();
     }
 
     async function startBatchOptimization() {
         const optimizeBtn = document.getElementById('optimize-all-btn');
         const clearBtn = document.getElementById('clear-all-btn');
-        if (optimizeBtn) optimizeBtn.disabled = true;
-        if (clearBtn) clearBtn.disabled = true;
+        if (optimizeBtn) { optimizeBtn.textContent = 'Processing...'; optimizeBtn.disabled = true; }
+        if (clearBtn) { clearBtn.disabled = true; }
 
-        const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
-        const promises = filesToProcess.map(fileState => processSingleFile(fileState, fileState.fileObject));
-        await Promise.all(promises);
+        const batchSize = 5;
 
+        for (let i = 0; i < appState.fileQueue.length; i += batchSize) {
+            const batch = appState.fileQueue.slice(i, i + batchSize);
+
+            const optimizationPromises = batch.map((file, index) => {
+                const globalIndex = i + index;
+                const listItem = document.querySelector(`[data-file-id="${file.uniqueId}"]`);
+                if (listItem) {
+                    return processSingleFile(file, listItem, globalIndex);
+                }
+                return Promise.resolve();
+            });
+            await Promise.all(optimizationPromises);
+        }
         updateMainButtonAfterCompletion();
     }
 
@@ -500,16 +556,21 @@ function initializeUploader() {
             downloadAllBtn.textContent = 'Zipping...';
 
             const zip = new JSZip();
-            const fetchPromises = appState.fileQueue
-                .filter(f => f.status === 'success')
-                .map(fileState => {
-                    return fetch(fileState.currentOptimizedUrl)
-                        .then(response => {
-                            if (!response.ok) throw new Error(`Failed to fetch '${fileState.currentOptimizedUrl}'`);
-                            return response.blob();
-                        })
-                        .then(blob => ({ name: fileState.downloadName, blob: blob }));
-                });
+            const fetchPromises = appState.fileQueue.map(file => {
+                const listItem = document.querySelector(`[data-file-id="${file.uniqueId}"]`);
+                const downloadLink = listItem ? listItem.querySelector('a.btn-download-item') : null;
+                if (!downloadLink) return Promise.resolve(null);
+
+                const fileUrl = downloadLink.href;
+                const fileName = downloadLink.getAttribute('download');
+
+                return fetch(fileUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Failed to fetch '${fileUrl}'`);
+                        return response.blob();
+                    })
+                    .then(blob => ({ name: fileName, blob: blob }));
+            });
 
             const files = (await Promise.all(fetchPromises)).filter(f => f !== null);
             files.forEach(file => {
@@ -544,28 +605,20 @@ function initializeUploader() {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
             if (appState.cropper) {
-                try { appState.cropper.destroy(); } catch (e) {}
+                try { appState.cropper.destroy(); } catch (e) { /* ignore */ }
                 appState.cropper = null;
             }
             modal.remove();
         }
     }
 
-    function findFileStateByElement(element) {
-        const listItem = element.closest('.file-list-item');
-        const fileId = listItem?.dataset.fileId;
-        return fileId ? appState.fileQueue.find(f => f.uniqueId === fileId) : null;
-    }
-
-    document.body.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('modal-overlay') || e.target.closest('.modal-close-btn')) {
+    function handleModalEvents(event) {
+        if (event.target.classList.contains('modal-overlay') || event.target.closest('.modal-close-btn')) {
             removeModalIfPresent();
         }
+    }
 
-        const button = e.target.closest('button');
-        if (!button) return;
-
-        // Genel Butonlar
+    function handleGeneralActionButtons(button) {
         if (button.id === 'choose-file-btn') fileInput.click();
         if (button.id === 'optimize-all-btn') startBatchOptimization();
         if (button.id === 'download-all-btn') handleZipDownload();
@@ -574,98 +627,204 @@ function initializeUploader() {
             const slider = document.querySelector('.advanced-slider');
             if (slider) slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
         }
+    }
 
-        const fileState = findFileStateByElement(button);
-
-        // Liste Elemanı Butonları
-        if (fileState) {
-            if (button.classList.contains('btn-delete-item')) {
-                appState.fileQueue = appState.fileQueue.filter(f => f.uniqueId !== fileState.uniqueId);
-                if (appState.fileQueue.length === 0) resetUI();
-                else updateUIForFileList();
-            }
-            if (button.classList.contains('btn-retry')) {
-                await processSingleFile(fileState, fileState.fileObject);
-            }
-            if (button.classList.contains('btn-crop')) {
-                appState.currentCropIndex = appState.fileQueue.indexOf(fileState);
-                await showCropModal();
-            }
-            if (button.classList.contains('btn-compare')) {
-                showComparisonModal(fileState);
-            }
-            if (button.classList.contains('btn-copy')) {
-                try {
-                    const response = await fetch(fileState.currentOptimizedUrl);
-                    const blob = await response.blob();
-                    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-                    const originalHTML = button.innerHTML;
-                    button.innerHTML = '✓';
-                    button.classList.add('copied');
-                    setTimeout(() => { button.innerHTML = originalHTML; button.classList.remove('copied'); }, 2000);
-                } catch (error) {
-                    console.error('Could not copy image:', error);
-                }
-            }
-            if (button.classList.contains('btn-base64')) {
-                try {
-                    const response = await fetch(fileState.currentOptimizedUrl);
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    reader.onloadend = () => { if (reader.result) showBase64Modal(reader.result); };
-                    reader.readAsDataURL(blob);
-                } catch (error) {
-                    console.error('Could not get Base64 data:', error);
-                }
-            }
-        }
-        
-        // Kırpma Penceresi Butonları
-        if (button.closest('.crop-modal-content')) {
-            const currentFileState = appState.fileQueue[appState.currentCropIndex];
-            if (!currentFileState) return;
-
-            if (button.classList.contains('crop-shape-btn')) {
-                if (!appState.cropper) return;
-                const shape = button.dataset.shape;
-                const isCircle = shape === 'circle';
-                appState.cropper.setAspectRatio(isCircle ? 1 / 1 : NaN);
-                const cropBox = document.querySelector('.cropper-view-box');
-                const cropFace = document.querySelector('.cropper-face');
-                if (cropBox) cropBox.style.borderRadius = isCircle ? '50%' : '0';
-                if (cropFace) cropFace.style.borderRadius = isCircle ? '50%' : '0';
-                document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-            }
-
-            if (button.id === 'crop-reset-btn') {
-                e.stopPropagation();
-                console.log('Resetting state...');
-                
-                currentFileState.currentOptimizedUrl = currentFileState.initialOptimizedUrl;
-
-                if (appState.cropper) {
-                    appState.cropper.replace(currentFileState.currentOptimizedUrl);
-                }
-
+    async function handleListItemActions(button) {
+        if (button.classList.contains('btn-delete-item')) {
+            const indexToRemove = parseInt(button.dataset.fileIndex, 10);
+            appState.fileQueue.splice(indexToRemove, 1);
+            if (appState.fileQueue.length === 0) {
+                resetUI();
+            } else {
                 updateUIForFileList();
-                console.log('Reset complete. State URL is now:', currentFileState.currentOptimizedUrl);
-            }
-
-            if (button.id === 'apply-crop-btn') {
-                if (!appState.cropper) return;
-                
-                appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' }).toBlob(async (blob) => {
-                    if (!blob) {
-                        alert('Cropping failed. Please try again.');
-                        return;
-                    }
-                    const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
-                    removeModalIfPresent();
-                    await processSingleFile(currentFileState, croppedFile);
-                });
             }
         }
+        if (button.classList.contains('btn-retry')) {
+            const indexToRetry = parseInt(button.dataset.fileIndex, 10);
+            const fileToRetry = appState.fileQueue[indexToRetry];
+            if (fileToRetry) {
+                const listItemToRetry = document.querySelector(`[data-file-id="${fileToRetry.uniqueId}"]`);
+                if (listItemToRetry) processSingleFile(fileToRetry, listItemToRetry, indexToRetry, button.dataset.format);
+            }
+        }
+        if (button.classList.contains('btn-crop')) {
+            appState.currentCropTarget = button.closest('.action-icon-group');
+            appState.currentCropIndex = parseInt(button.dataset.fileIndex, 10);
+            await showCropModal(button.dataset.originalUrl, button.dataset.optimizedUrl);
+        }
+        if (button.classList.contains('btn-compare')) {
+            showComparisonModal(button.dataset.originalUrl, button.dataset.optimizedUrl);
+        }
+        if (button.classList.contains('btn-copy')) {
+            const copyBtn = button;
+            try {
+                const response = await fetch(copyBtn.dataset.optimizedUrl);
+                const blob = await response.blob();
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '✓';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (error) {
+                console.error('Could not copy image:', error);
+                alert('Could not copy image.');
+            }
+        }
+        if (button.classList.contains('btn-base64')) {
+            try {
+                const response = await fetch(button.dataset.optimizedUrl);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (reader.result) showBase64Modal(reader.result);
+                };
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                console.error('Could not get Base64 data:', error);
+                alert('Could not generate Base64 code.');
+            }
+        }
+    }
+
+    async function handleCropModalActions(button, event) {
+        if (!document.querySelector('.crop-modal-content')) return;
+
+        if (button.classList.contains('crop-shape-btn')) {
+            if (!appState.cropper) return;
+            const shape = button.dataset.shape;
+            const isCircle = shape === 'circle';
+            appState.cropper.setAspectRatio(isCircle ? 1 / 1 : NaN);
+
+            const cropBox = document.querySelector('.cropper-view-box');
+            const cropFace = document.querySelector('.cropper-face');
+            if (cropBox) cropBox.style.borderRadius = isCircle ? '50%' : '0';
+            if (cropFace) cropFace.style.borderRadius = isCircle ? '50%' : '0';
+
+            document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        if (button.id === 'crop-reset-btn') {
+            event.stopPropagation();
+            console.log("Reset handler initiated via main router.");
+
+            if (!appState.cropper || appState.currentCropIndex < 0) return;
+
+            const currentFile = appState.fileQueue[appState.currentCropIndex];
+            if (!currentFile) return;
+
+            const listItem = document.querySelector(`[data-file-id="${currentFile.uniqueId}"]`);
+            const actionGroup = listItem ? listItem.querySelector('.action-icon-group') : null;
+            if (!actionGroup) {
+                console.error("Reset failed: Could not find action-group for the current file.");
+                return;
+            }
+
+            const cropButton = actionGroup.querySelector('.btn-crop');
+            const initialOptimizedUrl = cropButton?.dataset.initialOptimizedUrl;
+            if (!initialOptimizedUrl) {
+                console.error("Reset failed: Could not find initial-optimized-url.");
+                return;
+            }
+
+            try {
+                const image = document.getElementById('image-to-crop');
+                const modalContent = image.closest('.crop-modal-content');
+                if (modalContent) modalContent.classList.remove('ready');
+
+                appState.cropper.destroy();
+                image.src = initialOptimizedUrl;
+                await image.decode();
+
+                appState.cropper = new Cropper(image, {
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                    ready: function() {
+                        if (modalContent) modalContent.classList.add('ready');
+                        document.querySelectorAll('.crop-shape-btn').forEach(b => b.classList.remove('active'));
+                        const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
+                        if (rectBtn) rectBtn.classList.add('active');
+                        const cBox = document.querySelector('.cropper-view-box');
+                        const cFace = document.querySelector('.cropper-face');
+                        if (cBox) cBox.style.borderRadius = '0';
+                        if (cFace) cFace.style.borderRadius = '0';
+                    }
+                });
+
+                actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
+                cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
+                actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
+
+                console.log('Reset completed successfully. UI updated to:', initialOptimizedUrl);
+            } catch (err) {
+                console.error("Resetting cropper failed:", err);
+            }
+        }
+
+        if (button.id === 'apply-crop-btn') {
+            if (!appState.cropper || appState.currentCropIndex < 0) return;
+
+            async function processBlob(blob, format) {
+                if (!blob) {
+                    console.error("Cropping failed to produce a blob.");
+                    return;
+                }
+                const fileIndex = appState.currentCropIndex;
+                const fileToUpdate = appState.fileQueue[fileIndex];
+                if (!fileToUpdate) return;
+
+                const listItem = document.querySelector(`[data-file-id="${fileToUpdate.uniqueId}"]`);
+                if (!listItem) return;
+
+                const originalFullName = listItem.dataset.originalFilename || `cropped-image.${format}`;
+                const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+                const newCroppedFile = new File([blob], `${originalBaseName}-cropped.${format}`, { type: `image/${format}` });
+                newCroppedFile.uniqueId = fileToUpdate.uniqueId;
+
+                appState.fileQueue[fileIndex] = newCroppedFile;
+                removeModalIfPresent();
+                await processSingleFile(newCroppedFile, listItem, fileIndex, format);
+            }
+
+            const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
+            const selectedFormat = isCircleCrop ? 'png' : (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
+            const exportMimeType = selectedFormat === 'png' ? 'image/png' : (selectedFormat === 'webp' ? 'image/webp' : 'image/jpeg');
+
+            const croppedCanvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+
+            if (!isCircleCrop) {
+                croppedCanvas.toBlob((blob) => { processBlob(blob, selectedFormat); }, exportMimeType, 0.9);
+                return;
+            }
+
+            const circularCanvas = document.createElement('canvas');
+            const context = circularCanvas.getContext('2d');
+            circularCanvas.width = croppedCanvas.width;
+            circularCanvas.height = croppedCanvas.height;
+            context.beginPath();
+            context.arc(circularCanvas.width / 2, circularCanvas.height / 2, circularCanvas.width / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            circularCanvas.toBlob((blob) => { processBlob(blob, 'png'); }, 'image/png');
+        }
+    }
+
+    // MAIN EVENT ROUTER
+    document.body.addEventListener('click', async (e) => {
+        handleModalEvents(e);
+        const targetButton = e.target.closest('button');
+        if (!targetButton) return;
+        
+        handleGeneralActionButtons(targetButton);
+        await handleListItemActions(targetButton);
+        await handleCropModalActions(targetButton, e);
     });
 
     document.body.addEventListener('change', (e) => {
@@ -677,11 +836,13 @@ function initializeUploader() {
     });
 
     fileInput.addEventListener('change', (event) => {
-        if (event.target.files.length > 0) {
-            handleFiles(event.target.files);
+        const files = event.target.files;
+        if (files.length > 0) {
+            handleFiles(files);
         }
     });
 
+    // Drag-drop
     uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
     uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
     uploadArea.addEventListener('drop', (e) => {
