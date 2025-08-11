@@ -25,6 +25,7 @@ function initializeUploader() {
         currentCropIndex: -1,
         ultimateOriginalUrl: null,
         createdObjectUrls: [],
+        isResetting: false, // 🆕 Reset işlemi sırasında modal kapanmasını engellemek için flag
     };
 
     const DEFAULT_QUALITY_SETTINGS = {
@@ -346,21 +347,22 @@ function initializeUploader() {
 
         // 🆕 Helper: reset logic extracted so we can call from direct button listener
         async function performResetFromButton() {
-            // prevent cases where currentCropTarget is not set
-            if (!appState.currentCropTarget) return;
-
-            const actionGroup = appState.currentCropTarget;
-            const cropButton = actionGroup.querySelector('.btn-crop');
-            const imageEl = document.getElementById('image-to-crop');
-
-            if (!cropButton || !imageEl) return;
-
-            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-            const modalContentLocal = imageEl.closest('.crop-modal-content');
-
-            if (modalContentLocal) modalContentLocal.classList.remove('ready');
-
+            // mark resetting - prevents modal being closed by other handlers
+            appState.isResetting = true; // 🆕
             try {
+                if (!appState.currentCropTarget) return;
+
+                const actionGroup = appState.currentCropTarget;
+                const cropButton = actionGroup.querySelector('.btn-crop');
+                const imageEl = document.getElementById('image-to-crop');
+
+                if (!cropButton || !imageEl) return;
+
+                const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
+                const modalContentLocal = imageEl.closest('.crop-modal-content');
+
+                if (modalContentLocal) modalContentLocal.classList.remove('ready');
+
                 if (appState.cropper) {
                     appState.cropper.destroy();
                     appState.cropper = null;
@@ -403,7 +405,11 @@ function initializeUploader() {
             } catch (err) {
                 console.error("Failed to reset cropper (button handler):", err);
                 alert("An error occurred while resetting the image. Please close the editor and try again.");
+                const modalContentLocal = document.querySelector('.crop-modal-content');
                 if (modalContentLocal) modalContentLocal.classList.add('ready');
+            } finally {
+                // release resetting flag after a tiny delay to ensure any bubbling handlers see it
+                setTimeout(() => { appState.isResetting = false; }, 50); // 🆕 small safety delay
             }
         }
 
@@ -423,22 +429,19 @@ function initializeUploader() {
         };
         if (image.complete) image.onload();
 
-        // 🆕 CRITICAL: Attach a direct click listener to the Reset button so it runs BEFORE body-level delegation
-        // This ensures the reset click cannot be misinterpreted by body handlers (no "hayalet" etkiler).
+        // 🆕 Attach direct click listener to Reset button so it runs BEFORE body-level delegation
         const resetBtn = document.getElementById('crop-reset-btn');
         if (resetBtn) {
-            // Use a named handler so it could be removed if needed
             const resetHandler = async (ev) => {
-                // prevent default behaviors and stop the event from bubbling up
-                ev.preventDefault();
-                ev.stopPropagation();
-                // call the reset routine
+                try {
+                    ev.preventDefault();
+                    // ensure no other handlers on same element run
+                    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                    ev.stopPropagation();
+                } catch (e) {}
                 await performResetFromButton();
-                // Do NOT allow any other click handlers to run for this event
-                // (stopImmediatePropagation isn't needed here because stopPropagation on target usually prevents ancestors in bubbling)
             };
             resetBtn.addEventListener('click', resetHandler);
-            // no explicit removeEventListener needed because when modal removed, button is gone (but if you re-use modals, consider cleanup)
         }
     }
 
@@ -694,9 +697,19 @@ function initializeUploader() {
     // ===============================================
 
     function handleModalEvents(event) {
-        // 🆕 Extra guard: if click originated from Reset button, don't close modal
-        // (this is a safety net; primary prevention is the direct handler attached to the button)
-        if (event.target.closest && event.target.closest('#crop-reset-btn')) return;
+        // 🆕 If a reset is in progress, do not close modal under any circumstance.
+        if (appState.isResetting) {
+            // small debug: console.log('modal close suppressed due to resetting');
+            return;
+        }
+
+        // 🆕 If click originated inside modal content, don't close modal here.
+        if (event.target && event.target.closest && event.target.closest('.crop-modal-content')) {
+            return;
+        }
+
+        // 🆕 Also keep older special-case guard for reset button clicks (defensive)
+        if (event.target && event.target.closest && event.target.closest('#crop-reset-btn')) return;
 
         if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-close-btn')) {
             const modal = document.querySelector('.modal-overlay');
@@ -788,14 +801,13 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
-        // keep a fallback: if delegasyon yoluyla reset tespit edilirse yine çalıştır (ancak normalde direct handler kullanılıyor)
+        // fallback: if delegasyon yoluyla reset tespit edilirse yine çalıştır (non-primary path)
         if (button.id === 'crop-reset-btn') {
             try {
-                // Try to prevent bubbling — may be too late if body handler already executed.
                 event.preventDefault();
-                event.stopImmediatePropagation();
+                if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+                event.stopPropagation();
             } catch (e) {}
-            // Reuse logic used in direct handler: (non-blocking)
             if (!appState.currentCropTarget) return;
 
             const actionGroup = appState.currentCropTarget;
@@ -810,6 +822,7 @@ function initializeUploader() {
             if (modalContent) modalContent.classList.remove('ready');
 
             try {
+                appState.isResetting = true; // 🆕 fallback flag
                 if (appState.cropper) {
                     appState.cropper.destroy();
                     appState.cropper = null;
@@ -845,6 +858,8 @@ function initializeUploader() {
             } catch (error) {
                 console.error("Failed to reset cropper (fallback):", error);
                 if (modalContent) modalContent.classList.add('ready');
+            } finally {
+                setTimeout(() => { appState.isResetting = false; }, 50);
             }
 
             return;
@@ -901,8 +916,11 @@ function initializeUploader() {
 
     // MAIN EVENT ROUTER
     document.body.addEventListener('click', async (e) => {
+        // handleModalEvents is defensive: it checks the isResetting flag and whether click is inside modal.
+        // We call it here (early) but it now refuses to close modal if reset is in progress or if click is inside modal.
         handleModalEvents(e);
-        const targetButton = e.target.closest('button');
+
+        const targetButton = e.target.closest ? e.target.closest('button') : null;
         if (!targetButton) return;
         
         handleGeneralActionButtons(targetButton);
