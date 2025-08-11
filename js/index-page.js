@@ -77,10 +77,37 @@ function initializeUploader() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
+    
+    // ===============================================
+    // CORE FILE HANDLING & UI RESET
+    // ===============================================
+    function handleFiles(files) {
+        resetUI();
 
-    // ===============================================
-    // UI RESET
-    // ===============================================
+        const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
+        const largeFiles = [];
+        const validFiles = [];
+
+        for (const file of files) {
+            if (file.size > MAX_FILE_SIZE) {
+                largeFiles.push(file.name);
+            } else {
+                file.uniqueId = `file-${Date.now()}-${Math.random()}`;
+                validFiles.push(file);
+            }
+        }
+
+        if (largeFiles.length > 0) {
+            alert(`The following files are too large (Max 30 MB):\n- ${largeFiles.join("\n- ")}`);
+        }
+
+        if (validFiles.length === 0) return;
+
+        appState.fileQueue = validFiles;
+        updateUIForFileList();
+        fileInput.value = null;
+    }
+
     function resetUI() {
         appState.createdObjectUrls.forEach(url => URL.revokeObjectURL(url));
         appState.createdObjectUrls = [];
@@ -722,7 +749,9 @@ function initializeUploader() {
                         const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
                         if (rectBtn) rectBtn.classList.add('active');
                         const cBox = document.querySelector('.cropper-view-box');
+                        const cFace = document.querySelector('.cropper-face');
                         if (cBox) cBox.style.borderRadius = '0';
+                        if (cFace) cFace.style.borderRadius = '0';
                     }
                 });
 
