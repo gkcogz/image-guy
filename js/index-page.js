@@ -7,12 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeUploader() {
-    // Critical DOM elements are selected at the beginning and their existence is checked.
     const uploadArea = document.querySelector('.upload-area');
     const fileInput = document.getElementById('file-input');
 
-    // Guard Clause:
-    // If the main uploader elements are not on the page, do not run the rest of the code.
     if (!uploadArea || !fileInput) {
         return;
     }
@@ -38,14 +35,10 @@ function initializeUploader() {
         heic: { default: 80, min: 50, max: 95 }
     };
 
-    // ===============================================
-    // DOM ELEMENT DEFINITIONS
-    // ===============================================
-
     const initialUploadAreaHTML = uploadArea.innerHTML;
 
     // ===============================================
-    // HELPER FUNCTIONS (Dynamic Loading)
+    // HELPER FUNCTIONS
     // ===============================================
 
     const loadScript = (src) => new Promise((resolve, reject) => {
@@ -67,10 +60,6 @@ function initializeUploader() {
         link.onerror = () => reject(new Error(`Style load error for ${href}`));
         document.head.appendChild(link);
     });
-    
-    // ===============================================
-    // UPLOADER-SPECIFIC HELPER FUNCTIONS
-    // ===============================================
 
     function sanitizeFilename(filename) {
         const extension = filename.slice(filename.lastIndexOf('.'));
@@ -82,7 +71,6 @@ function initializeUploader() {
 
     function handleFiles(files) {
         resetUI();
-    
         const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
         const largeFiles = [];
         const validFiles = [];
@@ -623,6 +611,9 @@ function initializeUploader() {
     // ===============================================
 
     function handleModalEvents(event) {
+        // 🆕 Reset All tıklamasında modal kapanmasını engelle
+        if (event.target.closest('#crop-reset-btn')) return;
+
         if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-close-btn')) {
             const modal = document.querySelector('.modal-overlay');
             if (modal) {
@@ -697,7 +688,7 @@ function initializeUploader() {
         }
     }
     
-    async function handleCropModalActions(button, event) { // DİKKAT: event parametresini ekledik
+    async function handleCropModalActions(button, event) {
         if (button.classList.contains('crop-shape-btn')) {
             if (!appState.cropper) return;
             const shape = button.dataset.shape;
@@ -714,8 +705,9 @@ function initializeUploader() {
         }
         
         if (button.id === 'crop-reset-btn') {
-            // ÇÖZÜM 1: Olayın yayılmasını hemen durdur!
-            event.stopPropagation();
+            // 🆕 Olayı tamamen engelle
+            event.preventDefault();
+            event.stopImmediatePropagation();
 
             if (!appState.currentCropTarget) return;
 
@@ -736,17 +728,14 @@ function initializeUploader() {
                     appState.cropper = null;
                 }
                 
-                // Resim kaynağını değiştir ve yüklenmesini bekle
                 image.src = initialOptimizedUrl;
                 await image.decode();
 
-                // Temizlenmiş resim elementi üzerinde Cropper'ı yeniden başlat
                 appState.cropper = new Cropper(image, {
                     viewMode: 1,
                     background: false,
                     autoCropArea: 0.8,
                     ready: function () {
-                        // Buton ve stil durumlarını da sıfırla
                         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
                         const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
                         if (rectBtn) rectBtn.classList.add('active');
@@ -760,7 +749,6 @@ function initializeUploader() {
                     }
                 });
     
-                // Arka plandaki data-attributeları orijinal URL ile güncelle
                 actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
                 cropButton.dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
@@ -772,6 +760,8 @@ function initializeUploader() {
                 alert("An error occurred while resetting the image. Please close the editor and try again.");
                 if (modalContent) modalContent.classList.add('ready');
             }
+
+            return; // 🆕 Diğer handler'lara geçişi durdur
         }
         
         if (button.id === 'apply-crop-btn') {
@@ -831,7 +821,6 @@ function initializeUploader() {
         
         handleGeneralActionButtons(targetButton);
         await handleListItemActions(targetButton);
-        // DİKKAT: event (e) nesnesini de gönderiyoruz
         await handleCropModalActions(targetButton, e); 
     });
 
@@ -850,7 +839,6 @@ function initializeUploader() {
         }
     });
 
-    // Drag-drop event listeners
     uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
     uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
     uploadArea.addEventListener('drop', (e) => {
