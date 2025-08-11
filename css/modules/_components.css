@@ -477,6 +477,7 @@ img-comparison-slider img {
 .crop-modal-content h2 {
     margin-bottom: 1.5rem;
     text-align: center;
+    color: var(--white-color);
 }
 
 .crop-image-container {

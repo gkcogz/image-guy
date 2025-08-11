@@ -344,6 +344,70 @@ function initializeUploader() {
         const modalContent = document.querySelector('.crop-modal-content');
         image.crossOrigin = "anonymous";
 
+        // 🆕 Helper: reset logic extracted so we can call from direct button listener
+        async function performResetFromButton() {
+            // prevent cases where currentCropTarget is not set
+            if (!appState.currentCropTarget) return;
+
+            const actionGroup = appState.currentCropTarget;
+            const cropButton = actionGroup.querySelector('.btn-crop');
+            const imageEl = document.getElementById('image-to-crop');
+
+            if (!cropButton || !imageEl) return;
+
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
+            const modalContentLocal = imageEl.closest('.crop-modal-content');
+
+            if (modalContentLocal) modalContentLocal.classList.remove('ready');
+
+            try {
+                if (appState.cropper) {
+                    appState.cropper.destroy();
+                    appState.cropper = null;
+                }
+
+                // switch source and wait for decode
+                imageEl.src = initialOptimizedUrl;
+                await imageEl.decode();
+
+                // restart cropper on the clean image
+                appState.cropper = new Cropper(imageEl, {
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                    ready: function () {
+                        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+                        const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
+                        if (rectBtn) rectBtn.classList.add('active');
+
+                        const cropBox = document.querySelector('.cropper-view-box');
+                        const cropFace = document.querySelector('.cropper-face');
+                        if (cropBox) cropBox.style.borderRadius = '0';
+                        if (cropFace) cropFace.style.borderRadius = '0';
+
+                        if (modalContentLocal) modalContentLocal.classList.add('ready');
+                    }
+                });
+
+                // update the action group's data-* so other actions use the original url
+                const compareBtn = actionGroup.querySelector('.btn-compare');
+                if (compareBtn) compareBtn.dataset.optimizedUrl = initialOptimizedUrl;
+                cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+                const copyBtn = actionGroup.querySelector('.btn-copy');
+                if (copyBtn) copyBtn.dataset.optimizedUrl = initialOptimizedUrl;
+                const base64Btn = actionGroup.querySelector('.btn-base64');
+                if (base64Btn) base64Btn.dataset.optimizedUrl = initialOptimizedUrl;
+                const downloadAnchor = actionGroup.querySelector('.btn-download-item');
+                if (downloadAnchor) downloadAnchor.href = initialOptimizedUrl;
+
+            } catch (err) {
+                console.error("Failed to reset cropper (button handler):", err);
+                alert("An error occurred while resetting the image. Please close the editor and try again.");
+                if (modalContentLocal) modalContentLocal.classList.add('ready');
+            }
+        }
+
+        // If the image is already loaded, initialize Cropper immediately
         image.onload = () => {
              if (appState.cropper) appState.cropper.destroy();
              appState.cropper = new Cropper(image, {
@@ -352,11 +416,30 @@ function initializeUploader() {
                 autoCropArea: 0.8,
                 ready: function () {
                     modalContent.classList.add('ready');
-                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                    const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
+                    if (rectBtn) rectBtn.classList.add('active');
                 }
             });
         };
         if (image.complete) image.onload();
+
+        // 🆕 CRITICAL: Attach a direct click listener to the Reset button so it runs BEFORE body-level delegation
+        // This ensures the reset click cannot be misinterpreted by body handlers (no "hayalet" etkiler).
+        const resetBtn = document.getElementById('crop-reset-btn');
+        if (resetBtn) {
+            // Use a named handler so it could be removed if needed
+            const resetHandler = async (ev) => {
+                // prevent default behaviors and stop the event from bubbling up
+                ev.preventDefault();
+                ev.stopPropagation();
+                // call the reset routine
+                await performResetFromButton();
+                // Do NOT allow any other click handlers to run for this event
+                // (stopImmediatePropagation isn't needed here because stopPropagation on target usually prevents ancestors in bubbling)
+            };
+            resetBtn.addEventListener('click', resetHandler);
+            // no explicit removeEventListener needed because when modal removed, button is gone (but if you re-use modals, consider cleanup)
+        }
     }
 
     function showBase64Modal(base64String) {
@@ -611,8 +694,9 @@ function initializeUploader() {
     // ===============================================
 
     function handleModalEvents(event) {
-        // 🆕 Reset All tıklamasında modal kapanmasını engelle
-        if (event.target.closest('#crop-reset-btn')) return;
+        // 🆕 Extra guard: if click originated from Reset button, don't close modal
+        // (this is a safety net; primary prevention is the direct handler attached to the button)
+        if (event.target.closest && event.target.closest('#crop-reset-btn')) return;
 
         if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-close-btn')) {
             const modal = document.querySelector('.modal-overlay');
@@ -704,11 +788,14 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
+        // keep a fallback: if delegasyon yoluyla reset tespit edilirse yine çalıştır (ancak normalde direct handler kullanılıyor)
         if (button.id === 'crop-reset-btn') {
-            // 🆕 Olayı tamamen engelle
-            event.preventDefault();
-            event.stopImmediatePropagation();
-
+            try {
+                // Try to prevent bubbling — may be too late if body handler already executed.
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            } catch (e) {}
+            // Reuse logic used in direct handler: (non-blocking)
             if (!appState.currentCropTarget) return;
 
             const actionGroup = appState.currentCropTarget;
@@ -716,18 +803,18 @@ function initializeUploader() {
             const image = document.getElementById('image-to-crop');
 
             if (!cropButton || !image ) return;
-    
+
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
             const modalContent = image.closest('.crop-modal-content');
-    
+
             if (modalContent) modalContent.classList.remove('ready');
-    
+
             try {
                 if (appState.cropper) {
                     appState.cropper.destroy();
                     appState.cropper = null;
                 }
-                
+
                 image.src = initialOptimizedUrl;
                 await image.decode();
 
@@ -739,29 +826,28 @@ function initializeUploader() {
                         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
                         const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
                         if (rectBtn) rectBtn.classList.add('active');
-                        
+
                         const cropBox = document.querySelector('.cropper-view-box');
                         const cropFace = document.querySelector('.cropper-face');
                         if (cropBox) cropBox.style.borderRadius = '0';
                         if (cropFace) cropFace.style.borderRadius = '0';
-                        
+
                         if (modalContent) modalContent.classList.add('ready');
                     }
                 });
-    
+
                 actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
                 cropButton.dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
-    
+
             } catch (error) {
-                console.error("Failed to reset cropper:", error);
-                alert("An error occurred while resetting the image. Please close the editor and try again.");
+                console.error("Failed to reset cropper (fallback):", error);
                 if (modalContent) modalContent.classList.add('ready');
             }
 
-            return; // 🆕 Diğer handler'lara geçişi durdur
+            return;
         }
         
         if (button.id === 'apply-crop-btn') {
