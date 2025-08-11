@@ -26,7 +26,6 @@ function initializeUploader() {
         cropper: null,
         currentCropTarget: null,
         currentCropIndex: -1,
-        cropHistory: [],
         ultimateOriginalUrl: null,
         createdObjectUrls: [],
     };
@@ -121,7 +120,6 @@ function initializeUploader() {
         appState.createdObjectUrls.forEach(url => URL.revokeObjectURL(url));
         appState.createdObjectUrls = [];
         appState.fileQueue = [];
-        appState.cropHistory = [];
         uploadArea.innerHTML = initialUploadAreaHTML;
         uploadArea.classList.remove('file-selected');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -699,7 +697,7 @@ function initializeUploader() {
         }
     }
     
-    async function handleCropModalActions(button) {
+    async function handleCropModalActions(button, event) { // DİKKAT: event parametresini ekledik
         if (button.classList.contains('crop-shape-btn')) {
             if (!appState.cropper) return;
             const shape = button.dataset.shape;
@@ -715,19 +713,20 @@ function initializeUploader() {
             button.classList.add('active');
         }
         
-        // --- NIHAI ÇÖZÜM: Elementi tamamen değiştirme ---
         if (button.id === 'crop-reset-btn') {
+            // ÇÖZÜM 1: Olayın yayılmasını hemen durdur!
+            event.stopPropagation();
+
             if (!appState.currentCropTarget) return;
 
             const actionGroup = appState.currentCropTarget;
             const cropButton = actionGroup.querySelector('.btn-crop');
-            const oldImage = document.getElementById('image-to-crop');
-            const imageContainer = oldImage?.parentElement;
+            const image = document.getElementById('image-to-crop');
 
-            if (!cropButton || !oldImage || !imageContainer) return;
+            if (!cropButton || !image ) return;
     
             const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
-            const modalContent = oldImage.closest('.crop-modal-content');
+            const modalContent = image.closest('.crop-modal-content');
     
             if (modalContent) modalContent.classList.remove('ready');
     
@@ -736,25 +735,18 @@ function initializeUploader() {
                     appState.cropper.destroy();
                     appState.cropper = null;
                 }
-
-                const newImage = new Image();
-                newImage.id = 'image-to-crop';
-                newImage.crossOrigin = 'anonymous';
                 
-                // Yeni resmi yükle ve bekle
-                newImage.src = initialOptimizedUrl;
-                await newImage.decode();
+                // Resim kaynağını değiştir ve yüklenmesini bekle
+                image.src = initialOptimizedUrl;
+                await image.decode();
 
-                // Eski resmi DOM'dan kaldır ve yenisini ekle
-                imageContainer.innerHTML = ''; // Konteynerı temizle
-                imageContainer.appendChild(newImage);
-
-                // Yeni element üzerinde Cropper'ı başlat
-                appState.cropper = new Cropper(newImage, {
+                // Temizlenmiş resim elementi üzerinde Cropper'ı yeniden başlat
+                appState.cropper = new Cropper(image, {
                     viewMode: 1,
                     background: false,
                     autoCropArea: 0.8,
                     ready: function () {
+                        // Buton ve stil durumlarını da sıfırla
                         document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
                         const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
                         if (rectBtn) rectBtn.classList.add('active');
@@ -768,7 +760,7 @@ function initializeUploader() {
                     }
                 });
     
-                // Arka plandaki data-attributeları güncelle
+                // Arka plandaki data-attributeları orijinal URL ile güncelle
                 actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
                 cropButton.dataset.optimizedUrl = initialOptimizedUrl;
                 actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
@@ -839,7 +831,8 @@ function initializeUploader() {
         
         handleGeneralActionButtons(targetButton);
         await handleListItemActions(targetButton);
-        await handleCropModalActions(targetButton);
+        // DİKKAT: event (e) nesnesini de gönderiyoruz
+        await handleCropModalActions(targetButton, e); 
     });
 
     document.body.addEventListener('change', (e) => {
