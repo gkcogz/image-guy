@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js
+// index-page.js (GÜNCELLENMİŞ)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -284,7 +284,7 @@ function initializeUploader() {
     }
 
     // ===============================================
-    // CROP MODAL: showCropModal with safer Reset behaviour
+    // CROP MODAL: showCropModal with modal dataset + direct reset handler
     // ===============================================
     async function showCropModal(originalUrl, optimizedUrl) {
         try {
@@ -300,8 +300,12 @@ function initializeUploader() {
             return;
         }
 
+        // initialOptimizedUrl: prefer the action-group initialOptimizedUrl, fallback to optimizedUrl
+        const initialOptimizedUrl = (appState.currentCropTarget && appState.currentCropTarget.querySelector('.btn-crop')?.dataset.initialOptimizedUrl)
+            || optimizedUrl;
+
         const modalHTML = `
-            <div class="modal-overlay">
+            <div class="modal-overlay" data-initial-optimized-url="${initialOptimizedUrl}" data-current-optimized-url="${optimizedUrl}">
                 <div class="crop-modal-content">
                     <button class="modal-close-btn" type="button">&times;</button>
                     <h2>Edit & Crop Image</h2>
@@ -344,7 +348,7 @@ function initializeUploader() {
         };
         if (image.complete) image.onload();
 
-        // Direct Reset handler: use cropper.replace + cropper.reset (no destroy/remove modal)
+        // Direct Reset handler: use modal dataset (no reliance on currentCropTarget)
         const resetBtn = document.getElementById('crop-reset-btn');
         if (resetBtn) {
             const resetHandler = async (ev) => {
@@ -354,54 +358,53 @@ function initializeUploader() {
                     ev.stopPropagation();
                 } catch (e) { /* ignore */ }
 
-                if (!appState.cropper || !appState.currentCropTarget) return;
+                console.log('Reset handler running');
 
-                const actionGroup = appState.currentCropTarget;
-                const cropButton = actionGroup.querySelector('.btn-crop');
-                const initialOptimizedUrl = cropButton?.dataset.initialOptimizedUrl || cropButton?.dataset.optimizedUrl;
-                if (!initialOptimizedUrl) return;
+                const modalEl = document.querySelector('.modal-overlay');
+                const initialUrlFromModal = modalEl?.dataset?.initialOptimizedUrl || modalEl?.dataset?.currentOptimizedUrl || optimizedUrl;
 
-                // mark resetting to prevent other handlers from closing modal
+                if (!appState.cropper) {
+                    console.warn('Reset: no cropper instance present');
+                    return;
+                }
+
                 appState.isResetting = true;
                 try {
                     const imageEl = document.getElementById('image-to-crop');
 
-                    // wait for replace to load (one-time)
                     await new Promise((resolve) => {
                         let resolved = false;
                         const onLoad = () => {
                             if (!resolved) {
                                 resolved = true;
-                                imageEl.removeEventListener('load', onLoad);
+                                try { imageEl.removeEventListener('load', onLoad); } catch (e) {}
                                 resolve();
                             }
                         };
 
-                        if (imageEl.src === initialOptimizedUrl && imageEl.complete) {
+                        if (imageEl.src === initialUrlFromModal && imageEl.complete) {
                             resolved = true;
                             resolve();
                             return;
                         }
 
                         imageEl.addEventListener('load', onLoad);
-                        // call replace; Cropper handles source change internally
+
                         try {
-                            appState.cropper.replace(initialOptimizedUrl);
+                            appState.cropper.replace(initialUrlFromModal);
                         } catch (err) {
-                            // fallback: set src directly if replace fails
-                            imageEl.removeEventListener('load', onLoad);
-                            try { imageEl.src = initialOptimizedUrl; } catch (_) {}
+                            // fallback: set src directly
+                            try { imageEl.removeEventListener('load', onLoad); } catch (e) {}
+                            try { imageEl.src = initialUrlFromModal; } catch (e) {}
                             resolve();
                         }
 
-                        // safety timeout: don't hang indefinitely
                         setTimeout(() => {
-                            try { imageEl.removeEventListener('load', onLoad); } catch (_) {}
+                            try { imageEl.removeEventListener('load', onLoad); } catch (e) {}
                             resolve();
                         }, 3000);
                     });
 
-                    // reset Cropper to initial state for this image
                     try { appState.cropper.reset(); } catch (e) { /* ignore */ }
 
                     // ensure visual state is rectangle default
@@ -413,22 +416,26 @@ function initializeUploader() {
                     if (cropBox) cropBox.style.borderRadius = '0';
                     if (cropFace) cropFace.style.borderRadius = '0';
 
-                    // update action group's datasets
-                    const compareBtn = actionGroup.querySelector('.btn-compare');
-                    if (compareBtn) compareBtn.dataset.optimizedUrl = initialOptimizedUrl;
-                    if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-                    const copyBtn = actionGroup.querySelector('.btn-copy');
-                    if (copyBtn) copyBtn.dataset.optimizedUrl = initialOptimizedUrl;
-                    const base64Btn = actionGroup.querySelector('.btn-base64');
-                    if (base64Btn) base64Btn.dataset.optimizedUrl = initialOptimizedUrl;
-                    const downloadAnchor = actionGroup.querySelector('.btn-download-item');
-                    if (downloadAnchor) downloadAnchor.href = initialOptimizedUrl;
+                    // update action group's datasets if present
+                    if (appState.currentCropTarget) {
+                        const actionGroup = appState.currentCropTarget;
+                        const cropButton = actionGroup.querySelector('.btn-crop');
+                        if (cropButton) cropButton.dataset.optimizedUrl = initialUrlFromModal;
+                        const compareBtn = actionGroup.querySelector('.btn-compare');
+                        if (compareBtn) compareBtn.dataset.optimizedUrl = initialUrlFromModal;
+                        const copyBtn = actionGroup.querySelector('.btn-copy');
+                        if (copyBtn) copyBtn.dataset.optimizedUrl = initialUrlFromModal;
+                        const base64Btn = actionGroup.querySelector('.btn-base64');
+                        if (base64Btn) base64Btn.dataset.optimizedUrl = initialUrlFromModal;
+                        const downloadAnchor = actionGroup.querySelector('.btn-download-item');
+                        if (downloadAnchor) downloadAnchor.href = initialUrlFromModal;
+                    }
 
+                    console.log('Reset completed, replaced to:', initialUrlFromModal);
                 } catch (err) {
                     console.error("Reset (direct) failed:", err);
                     alert("An error occurred while resetting the image. Please try again or close and re-open the editor.");
                 } finally {
-                    // small safety delay to avoid races
                     setTimeout(() => { appState.isResetting = false; }, 50);
                 }
             };
@@ -818,16 +825,21 @@ function initializeUploader() {
             button.classList.add('active');
         }
 
-        // Delegated reset fallback: use cropper.replace() + reset rather than destroy/remove modal
+        // Delegated reset fallback: use modal.dataset if present
         if (button.id === 'crop-reset-btn') {
             try { event.preventDefault(); if (event.stopImmediatePropagation) event.stopImmediatePropagation(); event.stopPropagation(); } catch (e) { /* ignore */ }
 
-            if (!appState.currentCropTarget || !appState.cropper) return;
+            if (!appState.cropper) {
+                console.warn('Delegated reset: no cropper instance');
+                return;
+            }
 
-            const actionGroup = appState.currentCropTarget;
-            const cropButton = actionGroup.querySelector('.btn-crop');
-            const initialOptimizedUrl = cropButton?.dataset.initialOptimizedUrl || cropButton?.dataset.optimizedUrl;
-            if (!initialOptimizedUrl) return;
+            const modalEl = document.querySelector('.modal-overlay');
+            const initialUrlFromModal = modalEl?.dataset?.initialOptimizedUrl || modalEl?.dataset?.currentOptimizedUrl;
+            if (!initialUrlFromModal) {
+                console.warn('Delegated reset: no initial URL found in modal dataset');
+                return;
+            }
 
             appState.isResetting = true;
             try {
@@ -837,12 +849,12 @@ function initializeUploader() {
                     const onLoad = () => {
                         if (!resolved) {
                             resolved = true;
-                            imageEl.removeEventListener('load', onLoad);
+                            try { imageEl.removeEventListener('load', onLoad); } catch (e) {}
                             resolve();
                         }
                     };
 
-                    if (imageEl.src === initialOptimizedUrl && imageEl.complete) {
+                    if (imageEl.src === initialUrlFromModal && imageEl.complete) {
                         resolved = true;
                         resolve();
                         return;
@@ -850,10 +862,10 @@ function initializeUploader() {
 
                     imageEl.addEventListener('load', onLoad);
                     try {
-                        appState.cropper.replace(initialOptimizedUrl);
+                        appState.cropper.replace(initialUrlFromModal);
                     } catch (err) {
                         imageEl.removeEventListener('load', onLoad);
-                        try { imageEl.src = initialOptimizedUrl; } catch (_) {}
+                        try { imageEl.src = initialUrlFromModal; } catch (_) {}
                         resolve();
                     }
 
@@ -873,16 +885,15 @@ function initializeUploader() {
                 if (cropBox) cropBox.style.borderRadius = '0';
                 if (cropFace) cropFace.style.borderRadius = '0';
 
-                const compareBtn = actionGroup.querySelector('.btn-compare');
-                if (compareBtn) compareBtn.dataset.optimizedUrl = initialOptimizedUrl;
-                if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-                const copyBtn = actionGroup.querySelector('.btn-copy');
-                if (copyBtn) copyBtn.dataset.optimizedUrl = initialOptimizedUrl;
-                const base64Btn = actionGroup.querySelector('.btn-base64');
-                if (base64Btn) base64Btn.dataset.optimizedUrl = initialOptimizedUrl;
-                const downloadAnchor = actionGroup.querySelector('.btn-download-item');
-                if (downloadAnchor) downloadAnchor.href = initialOptimizedUrl;
-
+                if (appState.currentCropTarget) {
+                    const actionGroup = appState.currentCropTarget;
+                    const cropButton = actionGroup.querySelector('.btn-crop');
+                    if (cropButton) cropButton.dataset.optimizedUrl = initialUrlFromModal;
+                    const compareBtn = actionGroup.querySelector('.btn-compare'); if (compareBtn) compareBtn.dataset.optimizedUrl = initialUrlFromModal;
+                    const copyBtn = actionGroup.querySelector('.btn-copy'); if (copyBtn) copyBtn.dataset.optimizedUrl = initialUrlFromModal;
+                    const base64Btn = actionGroup.querySelector('.btn-base64'); if (base64Btn) base64Btn.dataset.optimizedUrl = initialUrlFromModal;
+                    const downloadAnchor = actionGroup.querySelector('.btn-download-item'); if (downloadAnchor) downloadAnchor.href = initialUrlFromModal;
+                }
             } catch (err) {
                 console.error("Reset (delegated) failed:", err);
             } finally {
@@ -978,7 +989,7 @@ function initializeUploader() {
         handleFiles(e.dataTransfer.files);
     });
 
-    // handleFiles is defined here to avoid hoisting-confusion for closure uses
+    // handleFiles (single definition)
     function handleFiles(files) {
         resetUI();
 
