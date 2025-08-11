@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (TAM VE EKSİKSİZ DÜZELTİLMİŞ HALİ)
+// index-page.js (FINAL & SIMPLIFIED VERSION)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -317,10 +317,7 @@ function initializeUploader() {
                     <div class="crop-actions">
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle" type="button">Circle</button>
-                        <div class="tooltip-wrapper">
-                            <button class="btn btn-secondary" id="crop-reset-btn" type="button">Reset All</button>
-                            <span class="tooltip-text">Warning: All changes will be deleted.</span>
-                        </div>
+                        <button class="btn btn-secondary modal-close-btn" type="button">Cancel</button>
                         <button class="btn btn-primary" id="apply-crop-btn" type="button">Apply Crop</button>
                     </div>
                 </div>
@@ -534,12 +531,13 @@ function initializeUploader() {
     function updateMainButtonAfterCompletion() {
         const actionArea = document.querySelector('.action-area');
         if (actionArea) {
-            actionArea.innerHTML = `
-                <div class="action-buttons-container">
-                    <button class="btn btn-primary" id="download-all-btn" type="button">Download All as .ZIP</button>
+            const actionButtonsContainer = actionArea.querySelector('.action-buttons-container');
+            if (actionButtonsContainer) {
+                actionButtonsContainer.innerHTML = `
                     <button class="btn btn-secondary" id="clear-all-btn" type="button">Start Over</button>
-                </div>
-            `;
+                    <button class="btn btn-primary" id="download-all-btn" type="button">Download All (.ZIP)</button>
+                `;
+            }
         }
     }
 
@@ -592,7 +590,7 @@ function initializeUploader() {
             alert('An error occurred while creating the ZIP file. Please try again.');
         } finally {
             if (downloadAllBtn) {
-                downloadAllBtn.textContent = 'Download All as .ZIP';
+                downloadAllBtn.textContent = 'Download All (.ZIP)';
                 downloadAllBtn.disabled = false;
             }
         }
@@ -613,6 +611,7 @@ function initializeUploader() {
     }
 
     function handleModalEvents(event) {
+        // Closes modal if user clicks overlay or a button with .modal-close-btn
         if (event.target.classList.contains('modal-overlay') || event.target.closest('.modal-close-btn')) {
             removeModalIfPresent();
         }
@@ -689,7 +688,7 @@ function initializeUploader() {
         }
     }
 
-    async function handleCropModalActions(button, event) {
+    async function handleCropModalActions(button) {
         if (!document.querySelector('.crop-modal-content')) return;
 
         if (button.classList.contains('crop-shape-btn')) {
@@ -705,66 +704,6 @@ function initializeUploader() {
 
             document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-        }
-
-        if (button.id === 'crop-reset-btn') {
-            event.stopPropagation();
-            console.log("Reset handler initiated via main router.");
-
-            if (!appState.cropper || appState.currentCropIndex < 0) return;
-
-            const currentFile = appState.fileQueue[appState.currentCropIndex];
-            if (!currentFile) return;
-
-            const listItem = document.querySelector(`[data-file-id="${currentFile.uniqueId}"]`);
-            const actionGroup = listItem ? listItem.querySelector('.action-icon-group') : null;
-            if (!actionGroup) {
-                console.error("Reset failed: Could not find action-group for the current file.");
-                return;
-            }
-
-            const cropButton = actionGroup.querySelector('.btn-crop');
-            const initialOptimizedUrl = cropButton?.dataset.initialOptimizedUrl;
-            if (!initialOptimizedUrl) {
-                console.error("Reset failed: Could not find initial-optimized-url.");
-                return;
-            }
-
-            try {
-                const image = document.getElementById('image-to-crop');
-                const modalContent = image.closest('.crop-modal-content');
-                if (modalContent) modalContent.classList.remove('ready');
-
-                appState.cropper.destroy();
-                image.src = initialOptimizedUrl;
-                await image.decode();
-
-                appState.cropper = new Cropper(image, {
-                    viewMode: 1,
-                    background: false,
-                    autoCropArea: 0.8,
-                    ready: function() {
-                        if (modalContent) modalContent.classList.add('ready');
-                        document.querySelectorAll('.crop-shape-btn').forEach(b => b.classList.remove('active'));
-                        const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
-                        if (rectBtn) rectBtn.classList.add('active');
-                        const cBox = document.querySelector('.cropper-view-box');
-                        const cFace = document.querySelector('.cropper-face');
-                        if (cBox) cBox.style.borderRadius = '0';
-                        if (cFace) cFace.style.borderRadius = '0';
-                    }
-                });
-
-                actionGroup.querySelector('.btn-compare').dataset.optimizedUrl = initialOptimizedUrl;
-                cropButton.dataset.optimizedUrl = initialOptimizedUrl;
-                actionGroup.querySelector('.btn-copy').dataset.optimizedUrl = initialOptimizedUrl;
-                actionGroup.querySelector('.btn-base64').dataset.optimizedUrl = initialOptimizedUrl;
-                actionGroup.querySelector('.btn-download-item').href = initialOptimizedUrl;
-
-                console.log('Reset completed successfully. UI updated to:', initialOptimizedUrl);
-            } catch (err) {
-                console.error("Resetting cropper failed:", err);
-            }
         }
 
         if (button.id === 'apply-crop-btn') {
@@ -824,7 +763,7 @@ function initializeUploader() {
         
         handleGeneralActionButtons(targetButton);
         await handleListItemActions(targetButton);
-        await handleCropModalActions(targetButton, e);
+        await handleCropModalActions(targetButton);
     });
 
     document.body.addEventListener('change', (e) => {
