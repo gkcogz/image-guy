@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL, COMPLETE & UNABRIDGED VERSION)
+// index-page.js (FINAL VERSION - ADVANCED BUTTON FIX)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,7 +15,7 @@ function initializeUploader() {
     // APPLICATION STATE (SINGLE SOURCE OF TRUTH)
     // ===============================================
     let appState = {
-        fileQueue: [], // Array of file state objects
+        fileQueue: [], 
         cropper: null,
         currentCropFileId: null,
         isBatchProcessing: false,
@@ -616,12 +616,12 @@ function initializeUploader() {
                 handleZipDownload();
             }
         }
-        else if (targetButton.closest('.upload-area') && !fileId) {
-            fileInput.click();
-        }
         else if (targetButton.id === 'advanced-options-btn') {
             const slider = document.querySelector('.advanced-slider');
             if (slider) slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
+        }
+        else if (targetButton.closest('.upload-area') && !fileId) {
+            fileInput.click();
         }
         
         if (targetButton.closest('.crop-modal-content')) {
@@ -678,7 +678,7 @@ function initializeUploader() {
         if (e.target.name === 'format') updateQualitySlider();
         if (e.target.id === 'quality-slider') {
             const qualityOutput = document.getElementById('quality-output');
-            if (qualityOutput) qualityOutput.textContent = e.target.value;
+            if (qualityOutput) qualityOutput.textContent = e.Ternary;
         }
     });
 
