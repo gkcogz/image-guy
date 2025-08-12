@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (THE FINAL, TRULY COMPLETE & ROBUST VERSION)
+// index-page.js (THE FINAL VERSION)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
