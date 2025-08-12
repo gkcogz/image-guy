@@ -1,6 +1,7 @@
 // js/api.js
 
-import { sanitizeFilename } from './utils.js';
+// Tüm import'lar dosyanın en başında toplanmalıdır.
+import { sanitizeFilename, loadScript } from './utils.js';
 import { renderApp } from './ui.js';
 import { appState } from './state.js';
 
@@ -67,10 +68,6 @@ export async function processSingleFile(fileState, fileObjectToProcess, override
     
     renderApp();
 }
-
-// Bu kodu js/api.js dosyasının en altına ekleyin.
-import { loadScript } from './utils.js'; // Bu import'u dosyanın en üstüne eklemeyi unutmayın.
-import { appState } from './state.js'; // Bu import'u da ekleyin.
 
 export async function handleZipDownload() {
     const downloadAllBtn = document.getElementById('download-all-btn');
