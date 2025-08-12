@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL, COMPLETE & UNABRIDGED VERSION)
+// index-page.js (FINAL & COMPLETE VERSION - ALL FEATURES INCLUDED)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -73,9 +73,9 @@ function initializeUploader() {
     // MAIN RENDER FUNCTION
     // ===============================================
     function renderApp() {
-        console.log("--- Rendering App State ---", JSON.parse(JSON.stringify(appState))); // Deep copy for clean logging
+        console.log("--- Rendering App State ---", JSON.parse(JSON.stringify(appState)));
         
-        uploadArea.innerHTML = ''; // Clear previous UI
+        uploadArea.innerHTML = '';
 
         if (appState.fileQueue.length === 0) {
             uploadArea.innerHTML = initialUploadAreaHTML;
@@ -136,13 +136,13 @@ function initializeUploader() {
         actionArea.className = 'action-area';
         
         const allDone = appState.fileQueue.every(f => f.status === 'success' || f.status === 'error');
-        if (allDone) {
+        if (allDone && appState.fileQueue.length > 0) {
              actionArea.innerHTML = `
                 <div class="action-buttons-container">
                     <button class="btn btn-secondary" id="clear-all-btn" type="button">Start Over</button>
                     <button class="btn btn-primary" id="download-all-btn" type="button">Download All (.ZIP)</button>
                 </div>`;
-        } else {
+        } else if (appState.fileQueue.length > 0) {
             const containsPng = appState.fileQueue.some(f => f.fileObject.name.toLowerCase().endsWith('.png'));
             actionArea.innerHTML = `
             <div class="format-options-header">
@@ -211,8 +211,9 @@ function initializeUploader() {
             originalUrl: URL.createObjectURL(file),
             initialOptimizedUrl: null,
             currentOptimizedUrl: null,
-            downloadName: null,
+            initialSavings: 0,
             savings: 0,
+            downloadName: null,
             progressText: '',
             errorMessage: '',
         }));
@@ -274,15 +275,16 @@ function initializeUploader() {
 
             fileState.status = 'success';
             fileState.currentOptimizedUrl = data.downloadUrl;
+            const currentSavings = ((fileState.fileObject.size - data.optimizedSize) / fileState.fileObject.size * 100);
+            fileState.savings = currentSavings;
+
             if (!fileState.initialOptimizedUrl) {
                 fileState.initialOptimizedUrl = data.downloadUrl;
+                fileState.initialSavings = currentSavings;
             }
-            fileState.savings = ((fileState.fileObject.size - data.optimizedSize) / fileState.fileObject.size * 100);
+            
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
             fileState.downloadName = sanitizeFilename(fileState.fileObject.name).replace(/\.[^/.]+$/, "") + newExtension;
-
-            console.log(`--- Processed ${fileObjectToProcess.name} ---`);
-            console.log("State after update:", JSON.parse(JSON.stringify(fileState)));
 
         } catch (error) {
             fileState.status = 'error';
@@ -331,14 +333,14 @@ function initializeUploader() {
         }
     }
 
-    function showComparisonModal(originalUrl, optimizedUrl) {
+    function showComparisonModal(beforeUrl, afterUrl) {
         const modalHTML = `
             <div class="modal-overlay">
                 <div class="modal-content">
                     <button class="modal-close-btn" type="button">&times;</button>
                     <img-comparison-slider>
-                        <img slot="first" src="${originalUrl}" />
-                        <img slot="second" src="${optimizedUrl}" />
+                        <img slot="first" src="${beforeUrl}" />
+                        <img slot="second" src="${afterUrl}" />
                     </img-comparison-slider>
                 </div>
             </div>`;
@@ -354,7 +356,6 @@ function initializeUploader() {
                 ]);
             }
         } catch (error) {
-            console.error("Failed to load Cropper.js assets:", error);
             alert("An error occurred while loading the image editor.");
             return;
         }
@@ -381,9 +382,7 @@ function initializeUploader() {
         image.crossOrigin = "anonymous";
 
         image.onload = () => {
-            if (appState.cropper) {
-                try { appState.cropper.destroy(); } catch (e) {}
-            }
+            if (appState.cropper) { try { appState.cropper.destroy(); } catch (e) {} }
             appState.cropper = new Cropper(image, {
                 viewMode: 1, background: false, autoCropArea: 0.8,
                 ready: () => {
@@ -495,13 +494,7 @@ function initializeUploader() {
     document.body.addEventListener('click', async (e) => {
         const targetButton = e.target.closest('button');
         
-        // Modal closing is a global concern
-        if (!targetButton || !targetButton.closest('.modal-content')) {
-             if (e.target.classList.contains('modal-overlay')) {
-                removeModalIfPresent();
-            }
-        }
-        if (targetButton && targetButton.classList.contains('modal-close-btn')) {
+        if (e.target.classList.contains('modal-overlay') || (targetButton && targetButton.classList.contains('modal-close-btn'))) {
             removeModalIfPresent();
         }
         
@@ -518,34 +511,51 @@ function initializeUploader() {
                 URL.revokeObjectURL(fileState.originalUrl);
                 renderApp();
             }
-            if (targetButton.classList.contains('btn-revert')) {
+            else if (targetButton.classList.contains('btn-revert')) {
                 fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
+                fileState.savings = fileState.initialSavings;
                 renderApp();
             }
-            if (targetButton.classList.contains('btn-retry')) {
+            else if (targetButton.classList.contains('btn-retry')) {
                 processSingleFile(fileState, fileState.fileObject);
             }
-            if (targetButton.classList.contains('btn-crop')) {
+            else if (targetButton.classList.contains('btn-crop')) {
                 appState.currentCropFileId = fileId;
                 showCropModal(fileState.currentOptimizedUrl);
             }
-            if (targetButton.classList.contains('btn-compare')) {
-                showComparisonModal(fileState.originalUrl, fileState.currentOptimizedUrl);
+            else if (targetButton.classList.contains('btn-compare')) {
+                showComparisonModal(fileState.initialOptimizedUrl, fileState.currentOptimizedUrl);
             }
-            if (targetButton.classList.contains('btn-copy')) {
+            else if (targetButton.classList.contains('btn-copy')) {
+                targetButton.innerHTML = '...';
                 try {
                     const response = await fetch(fileState.currentOptimizedUrl);
                     const blob = await response.blob();
-                    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-                    targetButton.innerHTML = '✓';
-                    targetButton.classList.add('copied');
-                    setTimeout(() => {
-                        targetButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-                        targetButton.classList.remove('copied');
-                    }, 2000);
-                } catch (err) { console.error('Copy failed:', err); }
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = await createImageBitmap(blob);
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    canvas.toBlob(async (pngBlob) => {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+                        targetButton.innerHTML = '✓';
+                        targetButton.classList.add('copied');
+                        setTimeout(() => {
+                           if (document.body.contains(targetButton)) {
+                                targetButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                                targetButton.classList.remove('copied');
+                           }
+                        }, 2000);
+                    }, 'image/png');
+                } catch (err) { 
+                    console.error('Copy failed:', err);
+                    targetButton.innerHTML = `X`;
+                }
             }
-            if (targetButton.classList.contains('btn-base64')) {
+            else if (targetButton.classList.contains('btn-base64')) {
                 try {
                     const response = await fetch(fileState.currentOptimizedUrl);
                     const blob = await response.blob();
@@ -555,23 +565,29 @@ function initializeUploader() {
                 } catch (err) { console.error('Base64 generation failed:', err); }
             }
         }
-        
-        // --- General actions ---
-        if (targetButton.id === 'clear-all-btn') resetUI();
-        if (targetButton.closest('.upload-area') && !fileId) fileInput.click(); // Click empty area
-        if (targetButton.id === 'download-all-btn') handleZipDownload();
-        if (targetButton.id === 'optimize-all-btn') {
-            const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
-            targetButton.disabled = true;
-            targetButton.textContent = `Processing...`;
-            await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
+        else if (targetButton.id === 'clear-all-btn') {
+            resetUI();
         }
-        if (targetButton.id === 'advanced-options-btn') {
+        else if (targetButton.id === 'optimize-all-btn' || targetButton.id === 'download-all-btn') {
+            e.stopPropagation();
+            if (targetButton.id === 'optimize-all-btn') {
+                const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
+                targetButton.disabled = true;
+                targetButton.textContent = `Processing...`;
+                await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
+            }
+            if (targetButton.id === 'download-all-btn') {
+                handleZipDownload();
+            }
+        }
+        else if (targetButton.closest('.upload-area') && !fileId) {
+            fileInput.click();
+        }
+        else if (targetButton.id === 'advanced-options-btn') {
             const slider = document.querySelector('.advanced-slider');
             if (slider) slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
         }
         
-        // --- Crop Modal Actions ---
         if (targetButton.closest('.crop-modal-content')) {
              if (targetButton.classList.contains('crop-shape-btn')) {
                 if (!appState.cropper) return;
