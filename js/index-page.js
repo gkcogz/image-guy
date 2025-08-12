@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL VERSION - ADVANCED BUTTON FIX)
+// index-page.js (FINAL VERSION - ADVANCED COMPARE FEATURE)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -313,7 +313,17 @@ function initializeUploader() {
                 canvas.width = cropData.width;
                 canvas.height = cropData.height;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(image, cropData.x, cropData.y, cropData.width, cropData.height, 0, 0, cropData.width, cropData.height);
+                ctx.drawImage(
+                    image,
+                    cropData.x,
+                    cropData.y,
+                    cropData.width,
+                    cropData.height,
+                    0,
+                    0,
+                    cropData.width,
+                    cropData.height
+                );
                 resolve(canvas.toDataURL());
             };
             image.onerror = () => reject(new Error('Failed to load image for cropping section.'));
@@ -678,7 +688,7 @@ function initializeUploader() {
         if (e.target.name === 'format') updateQualitySlider();
         if (e.target.id === 'quality-slider') {
             const qualityOutput = document.getElementById('quality-output');
-            if (qualityOutput) qualityOutput.textContent = e.Ternary;
+            if (qualityOutput) qualityOutput.textContent = e.target.value;
         }
     });
 
