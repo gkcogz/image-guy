@@ -304,40 +304,55 @@ function initializeUploader() {
     // MODALS & UI HELPERS
     // ===============================================
 
-    async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
-        try {
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('Network response was not ok for getCroppedSection.');
-            const blob = await response.blob();
-            const localUrl = URL.createObjectURL(blob);
+async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
+        // fetch/blob yerine doğrudan Image objesi kullanarak daha sağlam bir yapı kuruyoruz.
+        // Bu Promise, resim yükleme işleminin asenkron doğasını yönetir.
+        return new Promise((resolve, reject) => {
+            const image = new Image();
 
-            return new Promise((resolve, reject) => {
-                const image = new Image();
-                image.onload = () => {
+            // EN KRİTİK ADIM: "src" özelliğini ayarlamadan ÖNCE "crossOrigin" ayarlanmalıdır.
+            // Bu, tarayıcıya resmi CORS başlıklarıyla talep etmesini söyler ve
+            // resmin bir canvas'a "kirletilmeden" (tainted) çizilmesine olanak tanır.
+            image.crossOrigin = "anonymous";
+
+            // Resim başarıyla yüklendiğinde bu fonksiyon tetiklenir.
+            image.onload = () => {
+                try {
+                    // Kırpılmış bölümü tutacak yeni bir canvas oluşturuyoruz.
                     const canvas = document.createElement('canvas');
                     canvas.width = cropData.width;
                     canvas.height = cropData.height;
                     const ctx = canvas.getContext('2d');
+
+                    // Yüklenen kaynak resmin (image) belirli bir bölümünü (cropData'ya göre)
+                    // yeni ve daha küçük olan canvas'ımızın üzerine çiziyoruz.
                     ctx.drawImage(
-                        image,
-                        cropData.x, cropData.y,
-                        cropData.width, cropData.height,
-                        0, 0,
-                        cropData.width, cropData.height
+                        image,                          // Kaynak resim
+                        cropData.x, cropData.y,         // Kaynak resimdeki başlangıç koordinatları
+                        cropData.width, cropData.height, // Kaynak resimden alınacak alanın boyutları
+                        0, 0,                           // Hedef canvas'taki çizim başlangıç koordinatları (sol üst)
+                        cropData.width, cropData.height // Hedef canvas'a çizilecek alanın boyutları
                     );
-                    URL.revokeObjectURL(localUrl);
+
+                    // Yeni oluşturduğumuz ve üzerinde sadece kırpılmış bölüm olan canvas'ın
+                    // base64 formatındaki Data URL'sini Promise'in başarılı sonucu olarak döndürüyoruz.
                     resolve(canvas.toDataURL());
-                };
-                image.onerror = () => {
-                    URL.revokeObjectURL(localUrl);
-                    reject(new Error('Failed to load local blob image for canvas drawing.'));
-                };
-                image.src = localUrl;
-            });
-        } catch (error) {
-            console.error('Error in getCroppedSectionAsDataUrl:', error);
-            throw error;
-        }
+
+                } catch (error) {
+                    // Canvas çizim işlemi sırasında bir hata olursa yakalayıp reddediyoruz.
+                    console.error('Kırpılmış resmi canvas\'a çizerken hata oluştu:', error);
+                    reject(error);
+                }
+            };
+
+            // Resim yüklenirken bir hata olursa (örn: ağ hatası, geçersiz URL, CORS ihlali) bu tetiklenir.
+            image.onerror = () => {
+                reject(new Error(`Karşılaştırma için resim yüklenemedi: ${imageUrl}. CORS politikasını kontrol edin.`));
+            };
+
+            // Bu satır, resmin S3 URL'sinden yüklenmesini başlatır.
+            image.src = imageUrl;
+        });
     }
 
     function updateQualitySlider() {
