@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL VERSION with REVERT and UI Fix)
+// index-page.js (FINAL VERSION with ROBUST REVERT LOGIC)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -154,7 +154,7 @@ function initializeUploader() {
                         </button>
                         
                         ${hasBeenCropped ? `
-                        <button class="icon-btn btn-revert" title="Undo Crop" data-initial-optimized-url="${data.initialOptimizedUrl}" type="button">
+                        <button class="icon-btn btn-revert" title="Undo Crop" data-initial-optimized-url="${data.initialOptimizedUrl}" data-file-index="${data.index}" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a10 10 0 1 1-10-10 10.2 10.2 0 0 1 3.4.6"></path><path d="M12 2v4h4"></path></svg>
                         </button>
                         ` : ''}
@@ -654,27 +654,32 @@ function initializeUploader() {
             }
         }
         if (button.classList.contains('btn-revert')) {
-            const initialUrl = button.dataset.initialOptimizedUrl;
+            const listItem = button.closest('.file-list-item');
+            const statusElement = listItem.querySelector('.file-item-status');
             const actionGroup = button.closest('.action-icon-group');
-            
-            if (!initialUrl || !actionGroup) {
-                console.error("Revert failed: Could not find initial URL or action group.");
-                return;
-            }
-    
-            const compareBtn = actionGroup.querySelector('.btn-compare');
             const cropBtn = actionGroup.querySelector('.btn-crop');
-            const copyBtn = actionGroup.querySelector('.btn-copy');
-            const base64Btn = actionGroup.querySelector('.btn-base64');
+
+            // Gerekli tüm bilgileri DOM'dan yeniden topla
+            const initialUrl = button.dataset.initialOptimizedUrl;
+            const originalUrl = cropBtn.dataset.originalUrl;
             const downloadLink = actionGroup.querySelector('.btn-download-item');
-    
-            if(compareBtn) compareBtn.dataset.optimizedUrl = initialUrl;
-            if(cropBtn) cropBtn.dataset.optimizedUrl = initialUrl;
-            if(copyBtn) copyBtn.dataset.optimizedUrl = initialUrl;
-            if(base64Btn) base64Btn.dataset.optimizedUrl = initialUrl;
-            if(downloadLink) downloadLink.href = initialUrl;
-    
-            button.style.display = 'none'; // Hide the button after use
+            const downloadName = downloadLink.getAttribute('download');
+            const savingsText = listItem.querySelector('.savings, .savings-info').textContent;
+            
+            // renderFileStatus, sayısal bir savings değeri bekler, metinden çıkarmak yerine 0 varsayalım
+            // veya daha sağlam bir çözüm için bu bilgiyi de data- attribute'da saklayabiliriz.
+            // Şimdilik basit tutalım.
+            const dummySavings = parseFloat(savingsText.replace(/[^0-9.]/g, '')) || 0;
+
+            // URL'leri ilk haline döndür ve arayüzü yeniden çiz
+            renderFileStatus(statusElement, 'SUCCESS', {
+                savings: dummySavings,
+                originalUrl: originalUrl,
+                optimizedUrl: initialUrl, // <-- En önemli değişiklik
+                initialOptimizedUrl: initialUrl,
+                downloadName: downloadName,
+                index: parseInt(button.dataset.fileIndex, 10)
+            });
         }
         if (button.classList.contains('btn-crop')) {
             appState.currentCropTarget = button.closest('.action-icon-group');
