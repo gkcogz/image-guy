@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL & SIMPLIFIED VERSION)
+// index-page.js (FINAL VERSION with REVERT and UI Fix)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -144,12 +144,21 @@ function initializeUploader() {
             case 'SUCCESS':
                 const savingsText = data.savings >= 1 ? `✓ ${data.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
                 const savingsClass = data.savings >= 1 ? 'savings' : 'savings-info';
+                const hasBeenCropped = data.initialOptimizedUrl !== data.optimizedUrl;
+
                 statusElement.innerHTML = `
                     <span class="${savingsClass}">${savingsText}</span>
                     <div class="action-icon-group">
                         <button class="icon-btn btn-compare" title="Compare" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
                         </button>
+                        
+                        ${hasBeenCropped ? `
+                        <button class="icon-btn btn-revert" title="Undo Crop" data-initial-optimized-url="${data.initialOptimizedUrl}" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a10 10 0 1 1-10-10 10.2 10.2 0 0 1 3.4.6"></path><path d="M12 2v4h4"></path></svg>
+                        </button>
+                        ` : ''}
+
                         <button class="icon-btn btn-crop" title="Edit & Crop" data-original-url="${data.originalUrl}" data-optimized-url="${data.optimizedUrl}" data-initial-optimized-url="${data.initialOptimizedUrl}" data-file-index="${data.index}" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
                         </button>
@@ -317,7 +326,6 @@ function initializeUploader() {
                     <div class="crop-actions">
                         <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
                         <button class="btn btn-secondary crop-shape-btn" data-shape="circle" type="button">Circle</button>
-                        <button class="btn btn-secondary modal-close-btn" type="button">Cancel</button>
                         <button class="btn btn-primary" id="apply-crop-btn" type="button">Apply Crop</button>
                     </div>
                 </div>
@@ -611,7 +619,6 @@ function initializeUploader() {
     }
 
     function handleModalEvents(event) {
-        // Closes modal if user clicks overlay or a button with .modal-close-btn
         if (event.target.classList.contains('modal-overlay') || event.target.closest('.modal-close-btn')) {
             removeModalIfPresent();
         }
@@ -645,6 +652,29 @@ function initializeUploader() {
                 const listItemToRetry = document.querySelector(`[data-file-id="${fileToRetry.uniqueId}"]`);
                 if (listItemToRetry) processSingleFile(fileToRetry, listItemToRetry, indexToRetry, button.dataset.format);
             }
+        }
+        if (button.classList.contains('btn-revert')) {
+            const initialUrl = button.dataset.initialOptimizedUrl;
+            const actionGroup = button.closest('.action-icon-group');
+            
+            if (!initialUrl || !actionGroup) {
+                console.error("Revert failed: Could not find initial URL or action group.");
+                return;
+            }
+    
+            const compareBtn = actionGroup.querySelector('.btn-compare');
+            const cropBtn = actionGroup.querySelector('.btn-crop');
+            const copyBtn = actionGroup.querySelector('.btn-copy');
+            const base64Btn = actionGroup.querySelector('.btn-base64');
+            const downloadLink = actionGroup.querySelector('.btn-download-item');
+    
+            if(compareBtn) compareBtn.dataset.optimizedUrl = initialUrl;
+            if(cropBtn) cropBtn.dataset.optimizedUrl = initialUrl;
+            if(copyBtn) copyBtn.dataset.optimizedUrl = initialUrl;
+            if(base64Btn) base64Btn.dataset.optimizedUrl = initialUrl;
+            if(downloadLink) downloadLink.href = initialUrl;
+    
+            button.style.display = 'none'; // Hide the button after use
         }
         if (button.classList.contains('btn-crop')) {
             appState.currentCropTarget = button.closest('.action-icon-group');
