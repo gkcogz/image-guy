@@ -215,6 +215,7 @@ function initializeUploader() {
             status: 'ready',
             originalUrl: URL.createObjectURL(file),
             initialOptimizedUrl: null,
+            initialImageObject: null, 
             currentOptimizedUrl: null,
             initialSavings: 0,
             savings: 0,
@@ -279,6 +280,22 @@ function initializeUploader() {
             }
             const data = await optimizeResponse.json();
 
+            if (!fileState.initialOptimizedUrl) { 
+                try {
+                    const loadedImage = await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.crossOrigin = "anonymous";
+                        img.onload = () => resolve(img);
+                        img.onerror = (err) => reject(new Error("Karşılaştırma için temel resim ön-yüklenemedi."));
+                        img.src = data.downloadUrl; 
+                    });
+                    fileState.initialImageObject = loadedImage; 
+                } catch (error) {
+                    console.error(error);
+                    fileState.initialImageObject = null; 
+                }
+            }
+
             fileState.status = 'success';
             fileState.currentOptimizedUrl = data.downloadUrl;
             const currentSavings = ((fileState.fileObject.size - data.optimizedSize) / fileState.fileObject.size * 100);
@@ -304,55 +321,27 @@ function initializeUploader() {
     // MODALS & UI HELPERS
     // ===============================================
 
-async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
-        // fetch/blob yerine doğrudan Image objesi kullanarak daha sağlam bir yapı kuruyoruz.
-        // Bu Promise, resim yükleme işleminin asenkron doğasını yönetir.
-        return new Promise((resolve, reject) => {
-            const image = new Image();
-
-            // EN KRİTİK ADIM: "src" özelliğini ayarlamadan ÖNCE "crossOrigin" ayarlanmalıdır.
-            // Bu, tarayıcıya resmi CORS başlıklarıyla talep etmesini söyler ve
-            // resmin bir canvas'a "kirletilmeden" (tainted) çizilmesine olanak tanır.
-            image.crossOrigin = "anonymous";
-
-            // Resim başarıyla yüklendiğinde bu fonksiyon tetiklenir.
-            image.onload = () => {
-                try {
-                    // Kırpılmış bölümü tutacak yeni bir canvas oluşturuyoruz.
-                    const canvas = document.createElement('canvas');
-                    canvas.width = cropData.width;
-                    canvas.height = cropData.height;
-                    const ctx = canvas.getContext('2d');
-
-                    // Yüklenen kaynak resmin (image) belirli bir bölümünü (cropData'ya göre)
-                    // yeni ve daha küçük olan canvas'ımızın üzerine çiziyoruz.
-                    ctx.drawImage(
-                        image,                          // Kaynak resim
-                        cropData.x, cropData.y,         // Kaynak resimdeki başlangıç koordinatları
-                        cropData.width, cropData.height, // Kaynak resimden alınacak alanın boyutları
-                        0, 0,                           // Hedef canvas'taki çizim başlangıç koordinatları (sol üst)
-                        cropData.width, cropData.height // Hedef canvas'a çizilecek alanın boyutları
-                    );
-
-                    // Yeni oluşturduğumuz ve üzerinde sadece kırpılmış bölüm olan canvas'ın
-                    // base64 formatındaki Data URL'sini Promise'in başarılı sonucu olarak döndürüyoruz.
-                    resolve(canvas.toDataURL());
-
-                } catch (error) {
-                    // Canvas çizim işlemi sırasında bir hata olursa yakalayıp reddediyoruz.
-                    console.error('Kırpılmış resmi canvas\'a çizerken hata oluştu:', error);
-                    reject(error);
-                }
-            };
-
-            // Resim yüklenirken bir hata olursa (örn: ağ hatası, geçersiz URL, CORS ihlali) bu tetiklenir.
-            image.onerror = () => {
-                reject(new Error(`Karşılaştırma için resim yüklenemedi: ${imageUrl}. CORS politikasını kontrol edin.`));
-            };
-
-            // Bu satır, resmin S3 URL'sinden yüklenmesini başlatır.
-            image.src = imageUrl;
-        });
+    function getCroppedSectionAsDataUrl(imageObject, cropData) {
+        if (!imageObject) {
+            throw new Error("Karşılaştırma için temel resim objesi hafızada bulunamadı.");
+        }
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = cropData.width;
+            canvas.height = cropData.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(
+                imageObject,
+                cropData.x, cropData.y,
+                cropData.width, cropData.height,
+                0, 0,
+                cropData.width, cropData.height
+            );
+            return canvas.toDataURL(); 
+        } catch (error) {
+            console.error('Hafızadaki resim canvas\'a çizilirken hata:', error);
+            throw error; 
+        }
     }
 
     function updateQualitySlider() {
@@ -583,11 +572,12 @@ async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
             }
             else if (targetButton.classList.contains('btn-compare')) {
                 let beforeUrl = fileState.initialOptimizedUrl;
-                if (fileState.cropData) {
+                if (fileState.cropData && fileState.initialImageObject) {
                     try {
-                        beforeUrl = await getCroppedSectionAsDataUrl(fileState.initialOptimizedUrl, fileState.cropData);
+                        beforeUrl = getCroppedSectionAsDataUrl(fileState.initialImageObject, fileState.cropData);
                     } catch (err) {
-                        alert("Could not create comparison view. This is likely a server CORS policy issue. Displaying full image instead.");
+                        console.error("Karşılaştırma görüntüsü oluşturulamadı:", err);
+                        alert("Karşılaştırma görüntüsü oluşturulamadı. Varsayılan resim gösteriliyor.");
                     }
                 }
                 showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
