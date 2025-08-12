@@ -215,7 +215,6 @@ function initializeUploader() {
             status: 'ready',
             originalUrl: URL.createObjectURL(file),
             initialOptimizedUrl: null,
-            initialImageObject: null, 
             currentOptimizedUrl: null,
             initialSavings: 0,
             savings: 0,
@@ -280,22 +279,6 @@ function initializeUploader() {
             }
             const data = await optimizeResponse.json();
 
-            if (!fileState.initialOptimizedUrl) { 
-                try {
-                    const loadedImage = await new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.crossOrigin = "anonymous";
-                        img.onload = () => resolve(img);
-                        img.onerror = (err) => reject(new Error("Karşılaştırma için temel resim ön-yüklenemedi."));
-                        img.src = data.downloadUrl; 
-                    });
-                    fileState.initialImageObject = loadedImage; 
-                } catch (error) {
-                    console.error(error);
-                    fileState.initialImageObject = null; 
-                }
-            }
-
             fileState.status = 'success';
             fileState.currentOptimizedUrl = data.downloadUrl;
             const currentSavings = ((fileState.fileObject.size - data.optimizedSize) / fileState.fileObject.size * 100);
@@ -321,27 +304,27 @@ function initializeUploader() {
     // MODALS & UI HELPERS
     // ===============================================
 
-    function getCroppedSectionAsDataUrl(imageObject, cropData) {
-        if (!imageObject) {
-            throw new Error("Karşılaştırma için temel resim objesi hafızada bulunamadı.");
-        }
-        try {
-            const canvas = document.createElement('canvas');
-            canvas.width = cropData.width;
-            canvas.height = cropData.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(
-                imageObject,
-                cropData.x, cropData.y,
-                cropData.width, cropData.height,
-                0, 0,
-                cropData.width, cropData.height
-            );
-            return canvas.toDataURL(); 
-        } catch (error) {
-            console.error('Hafızadaki resim canvas\'a çizilirken hata:', error);
-            throw error; 
-        }
+    async function getCroppedSectionFromUrl(imageUrl, cropData) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            // Yerel blob: URL'ler için crossOrigin'e gerek yoktur.
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = cropData.width;
+                canvas.height = cropData.height;
+                context.drawImage(
+                    image,
+                    cropData.x, cropData.y,
+                    cropData.width, cropData.height,
+                    0, 0,
+                    cropData.width, cropData.height
+                );
+                resolve(canvas.toDataURL());
+            };
+            image.onerror = () => reject(new Error('Karşılaştırma için yerel resim yüklenemedi.'));
+            image.src = imageUrl;
+        });
     }
 
     function updateQualitySlider() {
@@ -571,16 +554,19 @@ function initializeUploader() {
                 showCropModal(fileState.currentOptimizedUrl);
             }
             else if (targetButton.classList.contains('btn-compare')) {
-                let beforeUrl = fileState.initialOptimizedUrl;
-                if (fileState.cropData && fileState.initialImageObject) {
+                const afterUrl = fileState.currentOptimizedUrl;
+                let beforeUrl = fileState.originalUrl; 
+
+                if (fileState.cropData) {
                     try {
-                        beforeUrl = getCroppedSectionAsDataUrl(fileState.initialImageObject, fileState.cropData);
+                        beforeUrl = await getCroppedSectionFromUrl(fileState.originalUrl, fileState.cropData);
                     } catch (err) {
-                        console.error("Karşılaştırma görüntüsü oluşturulamadı:", err);
-                        alert("Karşılaştırma görüntüsü oluşturulamadı. Varsayılan resim gösteriliyor.");
+                        console.error("Orijinal resimden 'öncesi' görüntüsü oluşturulamadı:", err);
+                        beforeUrl = fileState.originalUrl; 
                     }
                 }
-                showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
+                
+                showComparisonModal(beforeUrl, afterUrl);
             }
             else if (targetButton.classList.contains('btn-copy')) {
                 targetButton.innerHTML = '...';
@@ -664,67 +650,52 @@ function initializeUploader() {
                 targetButton.classList.add('active');
             }
 
-if (targetButton.id === 'apply-crop-btn') {
+            if (targetButton.id === 'apply-crop-btn') {
                 if (!appState.cropper || !appState.currentCropFileId) return;
                 const currentFileState = appState.fileQueue.find(f => f.uniqueId === appState.currentCropFileId);
                 if (!currentFileState) return;
 
-                // ==========================================================
-                // MANUEL KIRPMA MANTIĞI (EN GÜVENİLİR YÖNTEM)
-                // ==========================================================
-                
-                // 1. Kütüphaneden sadece ham kırpma verilerini alıyoruz.
-                const cropData = appState.cropper.getData(true); // true -> yuvarlanmış değerler
-                // 2. Kırpılacak olan orijinal resim elementini alıyoruz.
+                const cropData = appState.cropper.getData(true); 
                 const originalImage = appState.cropper.image;
-
-                // 3. Sonucu çizeceğimiz yeni, boş bir tuval oluşturuyoruz.
                 const finalCanvas = document.createElement('canvas');
                 const context = finalCanvas.getContext('2d');
-
-                // 4. Yeni tuvalimizin boyutlarını kırpma boyutlarına eşitliyoruz.
                 finalCanvas.width = cropData.width;
                 finalCanvas.height = cropData.height;
 
                 const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
-                let outputMimeType = 'image/jpeg'; // Varsayılan format
+                let outputMimeType = 'image/jpeg';
                 let formatOverride = null;
 
-                // 5. Eğer dairesel kırpma ise, tuvale dairesel bir maske uyguluyoruz.
                 if (isCircleCrop) {
                     context.beginPath();
                     context.arc(cropData.width / 2, cropData.height / 2, cropData.width / 2, 0, 2 * Math.PI);
                     context.closePath();
                     context.clip();
-                    outputMimeType = 'image/png'; // Daireler şeffaflık için PNG olmalı
+                    outputMimeType = 'image/png';
                     formatOverride = 'png';
                 } else if (currentFileState.fileObject.type === 'image/png') {
-                    // Dikdörtgen kırpma ama orijinali PNG ise şeffaflığı koru
                     outputMimeType = 'image/png';
                     formatOverride = 'png';
                 }
 
-                // 6. Orijinal resmin SADECE cropData ile belirtilen kısmını
-                //    yeni tuvalimizin (0,0) noktasına çiziyoruz.
                 context.drawImage(
-                    originalImage,    // Kaynak resim
-                    cropData.x,       // Kaynaktaki başlangıç X
-                    cropData.y,       // Kaynaktaki başlangıç Y
-                    cropData.width,   // Kaynaktan alınacak genişlik
-                    cropData.height,  // Kaynaktan alınacak yükseklik
-                    0,                // Hedef tuvaldeki başlangıç X
-                    0,                // Hedef tuvaldeki başlangıç Y
-                    cropData.width,   // Hedefe çizilecek genişlik
-                    cropData.height   // Hedefe çizilecek yükseklik
+                    originalImage,   
+                    cropData.x,      
+                    cropData.y,      
+                    cropData.width,  
+                    cropData.height, 
+                    0,               
+                    0,               
+                    cropData.width,  
+                    cropData.height  
                 );
-
-                // 7. Sonuç tuvalini Blob'a çevirip işleme gönderiyoruz.
+                
                 finalCanvas.toBlob(blob => {
                     if (!blob) {
                         alert('Cropping failed: could not create blob.');
                         return;
                     }
-                    currentFileState.cropData = cropData; // Kırpma verisini state'e kaydet
+                    currentFileState.cropData = cropData;
                     const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
                     removeModalIfPresent();
                     processSingleFile(currentFileState, croppedFile, formatOverride);
