@@ -2,6 +2,7 @@
 
 import { sanitizeFilename } from './utils.js';
 import { renderApp } from './ui.js';
+import { appState } from './state.js';
 
 function uploadWithProgress(url, file, onProgress) {
     return new Promise((resolve, reject) => {
@@ -65,4 +66,54 @@ export async function processSingleFile(fileState, fileObjectToProcess, override
     }
     
     renderApp();
+}
+
+// Bu kodu js/api.js dosyasının en altına ekleyin.
+import { loadScript } from './utils.js'; // Bu import'u dosyanın en üstüne eklemeyi unutmayın.
+import { appState } from './state.js'; // Bu import'u da ekleyin.
+
+export async function handleZipDownload() {
+    const downloadAllBtn = document.getElementById('download-all-btn');
+    if (!downloadAllBtn || downloadAllBtn.disabled) return;
+    try {
+        downloadAllBtn.textContent = 'Loading Assets...';
+        downloadAllBtn.disabled = true;
+        // JSZip kütüphanesini yükle
+        if (!window.JSZip) {
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+        }
+        downloadAllBtn.textContent = 'Zipping...';
+        const zip = new JSZip();
+        const filesToZip = appState.fileQueue.filter(f => f.status === 'success');
+        
+        const fetchPromises = filesToZip.map(fileState => 
+            fetch(fileState.currentOptimizedUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch '${fileState.downloadName}'`);
+                    return response.blob();
+                })
+                .then(blob => ({ name: fileState.downloadName, blob: blob }))
+        );
+
+        const files = await Promise.all(fetchPromises);
+        files.forEach(file => zip.file(file.name, file.blob));
+        
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const tempUrl = URL.createObjectURL(zipBlob);
+        const tempLink = document.createElement('a');
+        tempLink.href = tempUrl;
+        tempLink.setAttribute('download', 'image-guy-optimized.zip');
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        URL.revokeObjectURL(tempUrl);
+    } catch (error) {
+        console.error('Failed to create ZIP file:', error);
+        alert('An error occurred while creating the ZIP file.');
+    } finally {
+        if (downloadAllBtn) {
+            downloadAllBtn.textContent = 'Download All (.ZIP)';
+            downloadAllBtn.disabled = false;
+        }
+    }
 }

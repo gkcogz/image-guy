@@ -2,7 +2,7 @@
 
 import { appState, resetState, findFileById } from './state.js';
 import { renderApp, updateQualitySlider, removeModalIfPresent, showComparisonModal, showCropModal } from './ui.js';
-import { processSingleFile } from './api.js';
+import { processSingleFile, handleZipDownload } from './api.js'; // handleZipDownload buraya import edildi.
 
 async function getCroppedSectionFromUrl(imageUrl, cropData) {
     return new Promise((resolve, reject) => {
@@ -116,7 +116,8 @@ export function initializeEventListeners() {
             await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
         }
         else if (targetButton.id === 'download-all-btn') {
-            // handleZipDownload() import edilip buraya eklenebilir.
+            // Yorum satırı kaldırıldı ve fonksiyon çağrısı eklendi.
+            handleZipDownload();
         }
         else if (targetButton.id === 'advanced-options-btn') {
             const slider = document.querySelector('.advanced-slider');
