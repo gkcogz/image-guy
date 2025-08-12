@@ -664,38 +664,71 @@ function initializeUploader() {
                 targetButton.classList.add('active');
             }
 
-            if (targetButton.id === 'apply-crop-btn') {
+if (targetButton.id === 'apply-crop-btn') {
                 if (!appState.cropper || !appState.currentCropFileId) return;
                 const currentFileState = appState.fileQueue.find(f => f.uniqueId === appState.currentCropFileId);
                 if (!currentFileState) return;
 
+                // ==========================================================
+                // MANUEL KIRPMA MANTIĞI (EN GÜVENİLİR YÖNTEM)
+                // ==========================================================
+                
+                // 1. Kütüphaneden sadece ham kırpma verilerini alıyoruz.
+                const cropData = appState.cropper.getData(true); // true -> yuvarlanmış değerler
+                // 2. Kırpılacak olan orijinal resim elementini alıyoruz.
+                const originalImage = appState.cropper.image;
+
+                // 3. Sonucu çizeceğimiz yeni, boş bir tuval oluşturuyoruz.
+                const finalCanvas = document.createElement('canvas');
+                const context = finalCanvas.getContext('2d');
+
+                // 4. Yeni tuvalimizin boyutlarını kırpma boyutlarına eşitliyoruz.
+                finalCanvas.width = cropData.width;
+                finalCanvas.height = cropData.height;
+
                 const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
-                
-                currentFileState.cropData = appState.cropper.getData();
-                
-                const canvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-                
-                const processBlob = (blob, formatOverride) => {
-                     if (!blob) return alert('Cropping failed.');
+                let outputMimeType = 'image/jpeg'; // Varsayılan format
+                let formatOverride = null;
+
+                // 5. Eğer dairesel kırpma ise, tuvale dairesel bir maske uyguluyoruz.
+                if (isCircleCrop) {
+                    context.beginPath();
+                    context.arc(cropData.width / 2, cropData.height / 2, cropData.width / 2, 0, 2 * Math.PI);
+                    context.closePath();
+                    context.clip();
+                    outputMimeType = 'image/png'; // Daireler şeffaflık için PNG olmalı
+                    formatOverride = 'png';
+                } else if (currentFileState.fileObject.type === 'image/png') {
+                    // Dikdörtgen kırpma ama orijinali PNG ise şeffaflığı koru
+                    outputMimeType = 'image/png';
+                    formatOverride = 'png';
+                }
+
+                // 6. Orijinal resmin SADECE cropData ile belirtilen kısmını
+                //    yeni tuvalimizin (0,0) noktasına çiziyoruz.
+                context.drawImage(
+                    originalImage,    // Kaynak resim
+                    cropData.x,       // Kaynaktaki başlangıç X
+                    cropData.y,       // Kaynaktaki başlangıç Y
+                    cropData.width,   // Kaynaktan alınacak genişlik
+                    cropData.height,  // Kaynaktan alınacak yükseklik
+                    0,                // Hedef tuvaldeki başlangıç X
+                    0,                // Hedef tuvaldeki başlangıç Y
+                    cropData.width,   // Hedefe çizilecek genişlik
+                    cropData.height   // Hedefe çizilecek yükseklik
+                );
+
+                // 7. Sonuç tuvalini Blob'a çevirip işleme gönderiyoruz.
+                finalCanvas.toBlob(blob => {
+                    if (!blob) {
+                        alert('Cropping failed: could not create blob.');
+                        return;
+                    }
+                    currentFileState.cropData = cropData; // Kırpma verisini state'e kaydet
                     const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
                     removeModalIfPresent();
                     processSingleFile(currentFileState, croppedFile, formatOverride);
-                };
-                
-                if (isCircleCrop) {
-                    const circularCanvas = document.createElement('canvas');
-                    const context = circularCanvas.getContext('2d');
-                    circularCanvas.width = canvas.width;
-                    circularCanvas.height = canvas.height;
-                    context.beginPath();
-                    context.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, 2 * Math.PI);
-                    context.closePath();
-                    context.clip();
-                    context.drawImage(canvas, 0, 0);
-                    circularCanvas.toBlob(blob => processBlob(blob, 'png'), 'image/png');
-                } else {
-                    canvas.toBlob(blob => processBlob(blob, null));
-                }
+                }, outputMimeType);
             }
         }
     });
