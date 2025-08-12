@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL VERSION with ROBUST REVERT LOGIC)
+// index-page.js (BUG FIXED: Undo Button Now Appears Correctly)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -144,7 +144,7 @@ function initializeUploader() {
             case 'SUCCESS':
                 const savingsText = data.savings >= 1 ? `✓ ${data.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
                 const savingsClass = data.savings >= 1 ? 'savings' : 'savings-info';
-                const hasBeenCropped = data.initialOptimizedUrl !== data.optimizedUrl;
+                const hasBeenCropped = data.initialOptimizedUrl && (data.initialOptimizedUrl !== data.optimizedUrl);
 
                 statusElement.innerHTML = `
                     <span class="${savingsClass}">${savingsText}</span>
@@ -490,8 +490,20 @@ function initializeUploader() {
             const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
             const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
 
+            // === HATAYI DÜZELTEN BÖLÜM BURASI ===
+            let initialUrlToKeep;
             const existingCropBtn = listItem.querySelector('.btn-crop');
-            const initialUrlToKeep = existingCropBtn?.dataset.initialOptimizedUrl || data.downloadUrl;
+            
+            // Eğer daha önceden işlenmiş bir öğe ise (yani üzerinde bir 'btn-crop' butonu varsa)
+            // ve bu butonun 'data-initial-optimized-url' verisi varsa, bu veriyi koru.
+            if (existingCropBtn && existingCropBtn.dataset.initialOptimizedUrl) {
+                initialUrlToKeep = existingCropBtn.dataset.initialOptimizedUrl;
+            } else {
+                // Bu, öğenin ilk işlenişi. Bu yüzden şu anki optimize edilmiş URL,
+                // aynı zamanda "başlangıç" URL'sidir.
+                initialUrlToKeep = data.downloadUrl;
+            }
+            // === DÜZELTME SONU ===
 
             renderFileStatus(statusElement, 'SUCCESS', {
                 savings,
@@ -666,9 +678,6 @@ function initializeUploader() {
             const downloadName = downloadLink.getAttribute('download');
             const savingsText = listItem.querySelector('.savings, .savings-info').textContent;
             
-            // renderFileStatus, sayısal bir savings değeri bekler, metinden çıkarmak yerine 0 varsayalım
-            // veya daha sağlam bir çözüm için bu bilgiyi de data- attribute'da saklayabiliriz.
-            // Şimdilik basit tutalım.
             const dummySavings = parseFloat(savingsText.replace(/[^0-9.]/g, '')) || 0;
 
             // URL'leri ilk haline döndür ve arayüzü yeniden çiz
