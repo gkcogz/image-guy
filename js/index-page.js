@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL VERSION - ADVANCED COMPARE FEATURE)
+// index-page.js (THE FINAL, TRULY COMPLETE & ROBUST VERSION)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -305,30 +305,39 @@ function initializeUploader() {
     // ===============================================
 
     async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
-        return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.crossOrigin = "Anonymous";
-            image.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = cropData.width;
-                canvas.height = cropData.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(
-                    image,
-                    cropData.x,
-                    cropData.y,
-                    cropData.width,
-                    cropData.height,
-                    0,
-                    0,
-                    cropData.width,
-                    cropData.height
-                );
-                resolve(canvas.toDataURL());
-            };
-            image.onerror = () => reject(new Error('Failed to load image for cropping section.'));
-            image.src = imageUrl;
-        });
+        try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) throw new Error('Network response was not ok for getCroppedSection.');
+            const blob = await response.blob();
+            const localUrl = URL.createObjectURL(blob);
+
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = cropData.width;
+                    canvas.height = cropData.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(
+                        image,
+                        cropData.x, cropData.y,
+                        cropData.width, cropData.height,
+                        0, 0,
+                        cropData.width, cropData.height
+                    );
+                    URL.revokeObjectURL(localUrl);
+                    resolve(canvas.toDataURL());
+                };
+                image.onerror = () => {
+                    URL.revokeObjectURL(localUrl);
+                    reject(new Error('Failed to load local blob image for canvas drawing.'));
+                };
+                image.src = localUrl;
+            });
+        } catch (error) {
+            console.error('Error in getCroppedSectionAsDataUrl:', error);
+            throw error;
+        }
     }
 
     function updateQualitySlider() {
@@ -561,15 +570,12 @@ function initializeUploader() {
                 let beforeUrl = fileState.initialOptimizedUrl;
                 if (fileState.cropData) {
                     try {
-                        // Bu satır S3'ten CORS izni gerektirir
                         beforeUrl = await getCroppedSectionAsDataUrl(fileState.initialOptimizedUrl, fileState.cropData);
                     } catch (err) {
-                        console.error("Could not generate cropped 'before' image due to an error:", err);
-                        // Hata durumunda kullanıcıyı bilgilendir
-                        alert("Could not create comparison view. This is likely due to a server CORS policy. Displaying full image instead.");
+                        alert("Could not create comparison view. This is likely a server CORS policy issue. Displaying full image instead.");
                     }
-            }
-            showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
+                }
+                showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
             }
             else if (targetButton.classList.contains('btn-copy')) {
                 targetButton.innerHTML = '...';
@@ -623,7 +629,9 @@ function initializeUploader() {
                 await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
                 
                 appState.isBatchProcessing = false;
-                renderApp();
+                if (appState.fileQueue.length > 0) {
+                    renderApp();
+                }
             }
             if (targetButton.id === 'download-all-btn') {
                 handleZipDownload();
