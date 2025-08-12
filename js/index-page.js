@@ -1,5 +1,5 @@
 // ==========================================================
-// index-page.js (FINAL & COMPLETE VERSION - ALL FEATURES INCLUDED)
+// index-page.js (FINAL, COMPLETE & UNABRIDGED VERSION)
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,6 +18,7 @@ function initializeUploader() {
         fileQueue: [], // Array of file state objects
         cropper: null,
         currentCropFileId: null,
+        isBatchProcessing: false,
     };
 
     const DEFAULT_QUALITY_SETTINGS = {
@@ -73,8 +74,6 @@ function initializeUploader() {
     // MAIN RENDER FUNCTION
     // ===============================================
     function renderApp() {
-        console.log("--- Rendering App State ---", JSON.parse(JSON.stringify(appState)));
-        
         uploadArea.innerHTML = '';
 
         if (appState.fileQueue.length === 0) {
@@ -144,6 +143,12 @@ function initializeUploader() {
                 </div>`;
         } else if (appState.fileQueue.length > 0) {
             const containsPng = appState.fileQueue.some(f => f.fileObject.name.toLowerCase().endsWith('.png'));
+            const filesReadyCount = appState.fileQueue.filter(f => f.status === 'ready').length;
+            
+            const optimizeButtonHTML = appState.isBatchProcessing 
+                ? `<button class="btn btn-primary" id="optimize-all-btn" type="button" disabled>Processing...</button>`
+                : `<button class="btn btn-primary" id="optimize-all-btn" type="button">Optimize All (${filesReadyCount} files)</button>`;
+            
             actionArea.innerHTML = `
             <div class="format-options-header">
                 <span class="format-label">Output Format:</span>
@@ -175,7 +180,7 @@ function initializeUploader() {
             </div>
             <div class="action-buttons-container initial-actions">
                 <button class="btn btn-secondary" id="clear-all-btn" type="button">Start Over</button>
-                <button class="btn btn-primary" id="optimize-all-btn" type="button">Optimize All (${appState.fileQueue.filter(f=>f.status==='ready').length} files)</button>
+                ${optimizeButtonHTML}
                 <button class="icon-btn" id="advanced-options-btn" type="button">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <span class="icon-tooltip">Advanced Settings</span>
@@ -216,6 +221,7 @@ function initializeUploader() {
             downloadName: null,
             progressText: '',
             errorMessage: '',
+            cropData: null,
         }));
 
         renderApp();
@@ -226,7 +232,7 @@ function initializeUploader() {
         if (appState.fileQueue.length > 0) {
             appState.fileQueue.forEach(f => { if (f.originalUrl) URL.revokeObjectURL(f.originalUrl) });
         }
-        appState = { fileQueue: [], cropper: null, currentCropFileId: null };
+        appState = { fileQueue: [], cropper: null, currentCropFileId: null, isBatchProcessing: false };
         renderApp();
     }
     
@@ -244,7 +250,7 @@ function initializeUploader() {
         });
     }
 
-    async function processSingleFile(fileState, fileObjectToProcess) {
+    async function processSingleFile(fileState, fileObjectToProcess, overrideFormat = null) {
         fileState.status = 'processing';
         fileState.progressText = 'Preparing...';
         renderApp();
@@ -262,7 +268,7 @@ function initializeUploader() {
             fileState.progressText = 'Optimizing...';
             renderApp();
             
-            const selectedFormat = (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
+            const selectedFormat = overrideFormat || (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
             const qualityValue = document.getElementById('quality-slider')?.value || null;
             const optimizePayload = { key, outputFormat: selectedFormat, quality: qualityValue };
             
@@ -297,6 +303,23 @@ function initializeUploader() {
     // ===============================================
     // MODALS & UI HELPERS
     // ===============================================
+
+    async function getCroppedSectionAsDataUrl(imageUrl, cropData) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.crossOrigin = "Anonymous";
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = cropData.width;
+                canvas.height = cropData.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, cropData.x, cropData.y, cropData.width, cropData.height, 0, 0, cropData.width, cropData.height);
+                resolve(canvas.toDataURL());
+            };
+            image.onerror = () => reject(new Error('Failed to load image for cropping section.'));
+            image.src = imageUrl;
+        });
+    }
 
     function updateQualitySlider() {
         const selectedFormatRadio = document.querySelector('input[name="format"]:checked');
@@ -514,6 +537,7 @@ function initializeUploader() {
             else if (targetButton.classList.contains('btn-revert')) {
                 fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
                 fileState.savings = fileState.initialSavings;
+                fileState.cropData = null;
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-retry')) {
@@ -524,7 +548,15 @@ function initializeUploader() {
                 showCropModal(fileState.currentOptimizedUrl);
             }
             else if (targetButton.classList.contains('btn-compare')) {
-                showComparisonModal(fileState.initialOptimizedUrl, fileState.currentOptimizedUrl);
+                let beforeUrl = fileState.initialOptimizedUrl;
+                if (fileState.cropData) {
+                    try {
+                        beforeUrl = await getCroppedSectionAsDataUrl(fileState.initialOptimizedUrl, fileState.cropData);
+                    } catch (err) {
+                        console.error("Could not generate cropped 'before' image:", err);
+                    }
+                }
+                showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
             }
             else if (targetButton.classList.contains('btn-copy')) {
                 targetButton.innerHTML = '...';
@@ -571,10 +603,14 @@ function initializeUploader() {
         else if (targetButton.id === 'optimize-all-btn' || targetButton.id === 'download-all-btn') {
             e.stopPropagation();
             if (targetButton.id === 'optimize-all-btn') {
+                appState.isBatchProcessing = true;
+                renderApp();
+
                 const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
-                targetButton.disabled = true;
-                targetButton.textContent = `Processing...`;
                 await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
+                
+                appState.isBatchProcessing = false;
+                renderApp();
             }
             if (targetButton.id === 'download-all-btn') {
                 handleZipDownload();
@@ -609,13 +645,15 @@ function initializeUploader() {
 
                 const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
                 
+                currentFileState.cropData = appState.cropper.getData();
+                
                 const canvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
                 
-                const processBlob = (blob) => {
+                const processBlob = (blob, formatOverride) => {
                      if (!blob) return alert('Cropping failed.');
                     const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
                     removeModalIfPresent();
-                    processSingleFile(currentFileState, croppedFile);
+                    processSingleFile(currentFileState, croppedFile, formatOverride);
                 };
                 
                 if (isCircleCrop) {
@@ -628,9 +666,9 @@ function initializeUploader() {
                     context.closePath();
                     context.clip();
                     context.drawImage(canvas, 0, 0);
-                    circularCanvas.toBlob(processBlob, 'image/png');
+                    circularCanvas.toBlob(blob => processBlob(blob, 'png'), 'image/png');
                 } else {
-                    canvas.toBlob(processBlob);
+                    canvas.toBlob(blob => processBlob(blob, null));
                 }
             }
         }
