@@ -561,12 +561,15 @@ function initializeUploader() {
                 let beforeUrl = fileState.initialOptimizedUrl;
                 if (fileState.cropData) {
                     try {
+                        // Bu satır S3'ten CORS izni gerektirir
                         beforeUrl = await getCroppedSectionAsDataUrl(fileState.initialOptimizedUrl, fileState.cropData);
                     } catch (err) {
-                        console.error("Could not generate cropped 'before' image:", err);
+                        console.error("Could not generate cropped 'before' image due to an error:", err);
+                        // Hata durumunda kullanıcıyı bilgilendir
+                        alert("Could not create comparison view. This is likely due to a server CORS policy. Displaying full image instead.");
                     }
-                }
-                showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
+            }
+            showComparisonModal(beforeUrl, fileState.currentOptimizedUrl);
             }
             else if (targetButton.classList.contains('btn-copy')) {
                 targetButton.innerHTML = '...';
