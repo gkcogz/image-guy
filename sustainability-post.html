@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self'; 
+      script-src 'self'; 
+      style-src 'self' https://fonts.googleapis.com; 
+      font-src https://fonts.gstatic.com; 
+      img-src 'self' data:; 
+      connect-src 'self';
+      frame-src 'none'; 
+      object-src 'none';">
+
+  <meta name="description" content="Learn practical steps to reduce your website's carbon footprint. A case study on decreasing CO2 emissions by over 86% through simple optimization techniques." />
+  <title>A Practical Guide to a Greener Web | Image Guy</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'" />
+  
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="manifest" href="/site.webmanifest">
+</head>
+<body class="untranslated">
+
+  <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle Menu">
+    <svg id="menu-open-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    <svg id="menu-close-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+  </button>
+
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <a href="/" class="logo-link">
+          <img src="assets/logo/logo-2.webp" alt="Image Guy Logo" class="logo-image" width="36" height="36" />
+        </a>
+      </div>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="/blog.html" aria-current="page">Blog</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+        <div class="language-switcher">
+            <button id="lang-switcher-btn" class="icon-btn" title="Change Language" aria-label="Change Language"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></button>
+            <div id="language-dropdown" class="language-dropdown"></div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container content-page">
+      <article class="blog-post-full">
+        <h1>A Practical Guide to a Greener Web: A Case Study</h1>
+        <div class="post-meta"><span>Posted on August 17, 2025</span></div>
+        <div class="post-content">
+            <p>The internet is not a magical cloud given by gods; it's a physical network of data centers that consume vast amounts of energy. As a result, our digital activities make up nearly 4% of total global CO₂ emissions. In other words, every website, including yours, has a carbon footprint, and releases CO₂ whenever you click. </p>
+            <p>But how can you help save the planet? This article presents a real-world case study, showing how a few simple optimization steps can reduce a website's CO₂ emissions per click by a staggering 86.4%.</p>
+
+            <h2>Step 1: Choosing the Right Image Format</h2>
+            <p>Visual elements are often the heaviest parts of a website. They are usually causing the highest amount of traffic in internet. The first step in our case study involved compressing large images and converting them to modern, efficient formats like WebP. Initially, the website's data transfer was 17.2 MB, resulting in a carbon footprint of 2.72g of CO₂ per visit. After optimizing the images with a tool like Image Guy, the total data size dropped immediately to just 2 MB.</p>
+            <p>This single step was a game-changer, immediately slashed the carbon footprint to 0.40g of CO₂ per visit.</p>
+            
+            <figure>
+                <img src="/assets/blog/b8.webp" alt="Image optimization results" loading="lazy" />
+                <figcaption>Optimizing images is the most impactful step towards a greener website.</figcaption>
+            </figure>
+
+            <h2>Step 2: Implementing Lazy Loading</h2>
+            <p>Also, why load images that the user can't see? "Lazy loading" is a technique that tells the browser to only load images when the user scrolls down to them. This dramatically reduces the initial amount of data transferred. Implementing this is as simple as adding an attribute to your image tag:</p>
+            <pre><code>&lt;img src="your-image.webp" loading="lazy"&gt;</code></pre>
+
+            <h2>Step 3: On-Demand Loading for Scripts</h2>
+            <p>Just like images, non-critical JavaScript libraries don't need to be loaded immediately. In our case study, a library for cropping images was only loaded when a user actually clicked the "Crop" button. This ensures that users who don't use this feature never have to download the extra file, saving data and energy, thus causing less internet traffic.</p>
+
+            <h2>The Final Result: An 86.4% Reduction</h2>
+            <p>By applying these frontend optimization techniques—image compression, lazy loading, and on-demand script loading—the website's carbon footprint was further reduced to just 0.37g of CO₂ per click. This journey proves that building a more sustainable website is not only possible but also straightforward, and coupled with a simpler web architecture.</p>
+            <p>Ready to reduce your own website's carbon footprint? Start by optimizing your images today!</p>
+            <strong>Thanks for reading!</strong>
+
+            <hr style="margin: 3rem 0;">
+            <p style="font-size: 0.9em; color: #6c757d; font-style: italic;">This article was adapted from its original version, first published on <a href="https://medium.com/p/219e3ec6cccc" target="_blank" rel="noopener noreferrer">Medium</a>.</p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-links">
+                <a href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/contact.html">Contact</a>
+                <a href="/privacy.html">Privacy Policy</a>
+                <a href="/terms.html">Terms of Service</a>
+            </div>
+            <div class="footer-copyright">
+                <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+                <span class="photo-credit">Photos by <a href="https://oguz.world" target="_blank" rel="noopener noreferrer">oguz.world</a></span>
+            </div>
+            <div class="footer-co2-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-leaf"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+                <p>This page produces only <strong>0.37g of CO₂</strong> per visit. <a href="https://medium.com/p/219e3ec6cccc">Learn more</a>.</p>
+            </div>
+        </div>
+    </footer>
+  
+  <script src="js/global.js" defer></script>
+</body>
+</html>

@@ -90,4 +90,15 @@
     <priority>0.70</priority>
   </url>
 
+  <url>
+    <loc>https://image-guy.com/sustainability-post.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="sustainability-post.html" />
+    <xhtml:link rel="alternate" hreflang="de" href="sustainability-post.html" />
+    <xhtml:link rel="alternate" hreflang="zh" href="sustainability-post.html" />
+    <xhtml:link rel="alternate" hreflang="tr" href="sustainability-post.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="sustainability-post.html" />
+    <lastmod>2025-08-17</lastmod>
+    <priority>0.70</priority>
+  </url>
+
 </urlset>

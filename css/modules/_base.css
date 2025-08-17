@@ -73,3 +73,15 @@ pre {
 code {
     font-family: 'Courier New', Courier, monospace;
 }
+
+/* --- Genel İçerik Resim Stilleri --- */
+
+/* Makale içindeki resimleri responsive yapar ve hizalar */
+.post-content img {
+    max-width: 100%; /* Resmin, içinde bulunduğu alandan taşmasını engeller */
+    height: auto;    /* Genişlik değiştikçe orantısını korur */
+    display: block;  /* Ortalamak için gereklidir */
+    margin: 1.5rem auto; /* Dikeyde boşluk bırakır ve yatayda ortalar */
+    border-radius: 8px; /* Kenarları yumuşatır */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Hafif bir gölge ekler */
+}

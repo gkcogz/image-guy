@@ -225,3 +225,26 @@
     color: #6c757d;
     margin-bottom: 2rem;
 }
+
+/* --- Blog Sayfası - Resim Karşılaştırma Bileşeni --- */
+.image-comparison {
+    display: flex; /* ÖNEMLİ: İçindeki resimleri yan yana dizer */
+    flex-wrap: wrap; /* Mobil için: Sığmazsa alt satıra indirir */
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 2rem 0;
+}
+
+.image-comparison figure {
+    flex: 1 1 300px;
+    max-width: 400px;
+    margin: 0; /* Üst elementten gelen margin'i sıfırlar */
+}
+
+.image-comparison figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: #555;
+    text-align: center;
+}
