@@ -251,7 +251,15 @@ function initializeUploader() {
         });
     }
 
+// index-page.js dosyasındaki mevcut processSingleFile fonksiyonunu silip bunu yapıştırın.
+
     async function processSingleFile(fileState, fileObjectToProcess, overrideFormat = null) {
+        const formatToUse = overrideFormat || (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
+        
+        // --- KESİN ÇÖZÜM: FORMATI DOSYANIN KENDİ DURUMUNDA SAKLA ---
+        // Bu sayede arayüz yeniden çizilse bile, yeniden deneme gibi durumlarda doğru formatı hatırlarız.
+        fileState.lastUsedFormat = formatToUse;
+
         fileState.status = 'processing';
         fileState.progressText = 'Preparing...';
         renderApp();
@@ -269,9 +277,9 @@ function initializeUploader() {
             fileState.progressText = 'Optimizing...';
             renderApp();
             
-            const selectedFormat = overrideFormat || (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
             const qualityValue = document.getElementById('quality-slider')?.value || null;
-            const optimizePayload = { key, outputFormat: selectedFormat, quality: qualityValue };
+            // Burada artık DOM'a değil, en başta belirlediğimiz ve kaydettiğimiz formata güveniyoruz.
+            const optimizePayload = { key, outputFormat: formatToUse, quality: qualityValue };
             
             const optimizeResponse = await fetch('/.netlify/functions/optimize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(optimizePayload) });
             if (!optimizeResponse.ok) {
@@ -547,7 +555,9 @@ function initializeUploader() {
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-retry')) {
-                processSingleFile(fileState, fileState.fileObject);
+                // Artık yeniden denerken, dosyanın durumuna kaydettiğimiz son formatı kullanıyoruz.
+                // Bu, arayüz sıfırlansa bile doğru formatın korunmasını garantiler.
+                processSingleFile(fileState, fileState.fileObject, fileState.lastUsedFormat);
             }
             else if (targetButton.classList.contains('btn-crop')) {
                 appState.currentCropFileId = fileId;
