@@ -649,46 +649,55 @@ function initializeUploader() {
                 targetButton.classList.add('active');
             }
 
+// index-page.js dosyasındaki 'apply-crop-btn' if bloğunu bununla değiştirin.
+
             if (targetButton.id === 'apply-crop-btn') {
                 if (!appState.cropper || !appState.currentCropFileId) return;
                 const currentFileState = appState.fileQueue.find(f => f.uniqueId === appState.currentCropFileId);
                 if (!currentFileState) return;
 
-                const cropData = appState.cropper.getData(true); 
+                // --- KESİN ÇÖZÜM BURADA BAŞLIYOR ---
+
+                // 1. Kırpma işlemi başlamadan ÖNCE, kullanıcının ana menüdeki format seçimini alıyoruz.
+                const userSelectedFormat = document.querySelector('input[name="format"]:checked')?.value || 'jpeg';
+                
+                // 2. Bu seçimi, varsayılan formatımız olarak ayarlıyoruz.
+                let formatOverride = userSelectedFormat;
+                let outputMimeType = 'image/jpeg'; // Varsayılan MimeType
+
+                // Blob oluşturmak için MimeType'ı seçilen formata göre ayarlayalım.
+                if (formatOverride === 'png') outputMimeType = 'image/png';
+                if (formatOverride === 'webp') outputMimeType = 'image/webp';
+
+
+                // 3. SADECE VE SADECE "daire" şeklinde kırpma yapılıyorsa, şeffaflık zorunlu olduğu için
+                // kullanıcının seçimini ezip formatı PNG'ye zorluyoruz.
+                const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
+                if (isCircleCrop) {
+                    formatOverride = 'png';
+                    outputMimeType = 'image/png';
+                }
+
+                const cropData = appState.cropper.getData(true);
                 const originalImage = appState.cropper.image;
                 const finalCanvas = document.createElement('canvas');
                 const context = finalCanvas.getContext('2d');
                 finalCanvas.width = cropData.width;
                 finalCanvas.height = cropData.height;
 
-                const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
-                let outputMimeType = 'image/jpeg';
-                let formatOverride = null;
-
                 if (isCircleCrop) {
                     context.beginPath();
                     context.arc(cropData.width / 2, cropData.height / 2, cropData.width / 2, 0, 2 * Math.PI);
                     context.closePath();
                     context.clip();
-                    outputMimeType = 'image/png';
-                    formatOverride = 'png';
-                } else if (currentFileState.fileObject.type === 'image/png') {
-                    outputMimeType = 'image/png';
-                    formatOverride = 'png';
                 }
 
                 context.drawImage(
-                    originalImage,   
-                    cropData.x,      
-                    cropData.y,      
-                    cropData.width,  
-                    cropData.height, 
-                    0,               
-                    0,               
-                    cropData.width,  
-                    cropData.height  
+                    originalImage,
+                    cropData.x, cropData.y, cropData.width, cropData.height,
+                    0, 0, cropData.width, cropData.height
                 );
-                
+
                 finalCanvas.toBlob(blob => {
                     if (!blob) {
                         alert('Cropping failed: could not create blob.');
@@ -697,6 +706,9 @@ function initializeUploader() {
                     currentFileState.cropData = cropData;
                     const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
                     removeModalIfPresent();
+
+                    // 4. processSingleFile fonksiyonunu, kullanıcının ana seçimini veya zorunlu PNG'yi yansıtacak
+                    // şekilde DÜZGÜN formatla çağırıyoruz.
                     processSingleFile(currentFileState, croppedFile, formatOverride);
                 }, outputMimeType);
             }
