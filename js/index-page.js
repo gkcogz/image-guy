@@ -1,744 +1,1127 @@
+// ===============================================
+// DİL (i18n) AYARLARI
+// ===============================================
+
+let translations = {};
+const supportedLanguages = ['en', 'de', 'zh', 'tr'];
+let currentLanguage = 'en'; // Varsayılan dil
+
+// Dil dosyasını yükleyen fonksiyon
+async function loadTranslations() {
+    try {
+        const response = await fetch('/languages.json');
+        if (!response.ok) {
+            throw new Error('Failed to load language file.');
+        }
+        translations = await response.json();
+        console.log("Translations loaded successfully.");
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// --- GÜNCELLENMİŞ FONKSİYON ---
+// Sayfadaki metinleri güncelleyen ve "parlama" sorununu çözen fonksiyon
+function translatePage() {
+    // Çeviri dosyası bulunamazsa bile içeriği görünür yap, sayfa boş kalmasın.
+    if (!translations[currentLanguage]) {
+        console.warn(`No translations found for language: ${currentLanguage}`);
+        document.documentElement.classList.remove('untranslated');
+        return;
+    }
+
+    // data-i18n-key niteliği olan tüm elementleri bul ve çevir
+    document.querySelectorAll('[data-i18n-key]').forEach(element => {
+        const key = element.getAttribute('data-i18n-key');
+        if (translations[currentLanguage][key]) {
+            element.innerHTML = translations[currentLanguage][key];
+        }
+    });
+
+    // Sayfa dilini (lang) ve aktif butonu güncelle
+    document.documentElement.lang = currentLanguage;
+    document.querySelectorAll('.lang-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.lang === currentLanguage);
+    });
+
+    // Çeviri bitti, şimdi <html> etiketinden sınıfı kaldırarak her şeyi görünür yap.
+    document.documentElement.classList.remove('untranslated');
+}
+
+
+// main.js'teki setLanguage fonksiyonunu güncelleyin
+function setLanguage(lang) {
+    if (supportedLanguages.includes(lang)) {
+        currentLanguage = lang;
+        localStorage.setItem('selectedLanguage', lang);
+        translatePage(); // async/await'e gerek yok
+    }
+}
+
+// Sayfa ilk yüklendiğinde çalışacak fonksiyon
+async function initializeI18n() {
+    await loadTranslations();
+    const savedLang = localStorage.getItem('selectedLanguage');
+    const browserLang = navigator.language.split('-')[0];
+
+    let initialLang = 'en'; // Varsayılan
+    if (savedLang && supportedLanguages.includes(savedLang)) {
+        initialLang = savedLang;
+    } else if (supportedLanguages.includes(browserLang)) {
+        initialLang = browserLang;
+    }
+    
+    // --- GÜNCELLENMİŞ SATIR ---
+    setLanguage(initialLang);
+
+    // Dropdown menü yönetimi
+    const switcherBtn = document.getElementById('lang-switcher-btn');
+    const dropdown = document.getElementById('language-dropdown');
+
+    switcherBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Click olayının body'e yayılmasını engelle
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Dropdown içindeki linklere tıklama
+    document.querySelectorAll('.lang-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            setLanguage(e.target.dataset.lang);
+            dropdown.style.display = 'none';
+        });
+    });
+
+    // Dışarıya tıklandığında menüyü kapat
+    document.addEventListener('click', () => {
+        if (dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
 // ==========================================================
-// index-page.js (THE FINAL VERSION)
+// BURADAN SONRASI ANA SAYFAYA ÖZEL FONKSİYONLAR (DEĞİŞMEDİ)
 // ==========================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeUploader();
+let fileQueue = []; 
+const DEFAULT_QUALITY_SETTINGS = {
+    jpeg: { default: 85, min: 50, max: 95 },
+    png: { default: 90, min: 60, max: 100 },
+    webp: { default: 80, min: 50, max: 95 },
+    avif: { default: 60, min: 30, max: 80 },
+    heic: { default: 80, min: 50, max: 95 }
+};
+let cropper = null;
+let currentCropTarget = null;
+let cropHistory = []; 
+let ultimateOriginalUrl = null; 
+
+const fileInput = document.getElementById('file-input');
+const uploadArea = document.querySelector('.upload-area');
+const initialUploadAreaHTML = uploadArea.innerHTML;
+
+// ===============================================
+// OLAY DİNLEYİCİLERİ (EVENT LISTENERS)
+// ===============================================
+
+fileInput.addEventListener('change', (event) => {
+    const files = event.target.files;
+    if (files.length > 0) { handleFiles(files); }
 });
 
-function initializeUploader() {
-    const uploadArea = document.querySelector('.upload-area');
-    const fileInput = document.getElementById('file-input');
-    if (!uploadArea || !fileInput) return;
+uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) { handleFiles(files); }
+});
 
-    // ===============================================
-    // APPLICATION STATE (SINGLE SOURCE OF TRUTH)
-    // ===============================================
-    let appState = {
-        fileQueue: [], 
-        cropper: null,
-        currentCropFileId: null,
-    };
+document.body.addEventListener('click', async (e) => {
+    const targetButton = e.target.closest('button');
 
-    const DEFAULT_QUALITY_SETTINGS = {
-        jpeg: { default: 85, min: 50, max: 95 },
-        png: { default: 90, min: 60, max: 100 },
-        webp: { default: 80, min: 50, max: 95 },
-        avif: { default: 60, min: 30, max: 80 },
-        heic: { default: 80, min: 50, max: 95 }
-    };
+    if (targetButton && targetButton.id === 'advanced-options-btn') {
+        e.preventDefault();
+        const slider = document.querySelector('.advanced-slider');
+        const isHidden = slider.style.display === 'none';
+        slider.style.display = isHidden ? 'flex' : 'none';
+        return; 
+    }
 
-    const initialUploadAreaHTML = uploadArea.innerHTML;
+    if (!targetButton && !e.target.classList.contains('modal-overlay') && !e.target.classList.contains('modal-close-btn')) {
+        return;
+    }
 
-    // ===============================================
-    // DYNAMIC LOADING HELPERS
-    // ===============================================
+    if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close-btn')) {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            modal.remove();
+        }
+        return;
+    }
+
+    if (targetButton && targetButton.id === 'choose-file-btn') {
+        e.preventDefault();
+        fileInput.click();
+    }
+    if (targetButton && targetButton.id === 'optimize-all-btn') {
+        startBatchOptimization();
+    }
+    if (targetButton && targetButton.id === 'download-all-btn') {
+        handleZipDownload();
+    }
+    if (targetButton && targetButton.id === 'clear-all-btn') {
+        resetUI();
+    }
+    if (targetButton && targetButton.classList.contains('btn-retry')) {
+        const indexToRetry = parseInt(targetButton.dataset.fileIndex, 10);
+        const formatToRetry = targetButton.dataset.format; 
+
+        const fileToRetry = fileQueue[indexToRetry];
+        const listItemToRetry = document.querySelectorAll('.file-list-item')[indexToRetry];
+
+        if (fileToRetry && listItemToRetry) {
+            console.log(`Retrying file: ${fileToRetry.name} with format ${formatToRetry}`);
+            processSingleFile(fileToRetry, listItemToRetry, indexToRetry, formatToRetry);
+        }
+    }
+
+if (targetButton && targetButton.id === 'crop-undo-btn') {
+    if (!cropper || cropHistory.length === 0) return;
+
+    const lastState = cropHistory.pop();
+
+    const compareButton = currentCropTarget.querySelector('.btn-compare');
+    const cropButton = currentCropTarget.querySelector('.btn-crop');
+    const imageInModal = document.getElementById('image-to-crop');
+
+    if (compareButton) {
+        compareButton.dataset.optimizedUrl = lastState.optimized;
+        compareButton.dataset.originalUrl = lastState.original;
+    }
+    if (cropButton) {
+        cropButton.dataset.optimizedUrl = lastState.optimized;
+    }
+
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+
+    imageInModal.src = '';
+    
+    setTimeout(() => {
+        imageInModal.onload = () => {
+            cropper = new Cropper(imageInModal, {
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+                ready: function () {
+                    document.querySelector('.crop-modal-content').classList.add('ready');
+                    document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
+                }
+            });
+        };
+        imageInModal.src = lastState.optimized;
+    }, 10);
+
+    if (cropHistory.length === 0) {
+        targetButton.disabled = true;
+    }
+}
+
+    if (targetButton && targetButton.classList.contains('btn-delete-item')) {
+        const indexToRemove = parseInt(targetButton.dataset.fileIndex, 10);
+        fileQueue.splice(indexToRemove, 1);
+        if (fileQueue.length === 0) {
+            resetUI();
+        } else {
+            updateUIForFileList();
+        }
+        return; 
+    }
+    
+    if (targetButton && targetButton.classList.contains('btn-copy')) {
+        const copyBtn = targetButton;
+        const imageUrl = copyBtn.dataset.optimizedUrl;
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await createImageBitmap(blob);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(async (pngBlob) => {
+                await navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = `✓`;
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }, 'image/png');
+        } catch (error) {
+            console.error('Failed to copy image:', error);
+            alert('Failed to copy image. Your browser might not fully support this action.');
+        }
+    }
+
+    if (targetButton && targetButton.classList.contains('btn-compare')) {
+        const originalUrl = targetButton.dataset.originalUrl;
+        const optimizedUrl = targetButton.dataset.optimizedUrl;
+        showComparisonModal(originalUrl, optimizedUrl);
+    }
+
+    if (targetButton && targetButton.classList.contains('btn-crop')) {
+        currentCropTarget = targetButton.closest('.action-icon-group');
+        const originalUrl = targetButton.dataset.originalUrl;
+        const optimizedUrl = targetButton.dataset.optimizedUrl;
+        showCropModal(originalUrl, optimizedUrl);
+    }
+
+    if (targetButton && targetButton.id === 'apply-crop-btn') {
+        if (!cropper) return;
+
+        const currentState = {
+            optimized: currentCropTarget.querySelector('.btn-crop').dataset.optimizedUrl,
+            original: currentCropTarget.querySelector('.btn-compare').dataset.originalUrl
+        };
+        cropHistory.push(currentState);
+        
+        const undoBtn = document.getElementById('crop-undo-btn');
+        if (undoBtn) undoBtn.disabled = false;
+        
+        let isCircle = document.querySelector('.crop-shape-btn[data-shape="circle"]').classList.contains('active');
+        let croppedCanvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+
+        if (isCircle) {
+            const circleCanvas = document.createElement('canvas');
+            const context = circleCanvas.getContext('2d');
+            const size = Math.min(croppedCanvas.width, croppedCanvas.height);
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            context.beginPath();
+            context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.clip();
+            context.drawImage(croppedCanvas, 0, 0);
+            croppedCanvas = circleCanvas;
+        }
+
+        const optimizedCroppedBlob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/png'));
+        
+        const sourceForOriginalCrop = currentCropTarget.querySelector('.btn-compare').dataset.originalUrl;
+        
+        const originalCroppedBlob = await new Promise((resolve, reject) => {
+            const originalImage = new Image();
+            originalImage.crossOrigin = "anonymous";
+            originalImage.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const cropBoxData = cropper.getData(true);
+                const scaleX = originalImage.naturalWidth / cropper.getImageData().naturalWidth;
+                const scaleY = originalImage.naturalHeight / cropper.getImageData().naturalHeight;
+                canvas.width = cropBoxData.width * scaleX;
+                canvas.height = cropBoxData.height * scaleY;
+                ctx.drawImage(originalImage, cropBoxData.x * scaleX, cropBoxData.y * scaleY, cropBoxData.width * scaleX, cropBoxData.height * scaleY, 0, 0, canvas.width, canvas.height);
+                
+                if(isCircle) {
+                    const circleCanvas = document.createElement('canvas');
+                    const context = circleCanvas.getContext('2d');
+                    const size = Math.min(canvas.width, canvas.height);
+                    circleCanvas.width = size;
+                    circleCanvas.height = size;
+                    context.beginPath();
+                    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+                    context.closePath();
+                    context.clip();
+                    context.drawImage(canvas, 0, 0);
+                    circleCanvas.toBlob(resolve, 'image/png');
+                } else {
+                    canvas.toBlob(resolve, 'image/png');
+                }
+            };
+            originalImage.onerror = reject;
+            originalImage.src = sourceForOriginalCrop;
+        });
+
+        const newOptimizedUrl = URL.createObjectURL(optimizedCroppedBlob);
+        const newOriginalUrl = URL.createObjectURL(originalCroppedBlob);
+
+        const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+        const compareButton = currentCropTarget.querySelector('.btn-compare');
+        const cropButton = currentCropTarget.querySelector('.btn-crop');
+        const copyButton = currentCropTarget.querySelector('.btn-copy');
+        const base64Button = currentCropTarget.querySelector('.btn-base64');
+
+        if(downloadLink) downloadLink.href = newOptimizedUrl;
+
+        if(compareButton) {
+            compareButton.dataset.optimizedUrl = newOptimizedUrl;
+            compareButton.dataset.originalUrl = newOriginalUrl; 
+        }
+
+        if(cropButton) {
+            cropButton.dataset.optimizedUrl = newOptimizedUrl;
+        }
+        
+        if(copyButton) {
+            copyButton.dataset.optimizedUrl = newOptimizedUrl;
+        }
+        
+        if (base64Button) {
+            base64Button.dataset.optimizedUrl = newOptimizedUrl;
+        }
+
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
+    }
+    
+    if (targetButton && targetButton.classList.contains('crop-shape-btn')) {
+        if (!cropper) return;
+        const shape = targetButton.dataset.shape;
+        const cropBox = document.querySelector('.cropper-view-box');
+        const cropFace = document.querySelector('.cropper-face');
+        
+        if (shape === 'circle') {
+            cropper.setAspectRatio(1/1);
+            if (cropBox) cropBox.style.borderRadius = '50%';
+            if (cropFace) cropFace.style.borderRadius = '50%';
+        } else {
+            cropper.setAspectRatio(NaN);
+            if (cropBox) cropBox.style.borderRadius = '0';
+            if (cropFace) cropFace.style.borderRadius = '0';
+        }
+        
+        document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
+        targetButton.classList.add('active');
+    }
+
+    if (targetButton && targetButton.classList.contains('btn-base64')) {
+        const imageUrl = targetButton.dataset.optimizedUrl;
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                showBase64Modal(reader.result);
+            };
+            reader.readAsDataURL(blob);
+
+        } catch (error) {
+            console.error('Failed to get Base64 data:', error);
+            alert('Could not generate Base64 code.');
+        }
+    }
+    
+    if (targetButton && targetButton.id === 'crop-reset-btn') {
+        if (!cropper) return;
+
+        if (currentCropTarget) {
+            const cropButton = currentCropTarget.querySelector('.btn-crop');
+            const compareButton = currentCropTarget.querySelector('.btn-compare');
+            const copyButton = currentCropTarget.querySelector('.btn-copy');
+            const base64Button = currentCropTarget.querySelector('.btn-base64');
+            const downloadLink = currentCropTarget.querySelector('.btn-download-item');
+
+            const initialOriginalUrl = cropButton.dataset.originalUrl;
+            const initialOptimizedUrl = cropButton.dataset.initialOptimizedUrl;
+
+            if (cropButton) cropButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (compareButton) {
+                compareButton.dataset.originalUrl = initialOriginalUrl;
+                compareButton.dataset.optimizedUrl = initialOptimizedUrl;
+            }
+            if (copyButton) copyButton.dataset.optimizedUrl = initialOptimizedUrl;
+            if (base64Button) base64Button.dataset.optimizedUrl = initialOptimizedUrl;
+            if (downloadLink) downloadLink.href = initialOptimizedUrl;
+        }
+
+        const undoBtn = document.getElementById('crop-undo-btn');
+        if (undoBtn) {
+            undoBtn.disabled = true;
+            cropHistory = [];
+        }
+
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            cropper.destroy();
+            cropper = null;
+            modal.remove();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeI18n(); // DİL FONKSİYONUNU BAŞLAT
+
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    if (!menuToggle) return;
+    const mainNav = document.querySelector('.main-nav');
+    const openIcon = document.getElementById('menu-open-icon');
+    const closeIcon = document.getElementById('menu-close-icon');
+    const body = document.body;
+    menuToggle.addEventListener('click', () => {
+        const isActive = mainNav.classList.toggle('mobile-active');
+        body.classList.toggle('mobile-menu-active');
+        if (openIcon && closeIcon) {
+            openIcon.style.display = isActive ? 'none' : 'block';
+            closeIcon.style.display = isActive ? 'block' : 'none';
+        }
+    });
+});
+
+document.body.addEventListener('change', (e) => {
+    if (e.target.name === 'format') {
+        updateQualitySlider();
+    }
+    if (e.target.id === 'quality-slider') {
+        document.getElementById('quality-output').textContent = e.target.value;
+    }
+});
+
+// ... (Rest of the helper functions: sanitizeFilename, handleFiles, etc.)
+// The rest of the file is identical to what was provided and can be omitted for brevity.
+// Just imagine the rest of the file from line 600+ is here.
+// --- YENİ KISIM SONU ---
+// ===============================================
+// ARAYÜZ VE YARDIMCI FONKSİYONLAR
+// ===============================================
+
+// main.js dosyanızdaki handleFiles fonksiyonunu bununla değiştirin
+// main.js dosyanızın sonuna, diğer yardımcı fonksiyonların yanına ekleyin
+
+// main.js dosyanızdaki mevcut sanitizeFilename fonksiyonunu bununla değiştirin
+
+function sanitizeFilename(filename) {
+    const extension = filename.slice(filename.lastIndexOf('.'));
+    let baseName = filename.slice(0, filename.lastIndexOf('.'));
+
+    baseName = baseName.toLowerCase();
+    baseName = baseName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    baseName = baseName.replace(/\s+/g, '-').replace(/-+/g, '-');
+    
+    // --- FIX IS ON THIS LINE ---
+    // Corrected the regex from [^a-z0--9-] to [^a-z0-9-]
+    baseName = baseName.replace(/[^a-z0-9-]/g, '');
+
+    // EĞER temizlikten sonra dosya adı boş kalırsa, varsayılan bir isim ata
+    if (!baseName) {
+        baseName = `file-${Date.now()}`;
+    }
+
+    return baseName + extension;
+}
+
+function handleFiles(files) {
+    fileQueue = [];
+    cropHistory = []; // Yeni dosya yüklendiğinde geçmişi sıfırla
+    for (const file of files) { 
+        fileQueue.push(file); 
+    }
+    updateUIForFileList();
+    
+    fileInput.value = null; 
+}
+
+function formatFileSize(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+const createProgressBarHTML = (text) => `
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill progress-bar-fill-indeterminate"></div>
+        <span class="progress-bar-text">${text}</span>
+    </div>
+`;
+
+function uploadWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                onProgress(percentComplete);
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+        };
+
+        xhr.onerror = () => {
+            reject(new Error('Network error during upload.'));
+        };
+
+        xhr.send(file);
+    });
+}
+
+// ... (your existing updateUIForFileList function and other functions) ...
+// main.js dosyanızdaki mevcut updateUIForFileList fonksiyonunu bununla değiştirin
+
+// main.js - updateUIForFileList fonksiyonu
+
+function updateUIForFileList() {
+    uploadArea.innerHTML = '';
+    const fileListElement = document.createElement('ul');
+    fileListElement.className = 'file-list';
+
+    let containsPng = false;
+
+    fileQueue.forEach((file, index) => {
+        if (file.name.toLowerCase().endsWith('.png')) {
+            containsPng = true;
+        }
+        const formattedSize = formatFileSize(file.size);
+        const listItem = document.createElement('li');
+        listItem.className = 'file-list-item';
+
+        // --- EKSİK OLAN VE EKLENMESİ GEREKEN SATIR BURASI ---
+        listItem.dataset.originalFilename = file.name;
+
+        listItem.innerHTML = `
+            <div class="file-info">
+                <span class="file-icon">📄</span>
+                <div class="file-details">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formattedSize}</span>
+                </div>
+            </div>
+            <div class="file-item-status">
+                <span>Ready</span>
+                <button class="icon-btn btn-delete-item" data-file-index="${index}" title="Remove file">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>`;
+        fileListElement.appendChild(listItem);
+    });
+    
+// main.js - updateUIForFileList fonksiyonu içindeki formatOptionsHTML değişkeni
+
+const formatOptionsHTML = `
+    <div class="format-options-header">
+        <span class="format-label">Output Format:</span>
+        <div class="tooltip-container">
+            <span class="info-icon">?</span>
+            
+            <div class="tooltip-content">
+                <div class="tooltip-grid-item">
+                    <h4>JPEG (.jpg)</h4>
+                    <p>Best for photographs.</p>
+                </div>
+                <div class="tooltip-grid-item">
+                    <h4>PNG</h4>
+                    <p>Best for graphics with transparency.</p>
+                </div>
+                <div class="tooltip-grid-item">
+                    <h4>WebP</h4>
+                    <p>Modern format for web use.</p>
+                </div>
+                <div class="tooltip-grid-item">
+                    <h4>AVIF</h4>
+                    <p>Newest format with highest compression.</p>
+                </div>
+                <div class="tooltip-grid-item">
+                    <h4>HEIC</h4>
+                    <p>Modern format by Apple, great for photos.</p>
+                </div>
+                <div class="tooltip-grid-item">
+                    <h4>Favicon (PNG/ICO)</h4>
+                    <p>Converts your image to a website icon.</p>
+                </div>
+            </div>
+            </div>
+    </div>
+    <div class="format-options">
+        <div class="radio-group"><input type="radio" id="jpeg" name="format" value="jpeg" checked><label for="jpeg">JPG</label></div>
+        <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
+        <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
+        <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
+        <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div>
+        <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
+        <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
+    </div>
+`;
+
+    // --- YENİ: Kalite kaydırıcısı, artık butonların üzerinde yer alacak ---
+    const advancedSliderHTML = `
+        <div class="advanced-slider" style="display: none;">
+            <label for="quality-slider">Quality:</label>
+            <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
+            <output for="quality-slider" id="quality-output">85</output>
+        </div>
+    `;
+    
+    let smartTipHTML = '';
+    if (containsPng) {
+        smartTipHTML = `<div class="smart-tip">💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing the <strong>JPG</strong> format often provides the smallest file size.</div>`;
+    }
+    
+    const actionArea = document.createElement('div');
+    actionArea.className = 'action-area';
+
+    // --- DEĞİŞİKLİK: HTML yapısı güncellendi ---
+    actionArea.innerHTML = formatOptionsHTML + advancedSliderHTML + `
+        <div class="action-buttons-container initial-actions">
+            <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
+            <button class="btn btn-primary" id="optimize-all-btn">Optimize All (${fileQueue.length} files)</button>
+            
+            <button class="icon-btn" id="advanced-options-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="icon-tooltip">Advanced Settings</span>
+            </button>
+        </div>
+    ` + smartTipHTML;
+    
+    uploadArea.appendChild(fileListElement);
+    uploadArea.appendChild(actionArea);
+    uploadArea.classList.add("file-selected");
+
+    updateQualitySlider();
+}
+
+// BU YENİ FONKSİYONU EKLEYİN
+// --- YENİ ---
+function updateQualitySlider() {
+    const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+    const advancedContainer = document.querySelector('.advanced-slider');
+    
+    if (DEFAULT_QUALITY_SETTINGS[selectedFormat]) {
+        const settings = DEFAULT_QUALITY_SETTINGS[selectedFormat];
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityOutput = document.getElementById('quality-output');
+        
+        qualitySlider.min = settings.min;
+        qualitySlider.max = settings.max;
+        qualitySlider.value = settings.default;
+        qualityOutput.textContent = settings.default;
+        
+        advancedContainer.style.visibility = 'visible';
+    } else {
+        // favicon gibi formatlar için slider alanını gizle
+        advancedContainer.style.visibility = 'hidden';
+    }
+}
+// --- YENİ KISIM SONU ---
+
+// main.js
+
+async function processSingleFile(file, listItem, index, retryFormat = null) {
+    const statusElement = listItem.querySelector('.file-item-status');
+    
+    // Değişiklik burada: retryFormat varsa onu, yoksa DOM'dan seçileni al.
+    const selectedFormat = retryFormat !== null ? retryFormat : document.querySelector('input[name="format"]:checked').value;
+    
+    const qualitySlider = document.getElementById('quality-slider');
+    const qualityValue = qualitySlider ? qualitySlider.value : null;
+    const originalObjectUrl = URL.createObjectURL(file);
+
+    try {
+        // Adım 1: "Preparing..." ilerleme çubuğunu göster
+        statusElement.innerHTML = createProgressBarHTML('Preparing...');
+    
+        const safeFilename = sanitizeFilename(file.name);
+        const linkResponse = await fetch('/.netlify/functions/get-upload-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: safeFilename, fileType: file.type }),
+        });
+        if (!linkResponse.ok) throw new Error('Could not get upload link.');
+        const { uploadUrl, key } = await linkResponse.json();
+
+        // Adım 2: Gerçek zamanlı yükleme çubuğunu göster
+        const uploadProgressBarContainer = `<div class="progress-bar-container"><div class="progress-bar-fill" style="width: 0%;"></div><span class="progress-bar-text">Uploading 0%</span></div>`;
+        statusElement.innerHTML = uploadProgressBarContainer;
+        const progressBarFill = listItem.querySelector('.progress-bar-fill');
+        const progressBarText = listItem.querySelector('.progress-bar-text');
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await uploadWithProgress(uploadUrl, file, (percent) => {
+            progressBarFill.style.width = `${percent.toFixed(0)}%`;
+            progressBarText.textContent = `Uploading ${percent.toFixed(0)}%`;
+        });
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        // Adım 3: "Optimizing..." ilerleme çubuğunu göster
+        statusElement.innerHTML = createProgressBarHTML('Optimizing...');
+        
+        const optimizePayload = { key: key, outputFormat: selectedFormat };
+        if (qualityValue) {
+            optimizePayload.quality = qualityValue;
+        }
+        
+        const optimizeResponse = await fetch('/.netlify/functions/optimize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(optimizePayload),
+        });
+        if (!optimizeResponse.ok) {
+             const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
+             throw new Error(errorData.error);
+        }
+        const data = await optimizeResponse.json();
+
+        // Adım 4: İndirme adını orijinaline sadık kalarak oluştur
+        const originalFullName = file.name;
+        const originalBaseName = originalFullName.slice(0, originalFullName.lastIndexOf('.'));
+        const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
+        const finalDownloadName = originalBaseName + newExtension;
+
+        // Adım 5: Sonuçları ve butonları arayüzde göster
+        const resultActions = `
+            <div class="action-icon-group">
+                <button class="icon-btn btn-compare" data-original-url="${originalObjectUrl}" data-optimized-url="${data.downloadUrl}" title="Compare">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg>
+                </button>
+                <button 
+                    class="icon-btn btn-crop" 
+                    data-original-url="${originalObjectUrl}" 
+                    data-optimized-url="${data.downloadUrl}" 
+                    data-initial-optimized-url="${data.downloadUrl}"
+                    title="Edit & Crop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                </button>
+                <button class="icon-btn btn-copy" data-optimized-url="${data.downloadUrl}" title="Copy Image">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+                <button class="icon-btn btn-base64" data-optimized-url="${data.downloadUrl}" title="Get Base64 Code">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                </button>
+                <a href="${data.downloadUrl}" download="${finalDownloadName}" class="btn btn-download-item">Download</a>
+            </div>
+        `;
+        const savings = ((data.originalSize - data.optimizedSize) / data.originalSize * 100);
+
+        let successHTML;
+        if (savings >= 1) {
+            successHTML = `<span class="savings">✓ ${savings.toFixed(0)}% Saved</span> ${resultActions}`;
+        } else {
+            successHTML = `<span class="savings-info">✓ Already Optimized</span> ${resultActions}`;
+        }
+        statusElement.innerHTML = successHTML;
+
+    } catch (error) {
+        console.error('Processing failed for', file.name, ':', error);
+
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+        
+        const retryButtonHTML = `
+            <button class="icon-btn btn-retry" data-file-index="${index}" data-format="${selectedFormat}">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span class="icon-tooltip">Retry</span>
+            </button>
+        `;
+
+        // Hata mesajını ve butonu arayüze yerleştir
+        statusElement.innerHTML = `<span class="status-failed">Failed! ${error.message}</span> ${retryButtonHTML}`;
+
+        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+    }
+}
+
+async function startBatchOptimization() {
+    console.log(`Starting optimization for ${fileQueue.length} files...`);
+    const optimizeBtn = document.getElementById('optimize-all-btn');
+    const clearBtn = document.getElementById('clear-all-btn');
+
+    if (optimizeBtn) {
+        optimizeBtn.textContent = 'Processing...';
+        optimizeBtn.disabled = true;
+    }
+    if (clearBtn) {
+        clearBtn.disabled = true;
+    }
+
+    const listItems = document.querySelectorAll('.file-list-item');
+    const batchSize = 5;
+    let processedCount = 0;
+
+    for (let i = 0; i < fileQueue.length; i += batchSize) {
+        const batch = fileQueue.slice(i, i + batchSize);
+        const batchListItems = Array.from(listItems).slice(i, i + batchSize);
+        
+        const optimizationPromises = batch.map((file, index) => {
+            const globalIndex = i + index; // Dosyanın global kuyruktaki index'i
+            const listItem = batchListItems[index];
+            // --- DEĞİŞİKLİK BURADA: processSingleFile'a index'i de gönderiyoruz ---
+            return processSingleFile(file, listItem, globalIndex);
+        });
+
+        await Promise.all(optimizationPromises);
+
+        processedCount += batch.length;
+        console.log(`${processedCount} of ${fileQueue.length} files processed.`);
+    }
+    
+    updateMainButtonAfterCompletion();
+}
+
+function updateMainButtonAfterCompletion() {
+    const actionArea = document.querySelector('.action-area');
+    if (actionArea) {
+        actionArea.innerHTML = `
+            <div class="action-buttons-container">
+                <button class="btn btn-primary" id="download-all-btn">Download All as .ZIP</button>
+                <button class="btn btn-secondary" id="clear-all-btn">Start Over</button>
+            </div>
+        `;
+    }
+}
+
+// main.js dosyanızdaki mevcut handleZipDownload fonksiyonunu bununla değiştirin
+
+async function handleZipDownload() {
+    const downloadAllBtn = document.getElementById('download-all-btn');
+    // Buton yoksa veya zaten işlem yapılıyorsa fonksiyonu durdur
+    if (!downloadAllBtn || downloadAllBtn.disabled) return;
+
+    // Gerekli script'i dinamik olarak yüklemek için bir yardımcı fonksiyon
     const loadScript = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        // Script zaten yüklenmişse tekrar yükleme
+        if (document.querySelector(`script[src="${src}"]`)) {
+            return resolve();
+        }
         const script = document.createElement('script');
-        script.src = src; script.async = true;
-        script.onload = resolve;
+        script.src = src;
+        script.onload = () => resolve();
         script.onerror = () => reject(new Error(`Script load error for ${src}`));
         document.head.appendChild(script);
     });
 
-    const loadStyle = (href) => new Promise((resolve, reject) => {
-        if (document.querySelector(`link[href="${href}"]`)) return resolve();
-        const link = document.createElement('link');
-        link.rel = 'stylesheet'; link.href = href;
-        link.onload = resolve;
-        link.onerror = () => reject(new Error(`Style load error for ${href}`));
-        document.head.appendChild(link);
-    });
+    try {
+        downloadAllBtn.textContent = 'Loading Assets...';
+        downloadAllBtn.disabled = true;
 
-    // ===============================================
-    // UTILITIES
-    // ===============================================
-    function sanitizeFilename(filename) {
-        const extension = filename.slice(filename.lastIndexOf('.'));
-        let baseName = filename.slice(0, filename.lastIndexOf('.'));
-        baseName = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/[^a-z0-9-]/g, '');
-        return (baseName || `file-${Date.now()}`) + extension;
-    }
+        // JSZip kütüphanesini sadece şimdi, butona basıldığında yüklüyoruz
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
 
-    function formatFileSize(bytes, decimals = 2) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024; const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-    
-    // ===============================================
-    // MAIN RENDER FUNCTION
-    // ===============================================
-    function renderApp() {
-        uploadArea.innerHTML = '';
+        console.log('Starting ZIP download process...');
+        downloadAllBtn.textContent = 'Zipping...';
 
-        if (appState.fileQueue.length === 0) {
-            uploadArea.innerHTML = initialUploadAreaHTML;
-            uploadArea.classList.remove('file-selected');
-            return;
-        }
+        const zip = new JSZip(); // Bu satır artık hata vermeyecek
+        const listItems = document.querySelectorAll('.file-list-item');
 
-        const fileListElement = document.createElement('ul');
-        fileListElement.className = 'file-list';
+        const fetchPromises = Array.from(listItems).map(item => {
+            // DÜZELTME: Doğru butonu hedeflemek için daha spesifik bir seçici kullanalım.
+            const downloadLink = item.querySelector('a.btn-download-item');
+            const fileUrl = downloadLink.href;
+            const fileName = downloadLink.getAttribute('download');
 
-        appState.fileQueue.forEach((fileState) => {
-            const listItem = document.createElement('li');
-            listItem.className = 'file-list-item';
-            listItem.dataset.fileId = fileState.uniqueId;
-
-            const fileInfoDiv = document.createElement('div');
-            fileInfoDiv.className = 'file-info';
-            fileInfoDiv.innerHTML = `
-                <span class="file-icon">📄</span>
-                <div class="file-details">
-                    <span class="file-name">${fileState.fileObject.name}</span>
-                    <span class="file-size">${formatFileSize(fileState.fileObject.size)}</span>
-                </div>`;
-
-            const fileStatusDiv = document.createElement('div');
-            fileStatusDiv.className = 'file-item-status';
-            
-            switch (fileState.status) {
-                case 'ready':
-                    fileStatusDiv.innerHTML = `<span>Ready</span><button class="icon-btn btn-delete-item" title="Remove file" type="button"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>`;
-                    break;
-                case 'processing':
-                    fileStatusDiv.innerHTML = `<div class="progress-bar-container"><div class="progress-bar-fill progress-bar-fill-indeterminate"></div><span class="progress-bar-text">${fileState.progressText || 'Processing...'}</span></div>`;
-                    break;
-                case 'success':
-                    const savingsText = fileState.savings >= 1 ? `✓ ${fileState.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
-                    const hasBeenCropped = fileState.initialOptimizedUrl && (fileState.initialOptimizedUrl !== fileState.currentOptimizedUrl);
-                    fileStatusDiv.innerHTML = `
-                        <span class="${fileState.savings >= 1 ? 'savings' : 'savings-info'}">${savingsText}</span>
-                        <div class="action-icon-group">
-                            <button class="icon-btn btn-compare" title="Compare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg></button>
-                            ${hasBeenCropped ? `<button class="icon-btn btn-revert" title="Undo Crop" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a10 10 0 1 1-10-10 10.2 10.2 0 0 1 3.4.6"></path><path d="M12 2v4h4"></path></svg></button>` : ''}
-                            <button class="icon-btn btn-crop" title="Edit & Crop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg></button>
-                            <button class="icon-btn btn-copy" title="Copy Image" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                            <button class="icon-btn btn-base64" title="Get Base64 Code" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></button>
-                            <a class="btn btn-download-item" href="${fileState.currentOptimizedUrl}" download="${fileState.downloadName}">Download</a>
-                        </div>`;
-                    break;
-                case 'error':
-                    fileStatusDiv.innerHTML = `<span class="status-failed">Failed! ${fileState.errorMessage}</span><button class="icon-btn btn-retry" type="button"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>`;
-                    break;
-            }
-            listItem.append(fileInfoDiv, fileStatusDiv);
-            fileListElement.appendChild(listItem);
+            return fetch(fileUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
+                    return response.blob();
+                })
+                .then(blob => ({
+                    name: fileName,
+                    blob: blob
+                }));
         });
 
-        const actionArea = document.createElement('div');
-        actionArea.className = 'action-area';
-        
-        const allDone = appState.fileQueue.every(f => f.status === 'success' || f.status === 'error');
-        if (allDone && appState.fileQueue.length > 0) {
-             actionArea.innerHTML = `
-                <div class="action-buttons-container">
-                    <button class="btn btn-secondary" id="clear-all-btn" type="button">Start Over</button>
-                    <button class="btn btn-primary" id="download-all-btn" type="button">Download All (.ZIP)</button>
-                </div>`;
-        } else if (appState.fileQueue.length > 0) {
-            const containsPng = appState.fileQueue.some(f => f.fileObject.name.toLowerCase().endsWith('.png'));
-            const filesReadyCount = appState.fileQueue.filter(f => f.status === 'ready').length;
-            
-            const isAnyFileProcessing = appState.fileQueue.some(f => f.status === 'processing');
-
-            const optimizeButtonHTML = isAnyFileProcessing
-                ? `<button class="btn btn-primary" id="optimize-all-btn" type="button" disabled>Processing...</button>`
-                : `<button class="btn btn-primary" id="optimize-all-btn" type="button">Optimize All (${filesReadyCount} files)</button>`;
-            
-            actionArea.innerHTML = `
-            <div class="format-options-header">
-                <span class="format-label">Output Format:</span>
-                <div class="tooltip-container">
-                    <span class="info-icon">?</span>
-                    <div class="tooltip-content">
-                        <div class="tooltip-grid-item"><h4>JPEG (.jpg)</h4><p>Best for photographs.</p></div>
-                        <div class="tooltip-grid-item"><h4>PNG</h4><p>Best for graphics with transparency.</p></div>
-                        <div class="tooltip-grid-item"><h4>WebP</h4><p>Modern format for web use.</p></div>
-                        <div class="tooltip-grid-item"><h4>AVIF</h4><p>Newest format with highest compression.</p></div>
-                        <div class="tooltip-grid-item"><h4>HEIC</h4><p>Modern format by Apple, great for photos.</p></div>
-                        <div class="tooltip-grid-item"><h4>Favicon (PNG/ICO)</h4><p>Converts your image to a website icon.</p></div>
-                    </div>
-                </div>
-            </div>
-            <div class="format-options">
-                <div class="radio-group"><input type="radio" id="jpeg" name="format" value="jpeg" checked><label for="jpeg">JPG</label></div>
-                <div class="radio-group"><input type="radio" id="png" name="format" value="png"><label for="png">PNG</label></div>
-                <div class="radio-group"><input type="radio" id="webp" name="format" value="webp"><label for="webp">WebP</label></div>
-                <div class="radio-group"><input type="radio" id="avif" name="format" value="avif"><label for="avif">AVIF</label></div>
-                <div class="radio-group"><input type="radio" id="heic" name="format" value="heic"><label for="heic">HEIC</label></div>
-                <div class="radio-group"><input type="radio" id="favicon-png" name="format" value="favicon-png"><label for="favicon-png">Favicon (PNG)</label></div>
-                <div class="radio-group"><input type="radio" id="favicon-ico" name="format" value="favicon-ico"><label for="favicon-ico">Favicon (ICO)</label></div>
-            </div>
-            <div class="advanced-slider" style="display: none;">
-                <div class="quality-label-container"><label for="quality-slider">Quality:</label></div>
-                <input type="range" id="quality-slider" name="quality" min="50" max="95" value="85">
-                <output for="quality-slider" id="quality-output">85</output>
-            </div>
-            <div class="action-buttons-container initial-actions">
-                <button class="btn btn-secondary" id="clear-all-btn" type="button">Start Over</button>
-                ${optimizeButtonHTML}
-                <button class="icon-btn" id="advanced-options-btn" type="button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <span class="icon-tooltip">Advanced Settings</span>
-                </button>
-            </div>
-            ${containsPng ? `<div class="smart-tip">💡 <strong>Pro Tip:</strong> For photos or images without transparency, choosing <strong>JPG</strong> often provides the smallest file size.</div>` : ''}
-            `;
-        }
-
-        uploadArea.append(fileListElement, actionArea);
-        uploadArea.classList.add("file-selected");
-        updateQualitySlider();
-    }
-    
-    // ===============================================
-    // STATE MODIFICATION & LOGIC
-    // ===============================================
-    
-    function handleFiles(files) {
-        resetUI();
-        const MAX_FILE_SIZE = 30 * 1024 * 1024;
-        
-        const validFiles = Array.from(files).filter(file => file.size <= MAX_FILE_SIZE);
-        if (validFiles.length < files.length) {
-            alert(`Some files were too large (Max 30 MB) and were not added.`);
-        }
-        if (validFiles.length === 0) return;
-
-        appState.fileQueue = validFiles.map(file => ({
-            fileObject: file,
-            uniqueId: `file-${Date.now()}-${Math.random()}`,
-            status: 'ready',
-            originalUrl: URL.createObjectURL(file),
-            initialOptimizedUrl: null,
-            currentOptimizedUrl: null,
-            initialSavings: 0,
-            savings: 0,
-            downloadName: null,
-            progressText: '',
-            errorMessage: '',
-            cropData: null,
-        }));
-
-        renderApp();
-        fileInput.value = null;
-    }
-
-    function resetUI() {
-        if (appState.fileQueue.length > 0) {
-            appState.fileQueue.forEach(f => { if (f.originalUrl) URL.revokeObjectURL(f.originalUrl) });
-        }
-        appState = { fileQueue: [], cropper: null, currentCropFileId: null };
-        renderApp();
-    }
-    
-    function uploadWithProgress(url, file, onProgress) {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('PUT', url, true);
-            xhr.setRequestHeader('Content-Type', file.type);
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) onProgress((event.loaded / event.total) * 100);
-            };
-            xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve(xhr.response) : reject(new Error(`Upload failed: ${xhr.status}`));
-            xhr.onerror = () => reject(new Error('Network error during upload.'));
-            xhr.send(file);
+        const files = await Promise.all(fetchPromises);
+        files.forEach(file => {
+            zip.file(file.name, file.blob);
         });
-    }
 
-// index-page.js dosyasındaki mevcut processSingleFile fonksiyonunu silip bunu yapıştırın.
-
-    async function processSingleFile(fileState, fileObjectToProcess, overrideFormat = null) {
-        const formatToUse = overrideFormat || (document.querySelector('input[name="format"]:checked')?.value || 'jpeg');
-        
-        // --- KESİN ÇÖZÜM: FORMATI DOSYANIN KENDİ DURUMUNDA SAKLA ---
-        // Bu sayede arayüz yeniden çizilse bile, yeniden deneme gibi durumlarda doğru formatı hatırlarız.
-        fileState.lastUsedFormat = formatToUse;
-
-        fileState.status = 'processing';
-        fileState.progressText = 'Preparing...';
-        renderApp();
-
-        try {
-            const safeFilename = sanitizeFilename(fileObjectToProcess.name);
-            const linkResponse = await fetch('/.netlify/functions/get-upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: safeFilename, fileType: fileObjectToProcess.type }) });
-            if (!linkResponse.ok) throw new Error('Could not get upload link.');
-            const { uploadUrl, key } = await linkResponse.json();
-            
-            fileState.progressText = 'Uploading...';
-            renderApp();
-            await uploadWithProgress(uploadUrl, fileObjectToProcess, () => {});
-            
-            fileState.progressText = 'Optimizing...';
-            renderApp();
-            
-            const qualityValue = document.getElementById('quality-slider')?.value || null;
-            // Burada artık DOM'a değil, en başta belirlediğimiz ve kaydettiğimiz formata güveniyoruz.
-            const optimizePayload = { key, outputFormat: formatToUse, quality: qualityValue };
-            
-            const optimizeResponse = await fetch('/.netlify/functions/optimize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(optimizePayload) });
-            if (!optimizeResponse.ok) {
-                const errorData = await optimizeResponse.json().catch(() => ({ error: "Optimization failed." }));
-                throw new Error(errorData.error || 'Optimization failed.');
-            }
-            const data = await optimizeResponse.json();
-
-            fileState.status = 'success';
-            fileState.currentOptimizedUrl = data.downloadUrl;
-            const currentSavings = ((fileState.fileObject.size - data.optimizedSize) / fileState.fileObject.size * 100);
-            fileState.savings = currentSavings;
-
-            if (!fileState.initialOptimizedUrl) {
-                fileState.initialOptimizedUrl = data.downloadUrl;
-                fileState.initialSavings = currentSavings;
-            }
-            
-            const newExtension = data.newFilename.slice(data.newFilename.lastIndexOf('.'));
-            fileState.downloadName = sanitizeFilename(fileState.fileObject.name).replace(/\.[^/.]+$/, "") + newExtension;
-
-        } catch (error) {
-            fileState.status = 'error';
-            fileState.errorMessage = error.message;
-        }
-        
-        renderApp();
-    }
-    
-    // ===============================================
-    // MODALS & UI HELPERS
-    // ===============================================
-
-    async function getCroppedSectionFromUrl(imageUrl, cropData) {
-        return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = cropData.width;
-                canvas.height = cropData.height;
-                context.drawImage(
-                    image,
-                    cropData.x, cropData.y,
-                    cropData.width, cropData.height,
-                    0, 0,
-                    cropData.width, cropData.height
-                );
-                resolve(canvas.toDataURL());
-            };
-            image.onerror = () => reject(new Error('Karşılaştırma için yerel resim yüklenemedi.'));
-            image.src = imageUrl;
+        const zipBlob = await zip.generateAsync({
+            type: 'blob'
         });
-    }
+        const tempUrl = URL.createObjectURL(zipBlob);
+        const tempLink = document.createElement('a');
+        tempLink.href = tempUrl;
+        tempLink.setAttribute('download', 'image-guy-optimized.zip');
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        URL.revokeObjectURL(tempUrl);
 
-    function updateQualitySlider() {
-        const selectedFormatRadio = document.querySelector('input[name="format"]:checked');
-        if (!selectedFormatRadio) return;
-        const selectedFormat = selectedFormatRadio.value;
-        const advancedContainer = document.querySelector('.advanced-slider');
-        if (!advancedContainer) return;
-        const qualitySlider = document.getElementById('quality-slider');
-        const qualityOutput = document.getElementById('quality-output');
-        const advancedButton = document.getElementById('advanced-options-btn');
-        if (DEFAULT_QUALITY_SETTINGS[selectedFormat]) {
-            const settings = DEFAULT_QUALITY_SETTINGS[selectedFormat];
-            if (qualitySlider && qualityOutput) {
-                qualitySlider.min = settings.min;
-                qualitySlider.max = settings.max;
-                qualitySlider.value = settings.default;
-                qualityOutput.textContent = settings.default;
-            }
-            if (advancedButton) advancedButton.style.display = 'inline-flex';
-        } else {
-            if (advancedContainer) advancedContainer.style.display = 'none';
-            if (advancedButton) advancedButton.style.display = 'none';
-        }
-    }
+        downloadAllBtn.textContent = 'Download All as .ZIP';
+        downloadAllBtn.disabled = false;
 
-    function removeModalIfPresent() {
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            if (appState.cropper) {
-                try { appState.cropper.destroy(); } catch (e) { /* ignore */ }
-                appState.cropper = null;
-            }
-            modal.remove();
-        }
+    } catch (error) {
+        console.error('Failed to create ZIP file or load assets:', error);
+        alert('An error occurred while creating the ZIP file. Please try again.');
+        downloadAllBtn.textContent = 'Download All as .ZIP';
+        downloadAllBtn.disabled = false;
     }
+}
 
-    function showComparisonModal(beforeUrl, afterUrl) {
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <img-comparison-slider>
-                        <img slot="first" src="${beforeUrl}" />
-                        <img slot="second" src="${afterUrl}" />
-                    </img-comparison-slider>
+function resetUI() {
+    console.log('Resetting UI to initial state.');
+    fileQueue = [];
+    cropHistory = [];
+    uploadArea.innerHTML = initialUploadAreaHTML;
+    uploadArea.classList.remove('file-selected');
+
+    // --- DEĞİŞTİRİLEN SATIR ---
+    // Sayfayı yavaşça en üste kaydır.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showComparisonModal(originalUrl, optimizedUrl) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <img-comparison-slider>
+                    <img slot="first" src="${originalUrl}" />
+                    <img slot="second" src="${optimizedUrl}" />
+                </img-comparison-slider>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// main.js dosyasındaki showCropModal fonksiyonunu bu şekilde güncelleyin:
+
+function showCropModal(originalUrl, optimizedUrl) {
+    // --- ÇÖZÜM: KIRPMA GEÇMİŞİNİ BURADA SIFIRLA ---
+    // Her kırpma penceresi açıldığında, o oturuma özel temiz bir geçmiş başlatıyoruz.
+    cropHistory = [];
+    // ------------------------------------------------
+
+    ultimateOriginalUrl = originalUrl; 
+
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="crop-modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <h2>Edit & Crop Image</h2>
+                <div class="crop-image-container">
+                    <img id="image-to-crop" src="${optimizedUrl}" data-original-url="${originalUrl}">
                 </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
-    
-    async function showCropModal(imageUrl) {
-        try {
-            if (!window.Cropper) {
-                await Promise.all([
-                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js'),
-                    loadStyle('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css')
-                ]);
-            }
-        } catch (error) {
-            alert("An error occurred while loading the image editor.");
-            return;
-        }
-
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="crop-modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <h2>Edit & Crop Image</h2>
-                    <div class="crop-image-container">
-                        <img id="image-to-crop" src="${imageUrl}">
-                    </div>
-                    <div class="crop-actions">
-                        <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
-                        <button class="btn btn-secondary crop-shape-btn" data-shape="circle" type="button">Circle</button>
-                        <button class="btn btn-primary" id="apply-crop-btn" type="button">Apply Crop</button>
-                    </div>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        const image = document.getElementById('image-to-crop');
-        const modalContent = document.querySelector('.crop-modal-content');
-        image.crossOrigin = "anonymous";
-
-        image.onload = () => {
-            if (appState.cropper) { try { appState.cropper.destroy(); } catch (e) {} }
-            appState.cropper = new Cropper(image, {
-                viewMode: 1, background: false, autoCropArea: 0.8,
-                ready: () => {
-                    if (modalContent) modalContent.classList.add('ready');
-                    const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
-                    if (rectBtn) rectBtn.classList.add('active');
-                }
-            });
-        };
-        if (image.complete) image.onload();
-    }
-    
-    function showBase64Modal(base64String) {
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content base64-modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <h2>Base64 Code</h2>
-                    <p>You can use this code directly in your CSS or HTML.</p>
-                    <div class="base64-container">
-                        <textarea class="base64-textarea" readonly>${base64String}</textarea>
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-secondary" id="check-base64-btn" type="button"><span>Check Code</span></button>
-                        <div class="modal-actions-group-right">
-                            <button class="btn btn-primary" id="copy-base64-btn" type="button">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                <span>Copy to Clipboard</span>
-                            </button>
-                            <span class="copy-success-msg">Copied!</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        const textarea = document.querySelector('.base64-textarea');
-        if (textarea) textarea.select();
-
-        const copyBtn = document.getElementById('copy-base64-btn');
-        const checkBtn = document.getElementById('check-base64-btn');
-        const successMsg = document.querySelector('.copy-success-msg');
-
-        if (copyBtn && successMsg) {
-            copyBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(base64String).then(() => {
-                    successMsg.classList.add('visible');
-                    setTimeout(() => { successMsg.classList.remove('visible'); }, 2000);
-                });
-            });
-        }
-
-        if (checkBtn) {
-            checkBtn.addEventListener('click', () => {
-                const newWindow = window.open();
-                if (newWindow) {
-                    newWindow.document.write(`<html><head><title>Base64 Image Preview</title></head><body style="margin:0; display:flex; justify-content:center; align-items:center; background-color:#2e2e2e;"><img src="${base64String}" alt="Base64 Preview"></body></html>`);
-                    newWindow.document.close();
-                } else {
-                    alert("Please allow pop-ups to preview the image.");
-                }
-            });
-        }
-    }
-    
-    async function handleZipDownload() {
-        const downloadAllBtn = document.getElementById('download-all-btn');
-        if (!downloadAllBtn || downloadAllBtn.disabled) return;
-        try {
-            downloadAllBtn.textContent = 'Loading Assets...';
-            downloadAllBtn.disabled = true;
-            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
-            downloadAllBtn.textContent = 'Zipping...';
-            const zip = new JSZip();
-            const filesToZip = appState.fileQueue.filter(f => f.status === 'success');
-            const fetchPromises = filesToZip.map(fileState => 
-                fetch(fileState.currentOptimizedUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`Failed to fetch '${fileState.downloadName}'`);
-                        return response.blob();
-                    })
-                    .then(blob => ({ name: fileState.downloadName, blob: blob }))
-            );
-            const files = await Promise.all(fetchPromises);
-            files.forEach(file => zip.file(file.name, file.blob));
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            const tempUrl = URL.createObjectURL(zipBlob);
-            const tempLink = document.createElement('a');
-            tempLink.href = tempUrl;
-            tempLink.setAttribute('download', 'image-guy-optimized.zip');
-            document.body.appendChild(tempLink);
-            tempLink.click();
-            document.body.removeChild(tempLink);
-            URL.revokeObjectURL(tempUrl);
-        } catch (error) {
-            console.error('Failed to create ZIP file:', error);
-            alert('An error occurred while creating the ZIP file.');
-        } finally {
-            if (downloadAllBtn) {
-                downloadAllBtn.textContent = 'Download All (.ZIP)';
-                downloadAllBtn.disabled = false;
-            }
-        }
-    }
-
-    // ===============================================
-    // EVENT LISTENERS
-    // ===============================================
-    document.body.addEventListener('click', async (e) => {
-        const targetButton = e.target.closest('button');
-        
-        if (e.target.classList.contains('modal-overlay') || (targetButton && targetButton.classList.contains('modal-close-btn'))) {
-            removeModalIfPresent();
-        }
-        
-        if (!targetButton) return;
-
-        const listItem = e.target.closest('.file-list-item');
-        const fileId = listItem?.dataset.fileId;
-        const fileState = fileId ? appState.fileQueue.find(f => f.uniqueId === fileId) : null;
-        
-        // --- Actions on a specific file ---
-        if (fileState) {
-            if (targetButton.classList.contains('btn-delete-item')) {
-                appState.fileQueue = appState.fileQueue.filter(f => f.uniqueId !== fileId);
-                URL.revokeObjectURL(fileState.originalUrl);
-                renderApp();
-            }
-            else if (targetButton.classList.contains('btn-revert')) {
-                fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
-                fileState.savings = fileState.initialSavings;
-                fileState.cropData = null;
-                renderApp();
-            }
-            else if (targetButton.classList.contains('btn-retry')) {
-                // Artık yeniden denerken, dosyanın durumuna kaydettiğimiz son formatı kullanıyoruz.
-                // Bu, arayüz sıfırlansa bile doğru formatın korunmasını garantiler.
-                processSingleFile(fileState, fileState.fileObject, fileState.lastUsedFormat);
-            }
-            else if (targetButton.classList.contains('btn-crop')) {
-                appState.currentCropFileId = fileId;
-                showCropModal(fileState.currentOptimizedUrl);
-            }
-            else if (targetButton.classList.contains('btn-compare')) {
-                const afterUrl = fileState.currentOptimizedUrl;
-                let beforeUrl = fileState.originalUrl; 
-
-                if (fileState.cropData) {
-                    try {
-                        beforeUrl = await getCroppedSectionFromUrl(fileState.originalUrl, fileState.cropData);
-                    } catch (err) {
-                        console.error("Orijinal resimden 'öncesi' görüntüsü oluşturulamadı:", err);
-                        beforeUrl = fileState.originalUrl; 
-                    }
-                }
-                
-                showComparisonModal(beforeUrl, afterUrl);
-            }
-            else if (targetButton.classList.contains('btn-copy')) {
-                targetButton.innerHTML = '...';
-                try {
-                    const response = await fetch(fileState.currentOptimizedUrl);
-                    const blob = await response.blob();
+                <div class="crop-actions">
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle">Rectangle</button>
+                    <button class="btn btn-secondary crop-shape-btn" data-shape="circle">Circle</button>
                     
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const img = await createImageBitmap(blob);
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    <button class="btn btn-secondary" id="crop-undo-btn" disabled>Undo</button>
 
-                    canvas.toBlob(async (pngBlob) => {
-                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
-                        targetButton.innerHTML = '✓';
-                        targetButton.classList.add('copied');
-                        setTimeout(() => {
-                           if (document.body.contains(targetButton)) {
-                                targetButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-                                targetButton.classList.remove('copied');
-                           }
-                        }, 2000);
-                    }, 'image/png');
-                } catch (err) { 
-                    console.error('Copy failed:', err);
-                    targetButton.innerHTML = `X`;
-                }
+                    <button class="btn btn-secondary" id="crop-reset-btn">
+                        Reset All
+                        <span class="tooltip-text">
+                            Warning: All changes will be reset. You will revert to the initial optimized image.
+                        </span>
+                    </button>
+                    <button class="btn btn-primary" id="apply-crop-btn">Apply Crop</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const image = document.getElementById('image-to-crop');
+    const modalContent = document.querySelector('.crop-modal-content');
+    image.crossOrigin = "anonymous";
+
+    image.onload = () => {
+         if (cropper) {
+            cropper.destroy();
+         }
+         cropper = new Cropper(image, {
+            viewMode: 1,
+            background: false,
+            autoCropArea: 0.8,
+            ready: function () {
+                modalContent.classList.add('ready');
+                document.querySelector('.crop-shape-btn[data-shape="rectangle"]').classList.add('active');
             }
-            else if (targetButton.classList.contains('btn-base64')) {
-                try {
-                    const response = await fetch(fileState.currentOptimizedUrl);
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    reader.onloadend = () => { if (reader.result) showBase64Modal(reader.result); };
-                    reader.readAsDataURL(blob);
-                } catch (err) { console.error('Base64 generation failed:', err); }
-            }
-        }
-        else if (targetButton.id === 'clear-all-btn') {
-            resetUI();
-        }
-        else if (targetButton.id === 'optimize-all-btn' || targetButton.id === 'download-all-btn') {
-            e.stopPropagation();
-            if (targetButton.id === 'optimize-all-btn') {
-                const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
-                
-                // --- ÇÖZÜM BURADA ---
-                // Kullanıcının format seçimini, işlemler başlayıp arayüzü yeniden çizmeden ÖNCE yakalıyoruz.
-                const selectedFormat = document.querySelector('input[name="format"]:checked')?.value || 'jpeg';
-                
-                // Yakaladığımız bu formatı, her bir processSingleFile çağrısına 'overrideFormat' olarak iletiyoruz.
-                await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject, selectedFormat)));
+        });
+    };
+    if (image.complete) {
+        image.onload();
+    }
+}
 
-            }
-            if (targetButton.id === 'download-all-btn') {
-                handleZipDownload();
-            }
-        }
-        else if (targetButton.id === 'advanced-options-btn') {
-            const slider = document.querySelector('.advanced-slider');
-            if (slider) slider.style.display = slider.style.display === 'none' ? 'flex' : 'none';
-        }
-        else if (targetButton.closest('.upload-area') && !fileId) {
-            fileInput.click();
-        }
-        
-        if (targetButton.closest('.crop-modal-content')) {
-             if (targetButton.classList.contains('crop-shape-btn')) {
-                if (!appState.cropper) return;
-                const shape = targetButton.dataset.shape;
-                const isCircle = shape === 'circle';
-                appState.cropper.setAspectRatio(isCircle ? 1 / 1 : NaN);
-                const cropBox = document.querySelector('.cropper-view-box');
-                const cropFace = document.querySelector('.cropper-face');
-                if (cropBox) cropBox.style.borderRadius = isCircle ? '50%' : '0';
-                if (cropFace) cropFace.style.borderRadius = isCircle ? '50%' : '0';
-                document.querySelectorAll('.crop-shape-btn').forEach(btn => btn.classList.remove('active'));
-                targetButton.classList.add('active');
-            }
+// main.js dosyanızdaki mevcut showBase64Modal fonksiyonunu bununla değiştirin
+function showBase64Modal(base64String) {
+    const modalHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content base64-modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <h2 data-i18n-key="base64_title">Base64 Code</h2>
+                <p data-i18n-key="base64_subtitle">You can use this code directly in your CSS or HTML.</p>
+                <div class="base64-container">
+                    <textarea class="base64-textarea" readonly>${base64String}</textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="check-base64-btn" data-i18n-key="base64_check_button">
+                        <span>Check Code</span>
+                    </button>
+                    <button class="btn btn-primary" id="copy-base64-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span data-i18n-key="base64_copy_button">Copy to Clipboard</span>
+                    </button>
+                    <span class="copy-success-msg" data-i18n-key="base64_copied_message">Copied!</span>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    translatePage(); // Modal içindeki metinleri çevir
 
-// index-page.js dosyasındaki 'apply-crop-btn' if bloğunu bununla değiştirin.
+    const textarea = document.querySelector('.base64-textarea');
+    textarea.select();
 
-            if (targetButton.id === 'apply-crop-btn') {
-                if (!appState.cropper || !appState.currentCropFileId) return;
-                const currentFileState = appState.fileQueue.find(f => f.uniqueId === appState.currentCropFileId);
-                if (!currentFileState) return;
+    const copyBtn = document.getElementById('copy-base64-btn');
+    const checkBtn = document.getElementById('check-base64-btn');
+    const successMsg = document.querySelector('.copy-success-msg');
 
-                // --- KESİN ÇÖZÜM BURADA BAŞLIYOR ---
-
-                // 1. Kırpma işlemi başlamadan ÖNCE, kullanıcının ana menüdeki format seçimini alıyoruz.
-                const userSelectedFormat = document.querySelector('input[name="format"]:checked')?.value || 'jpeg';
-                
-                // 2. Bu seçimi, varsayılan formatımız olarak ayarlıyoruz.
-                let formatOverride = userSelectedFormat;
-                let outputMimeType = 'image/jpeg'; // Varsayılan MimeType
-
-                // Blob oluşturmak için MimeType'ı seçilen formata göre ayarlayalım.
-                if (formatOverride === 'png') outputMimeType = 'image/png';
-                if (formatOverride === 'webp') outputMimeType = 'image/webp';
-
-
-                // 3. SADECE VE SADECE "daire" şeklinde kırpma yapılıyorsa, şeffaflık zorunlu olduğu için
-                // kullanıcının seçimini ezip formatı PNG'ye zorluyoruz.
-                const isCircleCrop = document.querySelector('.crop-shape-btn[data-shape="circle"].active');
-                if (isCircleCrop) {
-                    formatOverride = 'png';
-                    outputMimeType = 'image/png';
-                }
-
-                const cropData = appState.cropper.getData(true);
-                const originalImage = appState.cropper.image;
-                const finalCanvas = document.createElement('canvas');
-                const context = finalCanvas.getContext('2d');
-                finalCanvas.width = cropData.width;
-                finalCanvas.height = cropData.height;
-
-                if (isCircleCrop) {
-                    context.beginPath();
-                    context.arc(cropData.width / 2, cropData.height / 2, cropData.width / 2, 0, 2 * Math.PI);
-                    context.closePath();
-                    context.clip();
-                }
-
-                context.drawImage(
-                    originalImage,
-                    cropData.x, cropData.y, cropData.width, cropData.height,
-                    0, 0, cropData.width, cropData.height
-                );
-
-                finalCanvas.toBlob(blob => {
-                    if (!blob) {
-                        alert('Cropping failed: could not create blob.');
-                        return;
-                    }
-                    currentFileState.cropData = cropData;
-                    const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
-                    removeModalIfPresent();
-
-                    // 4. processSingleFile fonksiyonunu, kullanıcının ana seçimini veya zorunlu PNG'yi yansıtacak
-                    // şekilde DÜZGÜN formatla çağırıyoruz.
-                    processSingleFile(currentFileState, croppedFile, formatOverride);
-                }, outputMimeType);
-            }
-        }
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(base64String).then(() => {
+            successMsg.classList.add('visible');
+            setTimeout(() => {
+                successMsg.classList.remove('visible');
+            }, 2000);
+        });
     });
 
-    document.body.addEventListener('change', (e) => {
-        if (e.target.name === 'format') updateQualitySlider();
-        if (e.target.id === 'quality-slider') {
-            const qualityOutput = document.getElementById('quality-output');
-            if (qualityOutput) qualityOutput.textContent = e.target.value;
+    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+    checkBtn.addEventListener('click', () => {
+        const newWindow = window.open();
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>Base64 Image Preview</title></head>
+                    <body style="margin:0; display:flex; justify-content:center; align-items:center; background-color:#2e2e2e;">
+                        <img src="${base64String}" alt="Base64 Preview">
+                    </body>
+                </html>
+            `);
+            newWindow.document.close();
+        } else {
+            alert("Please allow popups to preview the image.");
         }
     });
-
-    fileInput.addEventListener('change', (event) => handleFiles(event.target.files));
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('drag-over');
-        handleFiles(e.dataTransfer.files);
-    });
+    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 }
