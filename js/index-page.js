@@ -118,7 +118,7 @@ function initializeUploader() {
                     // Duruma göre dinamik bir tooltip metni oluşturuyoruz.
                     const compareTitleText = hasBeenCropped 
                         ? "Compare Cropped vs Previous Optimized" 
-                        : "Compre Optimized vs Original";
+                        : "Compare Optimized vs Original";
                     // --- YENİ MANTIK BURADA BİTİYOR ---
 
                     fileStatusDiv.innerHTML = `
