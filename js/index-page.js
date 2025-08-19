@@ -111,20 +111,29 @@ function initializeUploader() {
                     break;
                 case 'success':
                     const savingsText = fileState.savings >= 1 ? `✓ ${fileState.savings.toFixed(0)}% Saved` : `✓ Already Optimized`;
+                    
+                    // --- YENİ MANTIK BURADA BAŞLIYOR ---
                     const hasBeenCropped = fileState.initialOptimizedUrl && (fileState.initialOptimizedUrl !== fileState.currentOptimizedUrl);
+                    
+                    // Duruma göre dinamik bir tooltip metni oluşturuyoruz.
+                    const compareTitleText = hasBeenCropped 
+                        ? "Kırpılmış hali, önceki tam haliyle karşılaştır" 
+                        : "Optimize edilmiş hali, orijinal haliyle karşılaştır";
+                    // --- YENİ MANTIK BURADA BİTİYOR ---
+
                     fileStatusDiv.innerHTML = `
                         <span class="${fileState.savings >= 1 ? 'savings' : 'savings-info'}">${savingsText}</span>
                         <div class="action-icon-group">
-                            <button class="icon-btn btn-compare" title="Compare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg></button>
+                            
+                            /* DİNAMİK title NİTELİĞİ BURAYA EKLENDİ */
+                            <button class="icon-btn btn-compare" title="${compareTitleText}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg></button>
+                            
                             ${hasBeenCropped ? `<button class="icon-btn btn-revert" title="Undo Crop" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a10 10 0 1 1-10-10 10.2 10.2 0 0 1 3.4.6"></path><path d="M12 2v4h4"></path></svg></button>` : ''}
                             <button class="icon-btn btn-crop" title="Edit & Crop" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg></button>
                             <button class="icon-btn btn-copy" title="Copy Image" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                             <button class="icon-btn btn-base64" title="Get Base64 Code" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></button>
                             <a class="btn btn-download-item" href="${fileState.currentOptimizedUrl}" download="${fileState.downloadName}">Download</a>
                         </div>`;
-                    break;
-                case 'error':
-                    fileStatusDiv.innerHTML = `<span class="status-failed">Failed! ${fileState.errorMessage}</span><button class="icon-btn btn-retry" type="button"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>`;
                     break;
             }
             listItem.append(fileInfoDiv, fileStatusDiv);
