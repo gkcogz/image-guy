@@ -117,15 +117,13 @@ function initializeUploader() {
                     
                     // Duruma göre dinamik bir tooltip metni oluşturuyoruz.
                     const compareTitleText = hasBeenCropped 
-                        ? "Kırpılmış hali, önceki tam haliyle karşılaştır" 
-                        : "Optimize edilmiş hali, orijinal haliyle karşılaştır";
+                        ? "Compare Cropped vs Previous Optimized" 
+                        : "Compre Optimized vs Original";
                     // --- YENİ MANTIK BURADA BİTİYOR ---
 
                     fileStatusDiv.innerHTML = `
                         <span class="${fileState.savings >= 1 ? 'savings' : 'savings-info'}">${savingsText}</span>
                         <div class="action-icon-group">
-                            
-                            /* DİNAMİK title NİTELİĞİ BURAYA EKLENDİ */
                             <button class="icon-btn btn-compare" title="${compareTitleText}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3m-6 18v-5"></path><path d="M6 3h12"></path></svg></button>
                             
                             ${hasBeenCropped ? `<button class="icon-btn btn-revert" title="Undo Crop" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a10 10 0 1 1-10-10 10.2 10.2 0 0 1 3.4.6"></path><path d="M12 2v4h4"></path></svg></button>` : ''}
