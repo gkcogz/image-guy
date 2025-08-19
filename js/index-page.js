@@ -614,7 +614,14 @@ function initializeUploader() {
             e.stopPropagation();
             if (targetButton.id === 'optimize-all-btn') {
                 const filesToProcess = appState.fileQueue.filter(f => f.status === 'ready');
-                await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject)));
+                
+                // --- ÇÖZÜM BURADA ---
+                // Kullanıcının format seçimini, işlemler başlayıp arayüzü yeniden çizmeden ÖNCE yakalıyoruz.
+                const selectedFormat = document.querySelector('input[name="format"]:checked')?.value || 'jpeg';
+                
+                // Yakaladığımız bu formatı, her bir processSingleFile çağrısına 'overrideFormat' olarak iletiyoruz.
+                await Promise.all(filesToProcess.map(fs => processSingleFile(fs, fs.fileObject, selectedFormat)));
+
             }
             if (targetButton.id === 'download-all-btn') {
                 handleZipDownload();
