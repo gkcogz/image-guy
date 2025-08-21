@@ -227,7 +227,6 @@ function initializeUploader() {
             uniqueId: `file-${Date.now()}-${Math.random()}`,
             status: 'ready',
             originalUrl: URL.createObjectURL(file),
-            croppedOriginalUrl: null,
             initialOptimizedUrl: null,
             currentOptimizedUrl: null,
             initialSavings: 0,
@@ -235,7 +234,6 @@ function initializeUploader() {
             downloadName: null,
             progressText: '',
             errorMessage: '',
-            cropData: null,
             lastUsedFormat: null,
         }));
 
@@ -247,8 +245,7 @@ function initializeUploader() {
         if (appState.fileQueue.length > 0) {
             appState.fileQueue.forEach(f => { 
                 if (f.originalUrl) URL.revokeObjectURL(f.originalUrl);
-                if (f.croppedOriginalUrl) URL.revokeObjectURL(f.croppedOriginalUrl);
-             });
+            });
         }
         appState = {
             fileQueue: [],
@@ -542,11 +539,9 @@ function initializeUploader() {
                 URL.revokeObjectURL(fileState.originalUrl);
                 renderApp();
             }
-            // 'btn-revert' bloğunu bununla değiştirin:
             else if (targetButton.classList.contains('btn-revert')) {
-                // Kırpmayı geri almak, sadece mevcut URL'yi ilk optimize edilmiş URL ile değiştirmektir.
-                currentFileState.currentOptimizedUrl = currentFileState.initialOptimizedUrl;
-                currentFileState.savings = currentFileState.initialSavings;
+                fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
+                fileState.savings = fileState.initialSavings;
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-retry')) {
@@ -556,11 +551,18 @@ function initializeUploader() {
                 appState.currentCropFileId = fileId;
                 showCropModal(fileState.currentOptimizedUrl);
             }
-            // 'btn-compare' bloğunu bununla değiştirin:
             else if (targetButton.classList.contains('btn-compare')) {
-                const afterUrl = currentFileState.currentOptimizedUrl;
-                // "Öncesi" resmi her zaman ya ilk optimize edilmiş hal ya da orijinaldir.
-                const beforeUrl = currentFileState.initialOptimizedUrl || currentFileState.originalUrl;
+                const afterUrl = fileState.currentOptimizedUrl;
+                let beforeUrl;
+
+                const hasBeenCropped = fileState.initialOptimizedUrl && (fileState.initialOptimizedUrl !== fileState.currentOptimizedUrl);
+
+                if (hasBeenCropped) {
+                    beforeUrl = fileState.initialOptimizedUrl;
+                } else {
+                    beforeUrl = fileState.originalUrl;
+                }
+
                 showComparisonModal(beforeUrl, afterUrl);
             }
             else if (targetButton.classList.contains('btn-copy')) {
@@ -638,15 +640,11 @@ function initializeUploader() {
                 targetButton.classList.add('active');
             }
 
-            // Mevcut 'apply-crop-btn' if bloğunu silip yerine bu doğru çalışan versiyonu yapıştırın.
-
             if (targetButton.id === 'apply-crop-btn') {
                 if (!appState.cropper || !appState.currentCropFileId) return;
                 const currentFileState = appState.fileQueue.find(f => f.uniqueId === appState.currentCropFileId);
                 if (!currentFileState) return;
 
-                // 1. Kırpma sonrası hangi formatın kullanılacağını belirle.
-                // Dairesel kırpma şeffaflık gerektirdiği için PNG'ye zorlanır.
                 let formatOverride = appState.selectedFormat;
                 let outputMimeType = 'image/jpeg';
 
@@ -659,7 +657,6 @@ function initializeUploader() {
                     outputMimeType = 'image/png';
                 }
 
-                // 2. Resmi canvas üzerinde kırp ve bir "blob" objesine dönüştür.
                 const croppedCanvas = appState.cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
 
                 let finalCanvas = croppedCanvas;
@@ -683,13 +680,10 @@ function initializeUploader() {
                         return;
                     }
                     
-                    // 3. Bu blob'dan yeni bir dosya nesnesi oluştur.
                     const croppedFile = new File([blob], `cropped-${currentFileState.fileObject.name}`, { type: blob.type });
                     
-                    // Modalı kapat.
                     removeModalIfPresent();
 
-                    // 4. EN ÖNEMLİ ADIM: Optimizasyon sürecini bu yeni kırpılmış dosya ile yeniden başlat.
                     processSingleFile(currentFileState, croppedFile, formatOverride);
                     
                 }, outputMimeType);
