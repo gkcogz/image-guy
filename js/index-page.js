@@ -68,6 +68,30 @@ function initializeUploader() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
+
+    // Bu fonksiyonları UTILITIES bölümüne ekleyin
+
+    function showSpinner() {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.style.display = 'flex';
+    }
+
+    function hideSpinner() {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.style.display = 'none';
+    }
+
+    // Birden fazla resmin yüklenmesini bekleyen yardımcı fonksiyon
+    const waitForImages = (imgElements) => {
+        const promises = Array.from(imgElements).map(img => {
+            return new Promise((resolve, reject) => {
+                if (img.complete) return resolve();
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+        });
+        return Promise.all(promises);
+};
     
     // ===============================================
     // MAIN RENDER FUNCTION
@@ -361,21 +385,36 @@ function initializeUploader() {
         }
     }
 
-    function showComparisonModal(beforeUrl, afterUrl) {
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <img-comparison-slider>
-                        <img slot="first" src="${beforeUrl}" />
-                        <img slot="second" src="${afterUrl}" />
-                    </img-comparison-slider>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Mevcut showComparisonModal fonksiyonunu bununla değiştirin.
+    async function showComparisonModal(beforeUrl, afterUrl) {
+        showSpinner(); // Animasyonu göster
+        try {
+            const modalHTML = `
+                <div class="modal-overlay">
+                    <div class="modal-content">
+                        <button class="modal-close-btn" type="button">&times;</button>
+                        <img-comparison-slider>
+                            <img slot="first" src="${beforeUrl}" />
+                            <img slot="second" src="${afterUrl}" />
+                        </img-comparison-slider>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            const imagesToLoad = document.querySelectorAll('.modal-content img');
+            await waitForImages(imagesToLoad); // İki resmin de yüklenmesini bekle
+
+        } catch (error) {
+            console.error("Karşılaştırma resimleri yüklenirken hata oluştu:", error);
+            alert("Karşılaştırma resimleri yüklenemedi.");
+        } finally {
+            hideSpinner(); // Her durumda (başarılı veya hatalı) animasyonu gizle
+        }
     }
     
+    // Mevcut showCropModal fonksiyonunu bununla değiştirin.
     async function showCropModal(imageUrl) {
+        showSpinner(); // Animasyonu göster
         try {
             if (!window.Cropper) {
                 await Promise.all([
@@ -383,44 +422,50 @@ function initializeUploader() {
                     loadStyle('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css')
                 ]);
             }
+            
+            const modalHTML = `
+                <div class="modal-overlay">
+                    <div class="crop-modal-content">
+                        <button class="modal-close-btn" type="button">&times;</button>
+                        <h2>Edit & Crop Image</h2>
+                        <div class="crop-image-container">
+                            <img id="image-to-crop" src="${imageUrl}">
+                        </div>
+                        <div class="crop-actions">
+                            <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
+                            <button class="btn btn-secondary crop-shape-btn" data-shape="circle" type="button">Circle</button>
+                            <button class="btn btn-primary" id="apply-crop-btn" type="button">Apply Crop</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            const image = document.getElementById('image-to-crop');
+            const modalContent = document.querySelector('.crop-modal-content');
+            image.crossOrigin = "anonymous";
+
+            image.onload = () => {
+                if (appState.cropper) { try { appState.cropper.destroy(); } catch (e) {} }
+                appState.cropper = new Cropper(image, {
+                    viewMode: 1, background: false, autoCropArea: 0.8,
+                    ready: () => {
+                        if (modalContent) modalContent.classList.add('ready');
+                        const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
+                        if (rectBtn) rectBtn.classList.add('active');
+                        hideSpinner(); // Resim ve cropper hazır, animasyonu gizle
+                    }
+                });
+            };
+            image.onerror = () => {
+                hideSpinner(); // Hata olursa animasyonu gizle
+                alert("Resim yüklenemedi.");
+            }
+            if (image.complete) image.onload();
+
         } catch (error) {
+            hideSpinner(); // Hata olursa animasyonu gizle
             alert("An error occurred while loading the image editor.");
-            return;
         }
-
-        const modalHTML = `
-            <div class="modal-overlay">
-                <div class="crop-modal-content">
-                    <button class="modal-close-btn" type="button">&times;</button>
-                    <h2>Edit & Crop Image</h2>
-                    <div class="crop-image-container">
-                        <img id="image-to-crop" src="${imageUrl}">
-                    </div>
-                    <div class="crop-actions">
-                        <button class="btn btn-secondary crop-shape-btn" data-shape="rectangle" type="button">Rectangle</button>
-                        <button class="btn btn-secondary crop-shape-btn" data-shape="circle" type="button">Circle</button>
-                        <button class="btn btn-primary" id="apply-crop-btn" type="button">Apply Crop</button>
-                    </div>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        const image = document.getElementById('image-to-crop');
-        const modalContent = document.querySelector('.crop-modal-content');
-        image.crossOrigin = "anonymous";
-
-        image.onload = () => {
-            if (appState.cropper) { try { appState.cropper.destroy(); } catch (e) {} }
-            appState.cropper = new Cropper(image, {
-                viewMode: 1, background: false, autoCropArea: 0.8,
-                ready: () => {
-                    if (modalContent) modalContent.classList.add('ready');
-                    const rectBtn = document.querySelector('.crop-shape-btn[data-shape="rectangle"]');
-                    if (rectBtn) rectBtn.classList.add('active');
-                }
-            });
-        };
-        if (image.complete) image.onload();
     }
     
     function showBase64Modal(base64String) {
