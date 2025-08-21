@@ -585,8 +585,8 @@ function initializeUploader() {
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-revert')) {
-                currentFileState.currentOptimizedUrl = currentFileState.initialOptimizedUrl;
-                currentFileState.savings = currentFileState.initialSavings;
+                fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
+                fileState.savings = fileState.initialSavings;
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-retry')) {
