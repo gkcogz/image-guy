@@ -540,8 +540,8 @@ function initializeUploader() {
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-revert')) {
-                fileState.currentOptimizedUrl = fileState.initialOptimizedUrl;
-                fileState.savings = fileState.initialSavings;
+                currentFileState.currentOptimizedUrl = currentFileState.initialOptimizedUrl;
+                currentFileState.savings = currentFileState.initialSavings;
                 renderApp();
             }
             else if (targetButton.classList.contains('btn-retry')) {
