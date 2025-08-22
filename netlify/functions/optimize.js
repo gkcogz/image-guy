@@ -1,6 +1,8 @@
-// File Name: netlify/functions/optimize.js (Complete and Hardened Version)
+// ==========================================================
+// netlify/functions/optimize.js (GÜNCELLENMİŞ NİHAİ VERSİYON)
+// ==========================================================
 
-const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand, CopyObjectCommand } = require("@aws-sdk/client-s3");
 const sharp = require('sharp');
 const toIco = require('to-ico');
 const heicConvert = require('heic-convert');
@@ -30,13 +32,12 @@ const streamToBuffer = (stream) => new Promise((resolve, reject) => {
 
 exports.handler = async (event, context) => {
     try {
-        // ROBUSTNESS: Validate input from the request body.
         let body;
         try {
             body = JSON.parse(event.body);
         } catch (e) {
             return {
-                statusCode: 400, // Bad Request
+                statusCode: 400,
                 body: JSON.stringify({ error: 'Invalid JSON in request body.' }),
             };
         }
@@ -45,7 +46,7 @@ exports.handler = async (event, context) => {
 
         if (!key || !outputFormat) {
             return {
-                statusCode: 400, // Bad Request
+                statusCode: 400,
                 body: JSON.stringify({ error: 'Missing required fields: key or outputFormat.' }),
             };
         }
@@ -126,13 +127,29 @@ exports.handler = async (event, context) => {
         const optimizedSize = optimizedImageBuffer.length;
         let finalBuffer, finalKey, finalContentType, finalFilename;
 
+        // EĞER OPTİMİZASYON SONRASI DOSYA KÜÇÜLMEDİYSE
         if (optimizedSize >= originalSize) {
-            console.log(`Optimization skipped for ${originalFilename}, original is smaller.`);
+            console.log(`Optimization skipped for ${originalFilename}. Updating metadata for download.`);
+            
+            // Dosyayı yeniden yüklemek yerine, mevcut dosyanın metadata'sını güncelliyoruz.
+            // Bunu, dosyayı kendi üzerine kopyalayıp ContentDisposition başlığını ekleyerek yapıyoruz.
+            const copyCommand = new CopyObjectCommand({
+                Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
+                CopySource: `${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}/${encodeURIComponent(key)}`, // Kaynak kendisi
+                Key: key, // Hedef kendisi
+                MetadataDirective: 'REPLACE', // Metadata'yı değiştir
+                ContentType: response.ContentType,
+                ContentDisposition: `attachment; filename="${originalFilename}"` // EKSİK OLAN BAŞLIĞI EKLE
+            });
+            await s3Client.send(copyCommand);
+
             finalBuffer = fileDataBuffer;
             finalKey = key;
             finalContentType = response.ContentType;
             finalFilename = originalFilename;
-        } else {
+        } 
+        // EĞER OPTİMİZASYON BAŞARILI OLDUYSA
+        else {
             console.log(`Optimization successful for ${originalFilename}.`);
             const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
             finalFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
@@ -166,7 +183,6 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        // SECURE ERROR HANDLING: Log the detailed error for debugging, but return a generic message to the client.
         console.error('An error occurred in the optimize function:', error);
         return {
             statusCode: 500,
