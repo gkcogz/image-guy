@@ -127,19 +127,21 @@ exports.handler = async (event, context) => {
         const optimizedSize = optimizedImageBuffer.length;
         let finalBuffer, finalKey, finalContentType, finalFilename;
 
-        // EĞER OPTİMİZASYON SONRASI DOSYA KÜÇÜLMEDİYSE
-        if (optimizedSize >= originalSize) {
+        const originalExtension = originalFilename.slice(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+        const requestedExtension = newExtension.toLowerCase();
+
+        // Sadece orijinal format ile istenen format aynıysa boyut kontrolü yap.
+        // Format değişikliği varsa, boyut artsa bile işlemi gerçekleştir.
+        if (optimizedSize >= originalSize && originalExtension === requestedExtension) {
             console.log(`Optimization skipped for ${originalFilename}. Updating metadata for download.`);
             
-            // Dosyayı yeniden yüklemek yerine, mevcut dosyanın metadata'sını güncelliyoruz.
-            // Bunu, dosyayı kendi üzerine kopyalayıp ContentDisposition başlığını ekleyerek yapıyoruz.
             const copyCommand = new CopyObjectCommand({
                 Bucket: process.env.IMAGEGUY_AWS_S3_BUCKET_NAME,
-                CopySource: `${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}/${encodeURIComponent(key)}`, // Kaynak kendisi
-                Key: key, // Hedef kendisi
-                MetadataDirective: 'REPLACE', // Metadata'yı değiştir
+                CopySource: `${process.env.IMAGEGUY_AWS_S3_BUCKET_NAME}/${encodeURIComponent(key)}`,
+                Key: key,
+                MetadataDirective: 'REPLACE',
                 ContentType: response.ContentType,
-                ContentDisposition: `attachment; filename="${originalFilename}"` // EKSİK OLAN BAŞLIĞI EKLE
+                ContentDisposition: `attachment; filename="${originalFilename}"`
             });
             await s3Client.send(copyCommand);
 
@@ -147,10 +149,10 @@ exports.handler = async (event, context) => {
             finalKey = key;
             finalContentType = response.ContentType;
             finalFilename = originalFilename;
-        } 
-        // EĞER OPTİMİZASYON BAŞARILI OLDUYSA
-        else {
-            console.log(`Optimization successful for ${originalFilename}.`);
+
+        } else {
+            // Optimizasyon başarılı olduysa VEYA format değişikliği istendiyse bu blok çalışır.
+            console.log(`Optimization/Conversion successful for ${originalFilename}.`);
             const baseFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
             finalFilename = `${baseFilename.replace(/\s+/g, '-')}.${newExtension}`;
             
