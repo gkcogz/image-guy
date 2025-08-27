@@ -1,13 +1,23 @@
 [build]
-  # This tells Netlify where our functions are located.
   functions = "netlify/functions/"
 
 [functions]
-  # This ensures Node.js dependencies from the root package.json are included.
   node_bundler = "esbuild"
 
-# --- ADD THIS NEW SECTION BELOW ---
-# Increase the timeout for our specific, long-running function
 [functions.optimize]
-  # Set the timeout to 26 seconds (the maximum allowed is 26)
   timeout = 26
+
+# --- ADD REDIRECTS BELOW ---
+
+# Force canonical URL for favicon-guide
+[[redirects]]
+  from = "/favicon-guide"
+  to = "/favicon-guide.html"
+  status = 301
+  force = true
+
+# (Optional) Disable pretty URLs site-wide if you want .html always visible
+#[[redirects]]
+#  from = "/*/"
+#  to = "/:splat.html"
+#  status = 301
