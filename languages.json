@@ -39,7 +39,7 @@
     "about_why_text": "Every image you optimize doesn't just improve your website's loading speed; it also reduces the energy required for data transfer and storage. This means a smaller digital footprint and a small but meaningful contribution to a more sustainable planet.",
     "about_tech_header": "Our Technology",
     "about_tech_text": "Image Guy is powered by the high-performance `sharp` library, running on a scalable serverless architecture. This allows us to offer top-tier optimization for various formats like JPEG, PNG, WebP, and AVIF without compromising on quality.",
-    "blog_title": "Image Guy Blog",
+    "blog_title": "🛋️ Image Guy Blog ",
     "blog_subtitle": "Tips, tricks, and insights on image optimization and web performance.",
     "blog_post1_title": "How Does Image Optimization Save Our Planet?",
     "blog_post1_excerpt": "Learn why optimizing images is critical for site speed, sustainability, and SEO, with practical tips for better web performance.",
