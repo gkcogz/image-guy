@@ -1,0 +1,181 @@
+v<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <meta name="description" content="Boost your Core Web Vitals score. Learn how to fix image-related LCP and CLS issues and speed up your site with WebP and optimization." />
+    <title>Boost Your Core Web Vitals Score with Images: The LCP & CLS Optimization Guide | Image Guy</title>
+
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" media="print" onload="this.media='all'" />
+    
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <style>
+        .post-content p, .post-content li { line-height: 1.6; }
+        .post-content p, .post-content ul, .post-content ol, pre, figure { margin-bottom: 1.25em; }
+        .post-content h2 { font-size: 1.8em; margin-top: 2.2em; margin-bottom: 1em; border-bottom: 1px solid #eee; padding-bottom: 0.5em;}
+        .post-content ul { list-style-type: disc; margin-left: 2em; }
+        .warning-box { background-color: #fffbeb; border-left: 4px solid #f9ca24; padding: 1em 1.5em; border-radius: 4px; }
+        .solution-box { background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1em 1.5em; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-break: break-word; }
+        code { font-family: 'Courier New', Courier, monospace; font-size: 0.95em; }
+        figure { margin: 1.5em 0; text-align: center; }
+        figure img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #eee; }
+        figcaption { font-size: 0.9em; color: #555; margin-top: 0.5em; font-style: italic; }
+    </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Boost Your Core Web Vitals Score with Images: The LCP & CLS Optimization Guide",
+      "datePublished": "2025-09-14T20:55:00+03:00",
+      "dateModified": "2025-09-14T20:55:00+03:00",
+      "author": {
+        "@type": "Person",
+        "name": "Alex Dawson" 
+      },
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://www.image-guy.com/assets/blog/cwv-score.png",
+        "width": 800,
+        "height": 450,
+         "description": "A 98 performance score on PageSpeed Insights for oguz.world, achieved after optimization with Image Guy."
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Image Guy",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.image-guy.com/assets/logo/logo-2.webp"
+        }
+      },
+      "description": "Boost your Core Web Vitals score. Learn how to fix image-related LCP and CLS issues and speed up your site with WebP and optimization."
+    }
+    </script>
+</head>
+<body class="untranslated"> 
+
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <a href="/" class="logo-link">
+          <img src="assets/logo/logo-2.webp" alt="Image Guy Logo" class="logo-image" width="36" height="36" />
+        </a>
+      </div>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="/blog.html" aria-current="page">Blog</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container content-page">
+      <article class="blog-post-full">
+        <h1>Boost Your Core Web Vitals Score with Images: The LCP & CLS Optimization Guide</h1>
+        <div class="post-meta">
+            <time datetime="2025-09-14">Posted on September 14, 2025</time>
+        </div>
+        <div class="post-content">
+            <p>Ever wonder what Google *really* cares about when ranking your site? </p> 
+            <p>Increasingly, the answer is "user experience." Google's primary metrics for measuring that experience are called <strong>Core Web Vitals (CWV)</strong>, and they have been an official ranking factor since 2021.</p>
+            <p>And what's the number one culprit that hurts these scores? Most of the time, it's your images.</p>
+            
+            <figure>
+                <img src="assets/blog/cwv.webp" alt="A PageSpeed Insights report for oguz.world showing a 98 performance score after optimization." loading="lazy">
+                <figcaption>This PageSpeed Insights report for the website oguz.world shows a 98 performance score, achieved after <strong>all images on the site were optimized using Image Guy</strong>.</figcaption>
+            </figure>
+
+            <p>If you're seeing warnings in Google Search Console like "LCP issue: longer than 2.5s" or "CLS issue: more than 0.1," you are not alone.</p>
+            <p> In this guide, we'll break down how to find and fix the image-related problems ruining these two critical metrics, all using tools like <strong>Image Guy</strong>.</p>
+
+            <h2>What is LCP (Largest Contentful Paint) and How Do Images Ruin It?</h2>
+            <p>In simple terms, LCP measures the loading time of the <strong>largest content element</strong> visible on the screen (usually a large hero image or video). Google wants this time to be under 2.5 seconds. Anything over 4 seconds is considered "poor."</p>
+            
+            <div class="warning-box">
+                <p><strong>The Main LCP Problem:</strong> The issue is almost always a large hero image at the top of the page. It loads slowly for two key reasons:</p>
+                <ol>
+                    <li>The file size is unnecessarily massive (e.g., an unoptimized 2MB JPG).</li>
+                    <li>It's using a legacy format (like JPG or PNG) instead of a modern one.</li>
+                </ol>
+            </div>
+
+            <figure>
+                <img src="assets/blog/lcp.webp" alt="A technical diagram explaining Largest Contentful Paint (LCP)." loading="lazy">
+                <figcaption>A technical diagram illustrating how LCP (Largest Contentful Paint) is the time it takes for the largest element (like a hero image) to render in the viewport.</figcaption>
+            </figure>
+            
+            <div class="solution-box">
+                <p><strong>The Image Guy Solution for LCP:</strong></p>
+                <p>The fastest way to fix your LCP score is to shrink the file size of that "largest" image.</p>
+                <ul>
+                    <li><strong>1. Optimize It:</strong> Upload your image to Image Guy to get up to 80% compression without noticeable quality loss. A 2MB file can instantly become 300KB.</li>
+                    <li><strong>2. Convert to WebP:</strong> After optimizing, convert that image to the modern <strong>WebP</strong> format. A WebP file is typically 30% smaller than the same quality JPG, saving precious seconds off your load time.</li>
+                </ul>
+            </div>
+
+            <h2>What is CLS (Cumulative Layout Shift) and What Causes That Annoying 'Jump'?</h2>
+            <p>Have you ever visited a site, tried to click a button, and suddenly the page "jumps," causing you to click on an ad or the wrong link? That's <strong>Cumulative Layout Shift (CLS)</strong>.</p>
+            <p>Google hates this unstable experience and wants sites to have a CLS score below 0.1.</p>
+
+            <div class="warning-box">
+                <p><strong>The Main CLS Problem:</strong> The number one cause of CLS is images in your HTML code that are missing their <strong>width and height attributes</strong>. The browser doesn't know how much space to save for the image. It loads the text first, and *then* the image pops in, pushing all the text down and causing the "jump."</p>
+            </div>
+
+            <figure>
+                <img src="assets/blog/cls.webp" alt="A 'Before' and 'After' diagram explaining Cumulative Layout Shift (CLS)." loading="lazy">
+                <figcaption>A 'Before' and 'After' diagram showing how CLS (Cumulative Layout Shift) occurs when a late-loading element (like an ad) pushes existing content down the page.</figcaption>
+            </figure>
+
+            <div class="solution-box">
+                <p><strong>The Image Guy Solution for CLS:</strong></p>
+                <p>To fix CLS, you must tell the browser the image's dimensions *before* it loads. This is a nightmare if you're managing images of 50 different sizes.</p>
+                <ul>
+                    <li><strong>1. Standardize Your Sizes:</strong> Use Image Guy's "Resize" tool. Decide that all your blog hero images will be 800px wide, for instance. Run all your images through the tool to standardize them.</li>
+                    <li><strong>2. Add Attributes to Your Code:</strong> Now you know the exact dimensions (e.g., 800px wide, 500px high). Add these attributes directly to your <code>&lt;img&gt;</code> tag.</li>
+                </ul>
+                <pre><code>&lt;!-- BAD (Causes CLS) --&gt;
+&lt;img src="my-article-image.webp" alt="..."&gt;
+
+&lt;!-- GOOD (Prevents CLS) --&gt;
+&lt;img src="my-article-image.webp" alt="..." width="800" height="500"&gt;</code></pre>
+                <p>Now, the browser will reserve an 800x500px empty space for your image *before* it even loads. When the image arrives, it slots perfectly into place with zero layout shift.</p>
+            </div>
+
+            <h2>Conclusion: Core Web Vitals Are Not a Detail, They're a Requirement</h2>
+            <p>When you combine the lessons from our Image SEO guide with these Core Web Vitals metrics, a clear picture emerges: optimizing your images is no longer an optional "nice-to-have." It is a <strong>core requirement</strong> for ranking on Google.</p>
+            <p>Fixing your LCP and CLS scores elevates your site from just being "a blog" to being a technically sound resource in Google's eyes, all while giving your users the fast, stable experience they deserve. Check your site's Core Web Vitals report and start fixing those slow images today!</p>
+            <p><a href="https://www.image-guy.com" target="_blank" rel="noopener"><strong>Start optimizing with Image Guy now</strong></a> and get the fast site that Google loves.</p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="footer">
+      <div class="container footer-container">
+          <div class="footer-links">
+              <a href="/blog.html">Blog</a>
+              <a href="/about.html">About</a>
+              <a href="/contact.html">Contact</a>
+              <a href="/privacy.html">Privacy Policy</a>
+              <a href="/terms.html">Terms of Service</a>
+          </div>
+          <div class="footer-copyright">
+              <span>&copy; 2025 Image-Guy.com | All Rights Reserved.</span>
+          </div>
+      </div>
+  </footer>
+  
+  <script src="js/global.js" defer></script>
+</body>
+</html>
